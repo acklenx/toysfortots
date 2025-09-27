@@ -1,0 +1,642 @@
+[
+  {
+    "label": "Solecto Lindo",
+    "address": "4430 Wade Green Rd.",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Angry Crab Shack",
+    "address": "3150 Cobb Parkway NW",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Carrabbas Italian Grill",
+    "address": "1160 Ernest Barett Pkwy",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Broken Anchor Winery",
+    "address": "3335 Cobb Parkway NW",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Holbrook Life",
+    "address": "4491 South Main St",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Cobblestone Golf Course",
+    "address": "4200 Nance Rd",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Celebration Village Acworth",
+    "address": "4460 Celebration Blvd.",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "The Tomatoes",
+    "address": "840 Ernest W Barrett Pkwy. NW",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Wild Ginger",
+    "address": "2201 Savoy Dr Chamblee",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "1885 Grill",
+    "address": "4438 Cherokee St",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "1885 Grill",
+    "address": "2840 S Main Street",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Fox Tale Bookstore",
+    "address": "105 E. Maine Street #138",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Black Rifle Company",
+    "address": "10971 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Firehouse #14",
+    "address": "225 Arnold Mill Road",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "All About Health",
+    "address": "12195 Highway 92 #112",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Reformation Brewery",
+    "address": "105 Elm Street",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Woodstock City Hall",
+    "address": "12453 Hwy 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Jekyl Brewing Company",
+    "address": "8634 Main Street",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Jeep Dealership",
+    "address": "8811 Hwy 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Truck and Tap",
+    "address": "8640 E. Main Street",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Learning Express",
+    "address": "2295 Town Lake Pwy",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Ping Segars Salon",
+    "address": "200 North Street",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Alma Coffee",
+    "address": "3448 Holly Springs Pkwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Bass Pro Shop",
+    "address": "152 Northpoint Pkwy",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 2,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Ralph's Tavern",
+    "address": "4290 Bells Ferry Road",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 2,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Troy Roberson's Office",
+    "address": "4286 Bells Ferry Road, Ste 214",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "St Catherine of Siena",
+    "address": "1618 Ben King Road",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": 1,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Big Woods Goods",
+    "address": "3505 Big Woods Dr",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Tony"
+  },
+  {
+    "label": "Cues Billiards",
+    "address": "3459 Acworth Due West Rd",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Tony"
+  },
+  {
+    "label": "Stout's Growlers",
+    "address": "1000 Tanger Dr Suite 400",
+    "city": "Locust Grove",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Tony"
+  },
+  {
+    "label": "Singleton Marine",
+    "address": "8832 Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Tony"
+  },
+  {
+    "label": "Workout Anytime Woodstock",
+    "address": "12195 Hwy 92 Ste 116",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Yesteryear Flea Market",
+    "address": "10385 Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Buddha Brothers Ink",
+    "address": "9010 Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Reformation Brewery (Canton)",
+    "address": "225 Reformation Pkwy Suite 500",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Vintage Estates",
+    "address": "13230 Hwy 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Woodstock Funeral Home",
+    "address": "8855 Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Culver's",
+    "address": "11405 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "The Tavern at Town Lake",
+    "address": "1015 Rose Creek Dr",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Eggs Up Grill",
+    "address": "2990 Shallowford Rd",
+    "city": "Marietta",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Rally Point Grille & Taproom",
+    "address": "112 E Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Hennessy Honda of Woodstock",
+    "address": "8931 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Guston's Grille (Woodstock)",
+    "address": "12195 Highway 92 Suite 156",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Jersey Mike's Subs",
+    "address": "2960 Sandy Plains Rd Ste 108",
+    "city": "Marietta",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "The Senior Center (Woodstock)",
+    "address": "223 Arnold Mill Rd",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Stars and Strikes Family Entertainment Center",
+    "address": "10010 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Buffalo's Cafe",
+    "address": "12035 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Cribs 2 Cradles",
+    "address": "3005 S Cherokee Ln",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Southern Comforts Consignments",
+    "address": "8610 Main St",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Mo M"
+  },
+  {
+    "label": "Primrose School of Woodstock",
+    "address": "12115 Highway 92",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": ""
+  },
+  {
+    "label": "Cherokee County Family YMCA",
+    "address": "151 Waleska St",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "441 BBQ",
+    "address": "1494 Riverstone Pkwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Sidelines Grille at Riverstone",
+    "address": "10511 Bells Ferry Rd",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Cherokee County Fire Station 1",
+    "address": "5984 Cumming Hwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Great Sky Clubhouse",
+    "address": "1000 Great Sky Pkwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "The Bluffs at Great Sky",
+    "address": "2020 Great Sky Pkwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Williamson Bros. Bar-B-Q",
+    "address": "1600 Marietta Hwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Ollie's Bargain Outlet",
+    "address": "1820 Marietta Hwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "Big East BBQ",
+    "address": "5835 Hickory Flat Hwy",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Shoup"
+  },
+  {
+    "label": "City BBQ",
+    "address": "8040 Alabama Rd",
+    "city": "Woodstock",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "The Lodge at Bridgemill",
+    "address": "10451 Bells Ferry Rd",
+    "city": "Canton",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Holbrook Asst Living",
+    "address": "4491 S Main Street",
+    "city": "Acworth",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Lazy Labrador Coffee House",
+    "address": "2886 Cherokee St NW",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  },
+  {
+    "label": "Kennesaw State University",
+    "address": "",
+    "city": "Kennesaw",
+    "state": "GA",
+    "lat": null,
+    "lon": null,
+    "boxes": null,
+    "volunteer": "Molly"
+  }
+]
