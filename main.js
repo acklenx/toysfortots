@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 	// Initialize the map, centered on Woodstock, GA
-	const map = L.map('map').setView([34.10, -84.52], 11);
+	const map = L.map('map').setView([34.05, -84.55], 10); // Adjusted initial view
 
 	// Add the tile layer from OpenStreetMap
 	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const locationList = document.getElementById('location-list');
 
+	// --- Define custom icon ---
+	const customIcon = L.icon({
+		iconUrl: 'images/pin.png', // Path to your custom icon
+		iconSize: [40, 40],                     // Size of the icon (width, height)
+		iconAnchor: [20, 40],                   // Point of the icon which will correspond to marker's location (half of iconSize width, full height for bottom-center)
+		popupAnchor: [0, -40]                   // Point from which the popup should open relative to the iconAnchor
+	});
+
+
 	// Fetch the location data from your JSON file
 	fetch('locations.json')
 		.then(response => response.json())
@@ -16,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			locations.forEach(location => {
 				if (location.lat && location.lon) {
 					// Create a marker on the map
-					const marker = L.marker([location.lat, location.lon]).addTo(map);
+					// --- Use the customIcon here ---
+					const marker = L.marker([location.lat, location.lon], { icon: customIcon }).addTo(map);
+
 
 					// Create the popup content
 					let popupContent = `<b>${location.label}</b><br>${location.address}`;
