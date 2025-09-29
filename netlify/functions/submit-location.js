@@ -1,12 +1,10 @@
 const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
-	// Only process POST requests
 	if (event.httpMethod !== 'POST') {
 		return { statusCode: 405, body: 'Method Not Allowed' };
 	}
 
-	// --- 1. Get Secrets and Data ---
 	const { GITHUB_TOKEN, POSITIONSTACK_API_KEY, GITHUB_REPO_SLUG } = process.env;
 	const formData = new URLSearchParams(event.body).entries();
 	const locationData = Object.fromEntries(formData);
@@ -15,7 +13,6 @@ exports.handler = async (event) => {
 	const githubApiUrl = `https://api.github.com/repos/${GITHUB_REPO_SLUG}/contents/locations.json`;
 
 	try {
-		// --- 2. Geocode the Address ---
 		const geoResponse = await fetch(`http://api.positionstack.com/v1/forward?access_key=${POSITIONSTACK_API_KEY}&query=${encodeURIComponent(fullAddress)}&limit=1`);
 		const geoData = await geoResponse.json();
 
@@ -24,15 +21,20 @@ exports.handler = async (event) => {
 		}
 		const { latitude, longitude } = geoData.data[0];
 
-		// --- 3. Get the current locations.json from GitHub ---
 		const currentFileResponse = await fetch(githubApiUrl, {
 			headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
 		});
 		const currentFile = await currentFileResponse.json();
-		const currentFileContent = Buffer.from(currentFile.content, 'base64').toString('utf-8');
-		const locations = JSON.parse(currentFileContent);
 
-		// --- 4. Add the new location and prepare the updated file ---
+		let locations = [];
+		// --- START FIX ---
+		// Check if the file has content. If not, start with an empty array.
+		if (currentFile.content) {
+			const currentFileContent = Buffer.from(currentFile.content, 'base64').toString('utf-8');
+			locations = JSON.parse(currentFileContent);
+		}
+		// --- END FIX ---
+
 		const newLocation = {
 			label: locationData.label,
 			address: locationData.address,
@@ -47,7 +49,6 @@ exports.handler = async (event) => {
 
 		const updatedContent = Buffer.from(JSON.stringify(locations, null, 2)).toString('base64');
 
-		// --- 5. Commit the updated file to GitHub ---
 		const updateResponse = await fetch(githubApiUrl, {
 			method: 'PUT',
 			headers: {
@@ -57,7 +58,7 @@ exports.handler = async (event) => {
 			body: JSON.stringify({
 				message: `feat: Add new location - ${locationData.label}`,
 				content: updatedContent,
-				sha: currentFile.sha // Required to prove you're updating the latest version
+				sha: currentFile.sha
 			})
 		});
 
@@ -66,12 +67,9 @@ exports.handler = async (event) => {
 			throw new Error(`GitHub API Error: ${errorBody.message}`);
 		}
 
-		// --- 6. Success! Redirect to the homepage ---
 		return {
 			statusCode: 302,
-			headers: {
-				'Location': '/',
-			}
+			headers: { 'Location': '/' }
 		};
 
 	} catch (error) {
