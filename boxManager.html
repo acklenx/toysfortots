@@ -45,9 +45,77 @@
 			cursor: pointer;
 		}
 	</style>
+		<script>
+
+			document.addEventListener('DOMContentLoaded', () => {
+				// 1. Get the boxId from the URL
+				const urlParams = new URLSearchParams(window.location.search);
+				const boxId = urlParams.get('boxId');
+
+				// Define the path to your JSON data file (update this if necessary)
+				const JSON_DATA_URL = '/locations.json'; // Assuming your JSON is here
+				const contentContainer = document.getElementById('boxContent');
+console.log(JSON_DATA_URL);
+console.log(boxId);
+				if (!boxId) {
+					// Handle case where boxId is missing from the URL
+					contentContainer.innerHTML = '<h1>Error: Missing Box ID</h1><p>Please scan a valid QR code or check the URL.</p>';
+					return;
+				}
+
+				// 2. Fetch the JSON data
+				fetch(JSON_DATA_URL)
+						.then(response => {
+							if (!response.ok) {
+								throw new Error(`HTTP error! status: ${response.status}`);
+							}
+							return response.json();
+						})
+						.then(data => {
+
+
+							const boxData = data.find(box => box.id === boxId);
+
+							// You may need to adjust the line above based on your JSON structure.
+							// For this example, we'll use OPTION B for simplicity.
+
+							// 4. Swap the page content
+							console.log(boxData);
+							if (boxData ) {
+								// If boxId is found AND the setup is complete, show the Info page
+								contentContainer.innerHTML = generateBoxInfoHTML(boxId, boxData);
+							} else {
+								// If boxId is NOT found OR setup is not complete, show the Setup page
+								showSetupHTML(boxId);
+							}
+						})
+						.catch(error => {
+							console.error('Error fetching or processing JSON:', error);
+							contentContainer.innerHTML = '<h1>Error</h1><p>Could not load box data.</p>';
+						});
+			});
+
+			// Helper function to generate Setup HTML
+			function showSetupHTML(boxId) {
+				document.getElementById("newBoxSetupPage").style.display = 'block';
+			}
+			function generateBoxInfoHTML(boxId, boxData) {
+				return `
+					<h1>Box Information for ID: ${boxId}</h1>
+					<p>Business Name: ${boxData.label}</p>
+					<p>Address: ${boxData.address}, ${boxData.city}</p>
+					<p>Number of Boxes: ${boxData.boxes}</p>
+					<p>Volunteer: ${boxData.volunteer}</p>
+					<!-- Add more info as needed -->
+				`;
+			}
+
+		</script>
+
 	</head>
 	<body>
-		<div class="form-container">
+		<div id="boxContent"></div>
+		<div id="newBoxSetupPage" class="form-container" style="display:none">
 			<h1>New Box Drop-Off Location</h1>
 
 			<form name="new-location" method="POST" action="/.netlify/functions/submit-location">
