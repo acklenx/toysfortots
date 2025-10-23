@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>TFT Box Sticker Print Sheet</title>
+		<!-- Load Tailwind CSS for utility classes --><script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			/* --- CONFIGURATION VARIABLES --- */
+			:root {
+				/* These are set dynamically by the JavaScript from the configuration panel */
+				--page-top-padding: 0.5in;
+				--column-gap: 0.15in;
+				--row-negative-margin: -0.09in; /* Used to pull rows together (Base Overlap) */
+
+				/* Calculated sticker dimensions for 8.5in paper with 0.25in side margins */
+				--sticker-width: calc((8.5in - (2 * 0.25in) - var(--column-gap)) / 2);
+				--sticker-height: 2.6in;
+			}
+
+			/* Base styles for the sticker card */
+			.sticker-card {
+				width: var(--sticker-width);
+				height: var(--sticker-height);
+				border: 1px dashed #ccc;
+				padding: 5px; /* Reduced padding */
+				box-sizing: border-box;
+				background-color: #fff;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+			}
+
+			/* The new wrapper for all stickers */
+			#sticker-grid-wrapper {
+				margin: 0 auto; /* Center on screen */
+			}
+
+			/* --- PRINT STYLES --- */
+			@media print {
+				body {
+					width: 8.5in;
+					height: 11in;
+					margin: 0;
+					/* Only horizontal padding on body, vertical offset moved to wrapper */
+					padding: 0 0.25in;
+				}
+
+				#sticker-grid-wrapper {
+					/* Apply the vertical offset as a margin-top to push the whole block down */
+					margin-top: var(--page-top-padding);
+
+					display: grid;
+					/* Define 2 columns with fixed widths and the configurable gap between them */
+					grid-template-columns: var(--sticker-width) var(--sticker-width);
+					/* Define 4 rows with fixed heights */
+					grid-template-rows: repeat(4, var(--sticker-height));
+
+					/* Apply column gap for horizontal spacing */
+					column-gap: var(--column-gap);
+				}
+
+				/* FIX: Apply cumulative negative margin for consistent row overlap across all rows */
+
+				/* Row 2 (Items 3, 4) - Pulls up by 1x the overlap value */
+				.sticker-card:nth-child(3), .sticker-card:nth-child(4) {
+					margin-top: var(--row-negative-margin);
+				}
+
+				/* Row 3 (Items 5, 6) - Pulls up by 2x the overlap value */
+				.sticker-card:nth-child(5), .sticker-card:nth-child(6) {
+					margin-top: calc(2 * var(--row-negative-margin));
+				}
+
+				/* Row 4 (Items 7, 8) - Pulls up by 3x the overlap value */
+				.sticker-card:nth-child(7), .sticker-card:nth-child(8) {
+					margin-top: calc(3 * var(--row-negative-margin));
+				}
+
+				.sticker-card {
+					width: var(--sticker-width);
+					height: var(--sticker-height);
+					border: none !important; /* Remove borders for final print */
+					padding: 0;
+					page-break-inside: avoid;
+					box-shadow: none !important; /* REMOVE DROP SHADOW WHEN PRINTING */
+				}
+				.config-panel {
+					display: none !important; /* HIDE CONFIG PANEL WHEN PRINTING */
+				}
+			}
+
+			/* --- SCREEN STYLES (for preview) --- */
+			@media screen {
+				body {
+					padding: 20px;
+					background-color: #f7f7f7;
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+				}
+				#sticker-grid-wrapper {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 20px;
+					max-width: 850px;
+				}
+				.config-panel {
+					width: 100%;
+					max-width: 850px;
+					margin-bottom: 20px;
+					padding: 15px;
+					border: 1px solid #ccc;
+					border-radius: 8px;
+					background-color: #fff;
+				}
+			}
+		</style>
+	</head>
+	<body class="font-sans">
+
+		<!-- Configuration Panel (Visible only on screen, hidden on print) -->
+		<div id="configPanel" class="config-panel">
+			<h2 class="text-lg font-bold mb-3 text-gray-700">Print Sheet Configuration</h2>
+			<div class="flex flex-wrap gap-4 items-end">
+				<div>
+					<label for="startId" class="block text-sm font-medium text-gray-600">Starting Box ID (e.g., 1, 9, 17)</label>
+					<input type="number" id="startId" value="1" min="1" class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+				</div>
+				<div>
+					<label for="topPadding" class="block text-sm font-medium text-gray-600">Page Top Padding (e.g., 0.2in)</label>
+					<input type="text" id="topPadding" value="0.5in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
+				</div>
+				<div>
+					<label for="rowGap" class="block text-sm font-medium text-gray-600">Row Overlap (Negative Margin, e.g., -0.3125in)</label>
+					<input type="text" id="rowGap" value="-0.09in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
+				</div>
+				<div>
+					<label for="columnGap" class="block text-sm font-medium text-gray-600">Column Gap (e.g., 0.15in)</label>
+					<input type="text" id="columnGap" value="0.15in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
+				</div>
+				<button onclick="renderStickers()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150">Generate Sheet</button>
+				<button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150">Print Sticker Sheet</button>
+			</div>
+		</div>
+
+		<script>
+			// --- Configuration Constants ---
+			// Hardcoded logo URLs using your Netlify locations
+			const MCL_LOGO = "https://toysfortots.netlify.app/images/mcl-logo.png";
+			const BASE_URL = 'https://toysfortots.netlify.app/submit.html';
+			const DEFAULT_STICKER_HEIGHT = '2.6in';
+
+			// --- Generate Box IDs for the current sheet ---
+			function generateBoxIds(startId, count) {
+				const ids = [];
+				for (let i = 0; i < count; i++) {
+					ids.push(String(startId + i).padStart(3, '0'));
+				}
+				return ids;
+			}
+
+			// --- QR Code Image Generation Function ---
+			function generateQrCodeImage(id) {
+				const qrText = `${BASE_URL}?boxId=${id}`;
+				const quickChartUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&size=300&light=FFFFFF&dark=000000`;
+				return `<img src="${quickChartUrl}" alt="QR Code Box ID ${id}" class="qr-svg mx-auto w-[180px] h-[180px] max-w-full">`;
+			}
+
+			// --- Render Stickers ---
+			function renderStickers() {
+				// 1. Get values from the UI inputs
+				const startIdValue = parseInt(document.getElementById('startId').value, 10) || 1;
+				const topPaddingValue = document.getElementById('topPadding').value || '0.2in';
+				const rowOverlapValue = document.getElementById('rowGap').value || '-0.3125in';
+				const columnGapValue = document.getElementById('columnGap').value || '0.15in';
+
+				// 2. Set CSS Variables dynamically
+				document.documentElement.style.setProperty('--page-top-padding', topPaddingValue);
+				document.documentElement.style.setProperty('--row-negative-margin', rowOverlapValue);
+				document.documentElement.style.setProperty('--column-gap', columnGapValue);
+				document.documentElement.style.setProperty('--sticker-height', DEFAULT_STICKER_HEIGHT);
+
+				// 3. Generate IDs
+				const boxIds = generateBoxIds(startIdValue, 8);
+
+				// 4. Clear old stickers and prepare wrapper
+				const body = document.body;
+				let wrapper = document.getElementById('sticker-grid-wrapper');
+
+				// Remove existing wrapper if it exists (for re-rendering)
+				if (wrapper) {
+					wrapper.remove();
+				}
+
+				// Create and append new wrapper
+				wrapper = document.createElement('div');
+				wrapper.id = 'sticker-grid-wrapper';
+				body.appendChild(wrapper);
+
+				// 5. Populate wrapper with stickers
+				boxIds.forEach(id => {
+					const sticker = document.createElement('a');
+					sticker.href = `${BASE_URL}?boxId=${id}`;
+					sticker.classList.add('sticker-card', 'flex', 'flex-col');
+
+					sticker.innerHTML = `
+                    <!-- Row 1: Spanning Header - Reduced vertical padding --><div class="text-center bg-[#CC0000] text-white py-0.5 mb-0.5 rounded-sm">
+                        <p class="text-sm font-extrabold uppercase tracking-widest">
+                            SCAN FOR QUICK SERVICE
+                        </p>
+                    </div>
+
+                    <!-- Main content area for QR, Bullets, and MCL Logo --><div class="flex flex-row flex-grow w-full items-start justify-between">
+
+                        <!-- Column 1: QR Code - Centered vertically in its space -->
+                        <div class="flex-shrink-0 w-1/2 flex flex-col items-center py-0.5 pt-0 px-1">
+                            ${generateQrCodeImage(id)}
+                            <div class="text-xs text-center font-mono font-bold text-[#003366] mt-1">
+                                BOX ID: ${id}
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Bullet Points and MCL Logo -->
+                        <div class="flex-grow w-1/2 flex flex-col justify-start h-full pl-2" style="position:relative;left:-15px; top:7px;">
+
+                            <!-- Bullets - Fixed size and no vertical spacing -->
+                            <ul class="list-none p-0 mt-0 text-gray-700 font-semibold pt-2 pb-0">
+                                <li class="font-bold text-base text-[#003366]"> • Report a full box</li>
+                                <li class="font-bold text-base text-[#003366]"> • Report a problem</li>
+                                <li class="font-bold text-base text-[#003366]"> • Get more information</li>
+                            </ul>
+
+                            <!-- Marine Corps League Logo (h-24) - Increased size and added top padding -->
+                            <div class="flex flex-col items-center mt-0 pt-1 pb-0" style="position:relative;">
+                                <img src="${MCL_LOGO}" style="position:relative;top: 10px;left:-7px;" onerror="this.onerror=null; this.src='https://placehold.co/100x40/003366/ffffff?text=MCL+Error';" alt="Marine Corps League Logo" class="h-24 w-auto">
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+					wrapper.appendChild(sticker);
+				});
+			}
+
+			// Initial render on load
+			window.onload = renderStickers;
+		</script>
+	</body>
+</html>
