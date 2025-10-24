@@ -6,8 +6,10 @@
     "state": "GA",
     "lat": 34.0615129,
     "lon": -84.5905295,
-    "boxes": null,
-    "volunteer": ""
+    "boxes": 1,
+    "volunteer": "Quincy",
+    "boxId":"001",
+    "id":"1"
   },
   {
     "label": "Angry Crab Shack",
@@ -648,5 +650,45 @@
     "lon": -84.4261612,
     "boxes": 1,
     "volunteer": "quinycy"
+  },
+  {
+    "label": "Maker Labs",
+    "address": "4572 Chatsworth Overlook NE",
+    "city": "Roswell",
+    "state": "GA",
+    "lat": 34.0616418,
+    "lon": -84.4258625,
+    "boxes": 1,
+    "volunteer": "Quincy Acklen"
+  },
+  {
+    "label": "Maker Labs",
+    "address": "4572 Chatsworth Overlook NE",
+    "city": "Roswell",
+    "state": "GA",
+    "lat": 34.0616418,
+    "lon": -84.4258625,
+    "boxes": 1,
+    "volunteer": "Quincy Acklen"
+  },
+  {
+    "label": "Maker Labs",
+    "address": "4572 Chatsworth Overlook NE",
+    "city": "Roswell",
+    "state": "GA",
+    "lat": 34.0616418,
+    "lon": -84.4258625,
+    "boxes": 1,
+    "volunteer": "Quincy Acklen"
+  },
+  {
+    "label": "General Motors",
+    "address": "5 Concourse Pkwy NE",
+    "city": "Atlanta",
+    "state": "GA",
+    "lat": 33.917072,
+    "lon": -84.3545712,
+    "boxes": 1,
+    "volunteer": "quincy"
   }
 ]
