@@ -68,7 +68,7 @@
 						<p class="text-sm font-semibold text-tots-red mb-3 text-center">
 							<span class="font-extrabold">OPTIONAL:</span> Add more details below (e.g., location, contact).
 						</p>
-						<form id="pickup-details-form" name="pickup-details-form" class="space-y-3">
+						<form id="pickup-details-form" name="pickup-details-form" data-netlify="true" method="POST" class="space-y-3">
 							<input type="hidden" name="form-name" value="pickup-details-form">
 							<!-- HIDDEN FIELD carrying the essential box ID/info -->
 							<input type="hidden" id="pickup-box-id-detail" name="box-info">
@@ -109,7 +109,7 @@
 
 					<!-- Problem Detail Form (Collapsible) -->
 					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
-						<form id="problem-details-form" name="problem-details-form" class="space-y-3">
+						<form id="problem-details-form" name="problem-details-form" data-netlify="true" method="POST" class="space-y-3">
 							<input type="hidden" name="form-name" value="problem-details-form">
 							<!-- HIDDEN FIELD carrying the essential box ID/info -->
 							<input type="hidden" id="problem-box-id-detail" name="box-info">
@@ -142,11 +142,11 @@
 
 		<!-- Hidden Forms for Instant Submission via Fetch -->
 		<!-- Netlify registers these forms when the page is deployed/viewed -->
-		<form name="instant-pickup" data-netlify="true" hidden>
+		<form name="instant-pickup" data-netlify="true" method="POST" hidden>
 			<input type="hidden" name="form-name" value="instant-pickup">
 			<input type="text" name="box-info" id="instant-pickup-id">
 		</form>
-		<form name="instant-problem" data-netlify="true" hidden>
+		<form name="instant-problem" data-netlify="true" method="POST" hidden>
 			<input type="hidden" name="form-name" value="instant-problem">
 			<input type="text" name="box-info" id="instant-problem-id">
 		</form>
@@ -192,8 +192,7 @@
 			// Handles the submission via fetch (for instant, non-page-reloading actions)
 			const submitForm = async (formName, data) => {
 				try {
-					// *** FIX APPLIED HERE ***
-					// Using the canonical Netlify Forms API endpoint for robust AJAX submission.
+					// Targeting the canonical Netlify Forms API endpoint for robust AJAX submission.
 					const targetUrl = window.location.origin + "/.netlify/forms";
 
 					const response = await fetch(targetUrl, {
