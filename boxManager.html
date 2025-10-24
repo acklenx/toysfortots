@@ -190,21 +190,21 @@
 			}
 
 			// Handles the submission via fetch (for instant, non-page-reloading actions)
-			// This function has been corrected to use the absolute root URL for robust Netlify Forms interception.
 			const submitForm = async (formName, data) => {
 				try {
-					// FIX: Using window.location.origin ensures the POST targets the absolute root URL
-					// Netlify's form processor is most reliable when hit with an absolute URL POST.
-					const targetUrl = window.location.origin + "/";
+					// *** FIX APPLIED HERE ***
+					// Using the canonical Netlify Forms API endpoint for robust AJAX submission.
+					const targetUrl = window.location.origin + "/.netlify/forms";
 
 					const response = await fetch(targetUrl, {
 						method: "POST",
 						headers: { "Content-Type": "application/x-www-form-urlencoded" },
+						// The form-name field is crucial for Netlify's processing
 						body: encode({ "form-name": formName, ...data })
 					});
 
-					if (response.ok || response.status === 204 || response.status === 303) {
-						// Netlify usually returns 204 (No Content) or 303 (See Other) on success
+					// Netlify's Forms endpoint usually returns 200/204 on success.
+					if (response.ok || response.status === 204) {
 						return true;
 					} else {
 						console.error("Netlify form submission failed.", response);
