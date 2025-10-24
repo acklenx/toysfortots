@@ -1,88 +1,90 @@
-const fetch = require('node-fetch');
+const { Octokit } = require('@octokit/rest');
+
+// Required Environment Variables:
+// GITHUB_TOKEN (PAT with 'repo' scope)
+// REPO_OWNER (e.g., 'your-github-username')
+// REPO_NAME (e.g., 'toys-for-tots-repo')
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+// Utility to parse Netlify form submission body
+const parseBody = (body) => {
+	return Object.fromEntries(new URLSearchParams(body));
+};
 
 exports.handler = async (event) => {
 	if (event.httpMethod !== 'POST') {
 		return { statusCode: 405, body: 'Method Not Allowed' };
 	}
 
-	const { GITHUB_TOKEN, GOOGLE_MAPS_API_KEY, GITHUB_REPO_SLUG } = process.env;
-	const formData = new URLSearchParams(event.body).entries();
-	const locationData = Object.fromEntries(formData);
-
-	const fullAddress = `${locationData.address}, ${locationData.city}, GA`;
-	const githubApiUrl = `https://api.github.com/repos/${GITHUB_REPO_SLUG}/contents/locations.json`;
-
 	try {
-		// --- 1. Geocode the Address using Google Maps API ---
-		const geoResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_MAPS_API_KEY}`);
-		const geoData = await geoResponse.json();
+		const formData = parseBody(event.body);
 
-		if (geoData.status !== 'OK' || !geoData.results || geoData.results.length === 0) {
-			console.error("Google Geocoding failed:", geoData.status, geoData.error_message);
-			throw new Error(`Could not find coordinates for the address. Google API status: ${geoData.status}`);
-		}
-		const { lat, lng } = geoData.results[0].geometry.location;
-		const latitude = lat;
-		const longitude = lng;
+		// Use environment variables for repo context
+		const owner = process.env.REPO_OWNER;
+		const repo = process.env.REPO_NAME;
+		const path = 'locations.json';
+		const branch = 'main'; // Or 'master', depending on your default branch
 
-		// --- 2. Get the current locations.json from GitHub ---
-		const currentFileResponse = await fetch(githubApiUrl, {
-			headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+		// --- 1. Get the current JSON file content and SHA from GitHub ---
+		const { data: fileData } = await octokit.repos.getContent({
+			owner,
+			repo,
+			path,
+			ref: branch,
 		});
-		const currentFile = await currentFileResponse.json();
 
-		let locations = [];
-		if (currentFile.content) {
-			const currentFileContent = Buffer.from(currentFile.content, 'base64').toString('utf-8');
-			locations = JSON.parse(currentFileContent);
-		}
+		// The content is Base64 encoded, decode it
+		const currentContent = Buffer.from(fileData.content, 'base64').toString('utf8');
+		const currentJson = JSON.parse(currentContent);
 
-		// --- 3. Add the new location and prepare the updated file ---
+		// --- 2. Generate new location data ---
+
+		// Find the next available ID (simple sequential integer or UUID is better for production)
+		const newIdNum = currentJson.reduce((max, loc) => Math.max(max, parseInt(loc.id) || 0), 0) + 1;
+		const newId = String(newIdNum).padStart(3, '0'); // e.g., "004"
+
 		const newLocation = {
-			label: locationData.label,
-			address: locationData.address,
-			city: locationData.city,
-			state: "GA",
-			lat: latitude,
-			lon: longitude,
-			boxes: parseInt(locationData.boxes, 10) || null,
-			boxId: parseInt(locationData.boxId, 10) || null,
-			volunteer: locationData.volunteer
+			"label": formData.label,
+			"address": formData.address,
+			"city": formData.city,
+			"state": formData.state || 'GA', // Default state if not provided
+			"lat": parseFloat(formData.lat) || 0, // Placeholder
+			"lon": parseFloat(formData.lon) || 0, // Placeholder
+			"boxes": parseInt(formData.boxes) || 1,
+			"volunteer": formData.volunteer,
+			"id": newId
 		};
-		locations.push(newLocation);
 
-		const updatedContent = Buffer.from(JSON.stringify(locations, null, 2)).toString('base64');
+		// --- 3. Update JSON and encode new content ---
+		currentJson.push(newLocation);
+		const newContent = JSON.stringify(currentJson, null, 2); // Pretty-print the JSON
+		const newContentBase64 = Buffer.from(newContent).toString('base64');
 
-		// --- 4. Commit the updated file to GitHub ---
-		const updateResponse = await fetch(githubApiUrl, {
-			method: 'PUT',
-			headers: {
-				'Authorization': `token ${GITHUB_TOKEN}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				message: `feat: Add new location - ${locationData.label}`,
-				content: updatedContent,
-				sha: currentFile.sha
-			})
+		// --- 4. Commit the new file content to GitHub ---
+		await octokit.repos.createOrUpdateFileContents({
+			owner,
+			repo,
+			path,
+			message: `[Netlify Function] Added new location: ${newLocation.label} (ID: ${newId})`,
+			content: newContentBase64,
+			sha: fileData.sha, // Required SHA of the old file for update
+			branch,
 		});
 
-		if (!updateResponse.ok) {
-			const errorBody = await updateResponse.json();
-			throw new Error(`GitHub API Error: ${errorBody.message}`);
-		}
-
-		// --- 5. Success! ---
+		// --- 5. Return success and trigger Netlify deploy ---
 		return {
 			statusCode: 302,
-			headers: { 'Location': '/' }
+			headers: {
+				'Location': '/success.html', // Redirect to a success page
+			},
+			body: 'Successfully updated locations.json and triggered build.'
 		};
 
 	} catch (error) {
-		console.error(error);
+		console.error('GitHub API Error:', error.message);
 		return {
 			statusCode: 500,
-			body: `An error occurred: ${error.message}. Please try again.`
+			body: `Error processing request: ${error.message}`
 		};
 	}
 };
