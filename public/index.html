@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Drop Box Action Center</title>
+		<script type="module">
+			// --- 1. IMPORTS ---
+			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+			import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+			import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+			// --- 2. CONFIG & TOP-LEVEL VARS ---
+			const firebaseConfig = {
+				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w", // <-- Don't forget to regenerate this!
+				authDomain: "toysfortots-eae4d.firebaseapp.com",
+				projectId: "toysfortots-eae4d",
+				storageBucket: "toysfortots-eae4d.firebasestorage.app",
+				messagingSenderId: "505039956655",
+				appId: "1:505039956655:web:c750c66b28f7facd82025a",
+				measurementId: "G-XKQYPK0GLC"
+			};
+			const appId = firebaseConfig.projectId;
+
+			let db, auth; // For Firebase
+			let appDB, appAuth, appID, currentBoxInfo; // For your app logic
+
+
+			// --- 3. FIREBASE SETUP ---
+			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
+			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+			const setupFirebase = async () => {
+				console.log("Setting up Firebase...");
+				if (!firebaseConfig.apiKey) {
+					console.error("Firebase configuration is missing.");
+					document.getElementById('loading-message').textContent = "ERROR: Firebase Config Missing.";
+					return;
+				}
+
+				try {
+					const app = initializeApp(firebaseConfig);
+					auth = getAuth(app);
+					db = getFirestore(app);
+
+					await signInAnonymously(auth);
+					console.log("Firebase initialized and user signed in.");
+
+					// Call the app initializer
+					window.initApp(appId, db, auth);
+
+				} catch (error) {
+					console.error("Firebase Initialization or Auth Error:", error);
+					document.getElementById('loading-message').textContent = `ERROR: Firebase setup failed. ${error.message}`;
+				}
+			};
+
+			// --- 4. MAIN APP LOGIC ---
+			// This function now contains ALL DOM-related code
+
+			// --- 4. MAIN APP LOGIC ---
+			// This function is now ASYNC to wait for the Firestore read
+			window.initApp = async (appId, dbInstance, authInstance) => {
+				appDB = dbInstance;
+				appAuth = authInstance;
+				appID = appId;
+
+				// --- DOM Elements (Now safely grabbed *after* load) ---
+				const listDiv = document.getElementById('location-display');
+				const loadingMessage = document.getElementById('loading-message');
+
+				const pickupBtn = document.getElementById('pickup-btn');
+				const problemBtn = document.getElementById('problem-btn');
+				const pickupBtnText = document.getElementById('pickup-btn-text');
+				const problemBtnText = document.getElementById('problem-btn-text');
+
+				const pickupConf = document.getElementById('pickup-confirmation');
+				const problemConf = document.getElementById('problem-confirmation');
+
+				const pickupDetailsSection = document.getElementById('pickup-details-section');
+				const problemDetailsSection = document.getElementById('problem-details-section');
+
+				const pickupDetailsForm = document.getElementById('pickup-details-form');
+				const problemDetailsForm = document.getElementById('problem-details-form');
+
+				const pickupDetailsSuccess = document.getElementById('pickup-details-success');
+				const problemDetailsSuccess = document.getElementById('problem-details-success');
+
+				// --- URL & Location Logic ---
+				const params = new URLSearchParams(window.location.search);
+				const boxId = params.get('id');
+
+				if (!boxId) {
+					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+					loadingMessage.textContent = "Error: Box ID missing from the link. Cannot display info.";
+					return;
+				}
+
+				// --- !!! THIS IS THE BIG CHANGE !!! ---
+				// We are replacing the local 'locations.find'
+				// with a direct fetch from Firestore.
+
+				try {
+					// 1. Create a reference to the specific document
+					// Path: /artifacts/{appId}/public/data/locations/{boxId}
+					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
+
+					// 2. Fetch the document
+					const locSnap = await getDoc(locRef);
+
+					if (!locSnap.exists()) {
+						// This handles Use Case 2 (new box) for now
+						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+						loadingMessage.textContent = `Error: This Box ID (${boxId}) has not been set up yet.`;
+						// Later, you could redirect this to your "provisioning" page
+						return;
+					}
+
+					// 3. Get the data from the document
+					const location = locSnap.data();
+
+					// --- END OF BIG CHANGE ---
+
+
+					currentBoxInfo = `${location.label} (ID: ${boxId}) @ ${location.address}`;
+
+					loadingMessage.remove();
+					listDiv.innerHTML = `
+                   <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
+                       <h2 class="text-xl font-bold text-tots-red">${location.label}</h2>
+                       <p class="text-sm text-gray-700 mt-1">${location.address}, ${location.city}, ${location.state}</p>
+                       <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${boxId}</span></p>
+                       <p class="text-sm font-semibold">Assigned Volunteer: ${location.volunteer}</p>
+                   </div>
+               `;
+
+					document.getElementById('pickup-box-id-detail').value = currentBoxInfo;
+					document.getElementById('problem-box-id-detail').value = currentBoxInfo;
+
+					pickupBtn.disabled = false;
+					problemBtn.disabled = false;
+
+					// --- Event Listeners (These are all fine) ---
+					pickupBtn.addEventListener('click', () => {
+						// ...
+					});
+
+					problemBtn.addEventListener('click', () => {
+						// ...
+					});
+
+					pickupDetailsForm.addEventListener('submit', async (e) => {
+						// ...
+					});
+
+					problemDetailsForm.addEventListener('submit', async (e) => {
+						// ...
+					});
+
+				} catch (error) {
+					console.error("Error fetching location:", error);
+					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+					loadingMessage.textContent = `Error loading location data: ${error.message}`;
+				}
+			};
+
+
+			// --- 5. FIRESTORE UTILITY ---
+			const submitReportToFirestore = async (reportData) => {
+				if (!appDB || !appAuth.currentUser) {
+					console.error("Firestore not initialized or user not authenticated.");
+					return false;
+				}
+
+				try {
+					const userId = appAuth.currentUser.uid;
+					const timestamp = new Date().toISOString();
+
+					const reportCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
+//					const locRef = doc(appDB, "artifacts", appId, "public", "3USFKkSJeT78pLqV0rE5", "data", "EF1QWEKWPMucLN7tC4Rl", "locations", boxId);
+
+
+					const fullReport = {
+						...reportData,
+						boxInfo: currentBoxInfo,
+						timestamp: timestamp,
+						reporterId: userId,
+						status: 'new'
+					};
+
+					await addDoc(reportCollectionRef, fullReport);
+					return true;
+
+				} catch (error) {
+					console.error("Firestore submission failed:", error);
+					return false;
+				}
+			};
+
+			// --- 6. EXPOSE SETUP FUNCTION TO GLOBAL SCOPE ---
+			// This allows your onload="" attribute to find it
+			window.setupFirebase = setupFirebase;
+
+		</script>
+
+		<!-- Load Tailwind CSS for easy, responsive styling -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			/* Custom styling for the slide-down effect */
+			.collapsible-content {
+				max-height: 0;
+				overflow: hidden;
+				transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+				padding: 0 1rem;
+			}
+			.collapsible-content.open {
+				max-height: 1000px; /* Large enough value to cover content */
+				padding-top: 1rem;
+				padding-bottom: 1rem;
+			}
+		</style>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						fontFamily: {
+							sans: ['Inter', 'sans-serif'],
+						},
+						colors: {
+							'tots-red': '#cc0000',
+							'tots-green': '#008000',
+							'tots-light': '#fcebeb',
+						}
+					}
+				}
+			}
+		</script>
+	</head>
+	<body class="bg-gray-50 font-sans p-4" onload="setupFirebase()">
+
+		<div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
+
+			<!-- Header and Location Display -->
+			<header class="bg-tots-red p-6">
+				<h1 class="text-3xl font-extrabold text-white text-center">Tots Box Action Center</h1>
+			</header>
+
+			<main class="p-6">
+				<div id="location-display" class="mb-6">
+					<!-- Location details inserted here by JavaScript -->
+					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
+				</div>
+
+				<div id="main-actions" class="space-y-4">
+
+					<!-- Pickup Action Button -->
+					<button id="pickup-btn" class="w-full py-3 bg-tots-green hover:bg-green-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+						<span id="pickup-btn-text">Request Immediate Pickup</span>
+					</button>
+					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
+						✅ **Alert Triggered!** Please confirm details below.
+					</div>
+
+					<!-- Pickup Detail Form (Collapsible) -->
+					<div id="pickup-details-section" class="collapsible-content bg-tots-light rounded-lg border border-tots-red/30">
+						<p class="text-sm font-semibold text-tots-red mb-3 text-center">
+							<span class="font-extrabold">OPTIONAL:</span> Add more details below.
+						</p>
+						<form id="pickup-details-form" class="space-y-3">
+							<!-- Hidden fields populated by JS -->
+							<input type="hidden" id="pickup-box-id-detail" name="box-info">
+							<input type="hidden" name="report-type" value="pickup_details">
+
+							<label class="block text-sm font-medium text-gray-700">Detailed Notes:
+								<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
+							</label>
+
+							<fieldset class="p-3 border rounded-md">
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<input type="text" name="contact-name" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contact-email" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+							</fieldset>
+
+							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
+								Send Detail Report
+							</button>
+						</form>
+						<div id="pickup-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
+							Thanks! Your detailed notes have been recorded instantly!
+						</div>
+					</div>
+
+					<!-- Divider -->
+					<div class="h-px bg-gray-200"></div>
+
+					<!-- Problem Action Button -->
+					<button id="problem-btn" class="w-full py-3 bg-gray-700 hover:bg-gray-800 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+						<span id="problem-btn-text">Report a Problem (Urgent Alert)</span>
+					</button>
+					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
+						⚠️ **Urgent Alert Triggered!** Please provide details below.
+					</div>
+
+					<!-- Problem Detail Form (Collapsible) -->
+					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
+						<form id="problem-details-form" class="space-y-3">
+							<!-- Hidden fields populated by JS -->
+							<input type="hidden" id="problem-box-id-detail" name="box-info">
+							<input type="hidden" name="report-type" value="problem_report">
+
+							<label class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
+							<textarea name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
+
+							<fieldset class="p-3 border rounded-md">
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<input type="text" name="contact-name" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contact-email" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+							</fieldset>
+
+							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
+								Send Full Problem Report
+							</button>
+						</form>
+						<div id="problem-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
+							✅ Thank you! The problem has been recorded instantly!
+						</div>
+					</div>
+
+				</div>
+			</main>
+		</div>
+	</body>
+</html>
