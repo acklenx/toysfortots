@@ -46,6 +46,7 @@ exports.handler = async (event) => {
 			lat: latitude,
 			lon: longitude,
 			boxes: parseInt(locationData.boxes, 10) || null,
+			boxId: parseInt(locationData.boxId, 10) || null,
 			volunteer: locationData.volunteer
 		};
 		locations.push(newLocation);
