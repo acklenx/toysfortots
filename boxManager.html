@@ -74,12 +74,11 @@
 							<input type="hidden" id="pickup-box-id-detail" name="box-info">
 
 							<!-- DEBUG FIELD (Visible for testing) -->
-							<label class="block text-sm font-medium text-gray-700" for="debug-pickup-info">Current Box Info (Read-Only):</label>
+							<label for="debug-pickup-info" class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
 							<input type="text" id="debug-pickup-info" readonly class="w-full border border-gray-300 bg-gray-100 rounded-md p-2 text-sm text-gray-600 mb-4 cursor-default">
 
-							<label class="block text-sm font-medium text-gray-700">Detailed Notes:
-							<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
-							</label>
+							<label for="pickup-notes-input" class="block text-sm font-medium text-gray-700">Detailed Notes:</label>
+							<textarea id="pickup-notes-input" name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
@@ -116,11 +115,11 @@
 							<input type="hidden" id="problem-box-id-detail" name="box-info">
 
 							<!-- DEBUG FIELD (Visible for testing) -->
-							<label class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
+							<label for="debug-problem-info" class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
 							<input type="text" id="debug-problem-info" readonly class="w-full border border-gray-300 bg-gray-100 rounded-md p-2 text-sm text-gray-600 mb-4 cursor-default">
 
-							<label class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
-							<textarea name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
+							<label for="problem-description-input" class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
+							<textarea id="problem-description-input" name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
@@ -191,6 +190,7 @@
 			}
 
 			// Handles the submission via fetch (for instant, non-page-reloading actions)
+			// This function has been corrected to use the absolute root URL for robust Netlify Forms interception.
 			const submitForm = async (formName, data) => {
 				try {
 					// FIX: Using window.location.origin ensures the POST targets the absolute root URL
