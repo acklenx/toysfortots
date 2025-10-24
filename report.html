@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>T4T Box Report</title>
+		<link rel="stylesheet" href="style.css">
+		<style>
+			/* Specific styles for the report page */
+			:root {
+				--t4t-red: #da291c;
+				--marine-blue: #003366;
+				--light-gray: #f4f4f4;
+				--dark-gray-text: #333;
+			}
+
+			body {
+				font-family: Arial, sans-serif;
+				background-color: var(--light-gray);
+				color: var(--dark-gray-text);
+				margin: 0;
+				padding: 0;
+			}
+
+			.container {
+				max-width: 700px;
+				margin: 30px auto;
+				padding: 30px;
+				background: white;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			}
+
+			h1, h2, h3, h4 {
+				color: var(--marine-blue);
+				text-align: center;
+				margin-bottom: 20px;
+			}
+
+			.location-info {
+				background-color: #e6f0ff; /* Light blue background */
+				border-left: 5px solid var(--marine-blue);
+				padding: 15px;
+				margin-bottom: 30px;
+				border-radius: 5px;
+				text-align: center;
+			}
+			.location-info h2 {
+				margin-top: 0;
+				margin-bottom: 5px;
+				color: var(--marine-blue);
+			}
+			.location-info p {
+				margin: 0;
+				color: var(--dark-gray-text);
+			}
+
+			.form-group {
+				margin-bottom: 20px;
+			}
+
+			.form-group label {
+				display: block;
+				margin-bottom: 8px;
+				font-weight: bold;
+				color: var(--dark-gray-text);
+			}
+
+			.form-group input[type="text"],
+			.form-group input[type="number"],
+			.form-group textarea {
+				width: 100%;
+				padding: 12px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				box-sizing: border-box;
+				font-size: 1rem;
+			}
+
+			.form-group textarea {
+				min-height: 80px;
+				resize: vertical;
+			}
+
+			.form-group input[type="radio"] {
+				margin-right: 8px;
+			}
+
+			.form-group .radio-option {
+				margin-bottom: 10px;
+				display: flex;
+				align-items: center;
+			}
+
+			.form-group button {
+				width: 100%;
+				padding: 15px;
+				background-color: var(--t4t-red);
+				color: white;
+				border: none;
+				border-radius: 4px;
+				font-size: 1.1rem;
+				font-weight: bold;
+				cursor: pointer;
+				transition: background-color 0.2s ease;
+			}
+
+			.form-group button:hover {
+				background-color: #b31b14; /* Darker red on hover */
+			}
+
+			.hidden {
+				display: none;
+			}
+
+			footer {
+				text-align: center;
+				padding: 20px;
+				margin-top: 40px;
+				border-top: 1px solid #eee;
+				font-size: 0.85rem;
+				color: #666;
+			}
+
+			footer a {
+				color: var(--marine-blue);
+				text-decoration: none;
+				font-weight: 500;
+			}
+
+			footer a:hover {
+				text-decoration: underline;
+			}
+
+			footer .link-divider {
+				margin: 0 10px;
+				color: #ccc;
+			}
+
+			/* Basic loader for when content is loading */
+			.loader {
+				border: 4px solid #f3f3f3;
+				border-top: 4px solid var(--marine-blue);
+				border-radius: 50%;
+				width: 30px;
+				height: 30px;
+				animation: spin 1s linear infinite;
+				margin: 20px auto;
+				display: none; /* Hidden by default */
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>T4T Box Report</h1>
+
+			<div id="loader" class="loader"></div>
+
+			<div id="report-content" class="hidden">
+				<div class="location-info">
+					<h2>You are at: <span id="location-name"></span></h2>
+					<p id="location-address"></p>
+					<p id="location-city-state"></p>
+				</div>
+
+				<form name="box-report" method="POST" data-netlify="true">
+					<input type="hidden" name="locationId" id="hidden-location-id">
+					<input type="hidden" name="locationLabel" id="hidden-location-label">
+					<input type="hidden" name="locationFullAddress" id="hidden-location-full-address">
+
+					<div class="form-group">
+						<label>What are you reporting?</label>
+						<div class="radio-option">
+							<input type="radio" id="pickup" name="reportType" value="Volunteer Pickup" required>
+							<label for="pickup">I'm a Volunteer Making a Pickup</label>
+						</div>
+						<div class="radio-option">
+							<input type="radio" id="problem" name="reportType" value="Problem Report" required>
+							<label for="problem">I'm Reporting a Problem</label>
+						</div>
+					</div>
+
+					<div id="pickup-fields" class="hidden">
+						<div class="form-group">
+							<label for="volunteer-name-pickup">Your Name</label>
+							<input type="text" id="volunteer-name-pickup" name="volunteerNamePickup" placeholder="Your Name" required>
+						</div>
+						<div class="form-group">
+							<label for="notes-pickup">Notes (e.g., "Box was half full", "Collected 3 large bags")</label>
+							<textarea id="notes-pickup" name="notesPickup" placeholder="Optional notes..."></textarea>
+						</div>
+					</div>
+
+					<div id="problem-fields" class="hidden">
+						<div class="form-group">
+							<label>What's the issue?</label>
+							<div class="radio-option">
+								<input type="checkbox" id="issue-full" name="issue[]" value="Box is full and needs pickup">
+								<label for="issue-full">Box is full and needs pickup</label>
+							</div>
+							<div class="radio-option">
+								<input type="checkbox" id="issue-damaged" name="issue[]" value="Box is damaged">
+								<label for="issue-damaged">Box is damaged</label>
+							</div>
+							<div class="radio-option">
+								<input type="checkbox" id="issue-missing" name="issue[]" value="Box is missing/moved">
+								<label for="issue-missing">Box is missing or has been moved</label>
+							</div>
+							<div class="radio-option">
+								<input type="checkbox" id="issue-removal" name="issue[]" value="Location requested removal">
+								<label for="issue-removal">Location has requested removal</label>
+							</div>
+							<div class="radio-option">
+								<input type="checkbox" id="issue-other" name="issue[]" value="Other">
+								<label for="issue-other">Other</label>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="notes-problem">More Details</label>
+							<textarea id="notes-problem" name="notesProblem" placeholder="Provide more details about the problem..."></textarea>
+						</div>
+						<div class="form-group">
+							<label for="volunteer-name-problem">Your Name (Optional)</label>
+							<input type="text" id="volunteer-name-problem" name="volunteerNameProblem" placeholder="Your Name">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<button type="submit">Submit Report</button>
+					</div>
+				</form>
+			</div> </div> <footer>
+		<a href="https://northatlanta.toysfortots.org/local-coordinator-sites/lco-sites/default.aspx?nPageID=0&nPreviewInd=0&nRedirectInd=3" target="_blank" rel="noopener noreferrer">
+			Official North Atlanta T4T Site
+		</a>
+		<span class="link-divider">|</span>
+		<a href="https://mcl1311.com/t4t" target="_blank" rel="noopener noreferrer">
+			MCL Detachment 1311 T4T Info
+		</a>
+	</footer>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', async () => {
+				const params = new URLSearchParams(window.location.search);
+				const locationId = params.get('loc'); // Get the 'loc' parameter from the URL
+
+				const loader = document.getElementById('loader');
+				const reportContent = document.getElementById('report-content');
+				const locationNameSpan = document.getElementById('location-name');
+				const locationAddressP = document.getElementById('location-address');
+				const locationCityStateP = document.getElementById('location-city-state');
+				const hiddenLocationId = document.getElementById('hidden-location-id');
+				const hiddenLocationLabel = document.getElementById('hidden-location-label');
+				const hiddenLocationFullAddress = document.getElementById('hidden-location-full-address');
+
+				const pickupRadio = document.getElementById('pickup');
+				const problemRadio = document.getElementById('problem');
+				const pickupFields = document.getElementById('pickup-fields');
+				const problemFields = document.getElementById('problem-fields');
+
+				const form = document.querySelector('form[name="box-report"]');
+				const volunteerNamePickup = document.getElementById('volunteer-name-pickup');
+				const volunteerNameProblem = document.getElementById('volunteer-name-problem');
+				const issueCheckboxes = document.querySelectorAll('#problem-fields input[type="checkbox"]');
+				const notesProblem = document.getElementById('notes-problem');
+
+				// Show loader while fetching data
+				loader.style.display = 'block';
+
+				if (!locationId) {
+					locationNameSpan.textContent = "Error: Location ID Missing";
+					locationAddressP.textContent = "Please scan a valid QR code.";
+					reportContent.classList.remove('hidden');
+					loader.style.display = 'none';
+					return;
+				}
+
+				try {
+					const response = await fetch('locations.json');
+					const locations = await response.json();
+
+					// You'll need to add an 'id' field to your locations.json for this to work
+					// For now, let's just find by label as a fallback/example
+					const foundLocation = locations.find(loc => loc.id === locationId); // Ideal: Match by unique ID
+					// Fallback for demo if 'id' not added yet:
+					if (!foundLocation) {
+						const normalizedLocationId = locationId.toLowerCase().replace(/[^a-z0-9]/g, '');
+						const fallbackLocation = locations.find(loc =>
+								loc.label.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedLocationId
+						);
+						if (fallbackLocation) {
+							console.warn("Location found by label fallback. Please add unique 'id' fields to locations.json for better performance.");
+							foundLocation = fallbackLocation;
+						}
+					}
+
+					if (foundLocation) {
+						locationNameSpan.textContent = foundLocation.label;
+						locationAddressP.textContent = foundLocation.address;
+						locationCityStateP.textContent = `${foundLocation.city}, ${foundLocation.state}`;
+
+						// Set hidden form fields
+						hiddenLocationId.value = locationId;
+						hiddenLocationLabel.value = foundLocation.label;
+						hiddenLocationFullAddress.value = `${foundLocation.address}, ${foundLocation.city}, ${foundLocation.state}`;
+
+					} else {
+						locationNameSpan.textContent = "Error: Location Not Found";
+						locationAddressP.textContent = "The location ID in the QR code is invalid.";
+					}
+				} catch (error) {
+					console.error("Error fetching locations:", error);
+					locationNameSpan.textContent = "Error Loading Locations";
+					locationAddressP.textContent = "Please try again later.";
+				} finally {
+					loader.style.display = 'none';
+					reportContent.classList.remove('hidden');
+				}
+
+				// --- Event Listeners for Conditional Fields ---
+				const toggleFields = () => {
+					const isPickup = pickupRadio.checked;
+					const isProblem = problemRadio.checked;
+
+					pickupFields.classList.toggle('hidden', !isPickup);
+					problemFields.classList.toggle('hidden', !isProblem);
+
+					// Set required attribute based on visibility
+					volunteerNamePickup.required = isPickup;
+					notesProblem.required = isProblem && (Array.from(issueCheckboxes).every(cb => !cb.checked)); // Require notes if no checkboxes are selected
+
+					// Clear inputs if fields are hidden
+					if (!isPickup) {
+						volunteerNamePickup.value = '';
+						document.getElementById('notes-pickup').value = '';
+					}
+					if (!isProblem) {
+						Array.from(issueCheckboxes).forEach(cb => cb.checked = false);
+						notesProblem.value = '';
+						volunteerNameProblem.value = '';
+					}
+				};
+
+				pickupRadio.addEventListener('change', toggleFields);
+				problemRadio.addEventListener('change', toggleFields);
+
+				// Add listener for problem checkboxes to conditionally require notes
+				issueCheckboxes.forEach(cb => {
+					cb.addEventListener('change', () => {
+						const anyChecked = Array.from(issueCheckboxes).some(cb => cb.checked);
+						notesProblem.required = !anyChecked;
+					});
+				});
+
+				// Initial toggle based on page load (nothing selected by default)
+				toggleFields();
+
+				// Set Netlify honeypot field (important for spam protection)
+				const honeypot = document.createElement('input');
+				honeypot.type = 'hidden';
+				honeypot.name = 'bot-field';
+				form.appendChild(honeypot);
+
+				// Add Netlify form processing attribute
+				form.setAttribute('netlify', true);
+			});
+		</script>
+	</body>
+</html>

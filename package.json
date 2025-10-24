@@ -2,7 +2,8 @@
   "name": "t4t-app",
   "version": "1.0.0",
   "dependencies": {
-    "node-fetch": "^2.6.1",
-    "dotenv": "^16.0.0"
+    "@octokit/rest": "^22.0.0",
+    "dotenv": "^16.0.0",
+    "node-fetch": "^2.6.1"
   }
 }
