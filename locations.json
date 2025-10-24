@@ -7,7 +7,9 @@
     "lat": 34.0615129,
     "lon": -84.5905295,
     "boxes": null,
-    "volunteer": ""
+    "volunteer": "",
+    "boxId":"001",
+    "id":"1"
   },
   {
     "label": "Angry Crab Shack",
