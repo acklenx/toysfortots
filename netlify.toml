@@ -1,2 +1,7 @@
 [build]
   functions = "netlify/functions"
+[functions.process-tots-report.environment]
+FIREBASE_SERVICE_ACCOUNT_BASE64 = "${FIREBASE_SERVICE_ACCOUNT_BASE64}"
+MAILGUN_API_KEY = "${MAILGUN_API_KEY}"
+MAILGUN_DOMAIN = "${MAILGUN_DOMAIN}"
+TOTS_RECIPIENT_EMAIL = "${TOTS_RECIPIENT_EMAIL}"
