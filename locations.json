@@ -6,8 +6,8 @@
     "state": "GA",
     "lat": 34.0615129,
     "lon": -84.5905295,
-    "boxes": null,
-    "volunteer": "",
+    "boxes": 1,
+    "volunteer": "Quincy",
     "boxId":"001",
     "id":"1"
   },
