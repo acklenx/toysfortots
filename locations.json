@@ -678,5 +678,15 @@
     "lon": -84.4258625,
     "boxes": 1,
     "volunteer": "Quincy Acklen"
+  },
+  {
+    "label": "General Motors",
+    "address": "5 Concourse Pkwy NE",
+    "city": "Atlanta",
+    "state": "GA",
+    "lat": 33.917072,
+    "lon": -84.3545712,
+    "boxes": 1,
+    "volunteer": "quincy"
   }
 ]
