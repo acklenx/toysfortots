@@ -60,25 +60,27 @@
 						<span>Request Immediate Pickup</span>
 					</button>
 					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-						✅ **Pickup Requested!** The team has been alerted.
+						✅ **Pickup Alert Sent!** Please add details below to submit the final request.
 					</div>
 
 					<!-- Pickup Detail Form (Collapsible) -->
 					<div id="pickup-details-section" class="collapsible-content bg-tots-light rounded-lg border border-tots-red/30">
 						<p class="text-sm font-semibold text-tots-red mb-3 text-center">
-							<span class="font-extrabold">OPTIONAL:</span> Add more details below (e.g., location, contact).
+							<span class="font-extrabold">OPTIONAL:</span> Add more details below and click submit to send the final report.
 						</p>
-						<form id="pickup-details-form" name="pickup-details-form" data-netlify="true" method="POST" class="space-y-3">
+						<!-- data-netlify="true" and method="POST" are needed for Netlify to register the form name -->
+						<form id="pickup-details-form" name="pickup-details-form" method="POST" data-netlify="true" class="space-y-3">
 							<input type="hidden" name="form-name" value="pickup-details-form">
 							<!-- HIDDEN FIELD carrying the essential box ID/info -->
 							<input type="hidden" id="pickup-box-id-detail" name="box-info">
 
 							<!-- DEBUG FIELD (Visible for testing) -->
-							<label for="debug-pickup-info" class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
+							<label class="block text-sm font-medium text-gray-700" for="debug-pickup-info">Current Box Info (Read-Only):</label>
 							<input type="text" id="debug-pickup-info" readonly class="w-full border border-gray-300 bg-gray-100 rounded-md p-2 text-sm text-gray-600 mb-4 cursor-default">
 
-							<label for="pickup-notes-input" class="block text-sm font-medium text-gray-700">Detailed Notes:</label>
-							<textarea id="pickup-notes-input" name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
+							<label class="block text-sm font-medium text-gray-700">Detailed Notes:
+								<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
+							</label>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
@@ -87,11 +89,11 @@
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
-								Send Detail Report
+								Send Final Pickup Request
 							</button>
 						</form>
 						<div id="pickup-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-							Thanks! Your detailed notes have been added.
+							Thanks! Your final pickup request has been submitted to the database.
 						</div>
 					</div>
 
@@ -104,22 +106,23 @@
 						<span>Report a Problem (Urgent Alert)</span>
 					</button>
 					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
-						⚠️ **Problem Alert Sent!** Please add details below.
+						⚠️ **Problem Alert Sent!** Please add details below to submit the final report.
 					</div>
 
 					<!-- Problem Detail Form (Collapsible) -->
 					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
-						<form id="problem-details-form" name="problem-details-form" data-netlify="true" method="POST" class="space-y-3">
+						<!-- data-netlify="true" and method="POST" are needed for Netlify to register the form name -->
+						<form id="problem-details-form" name="problem-details-form" method="POST" data-netlify="true" class="space-y-3">
 							<input type="hidden" name="form-name" value="problem-details-form">
 							<!-- HIDDEN FIELD carrying the essential box ID/info -->
 							<input type="hidden" id="problem-box-id-detail" name="box-info">
 
 							<!-- DEBUG FIELD (Visible for testing) -->
-							<label for="debug-problem-info" class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
+							<label class="block text-sm font-medium text-gray-700">Current Box Info (Read-Only):</label>
 							<input type="text" id="debug-problem-info" readonly class="w-full border border-gray-300 bg-gray-100 rounded-md p-2 text-sm text-gray-600 mb-4 cursor-default">
 
-							<label for="problem-description-input" class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
-							<textarea id="problem-description-input" name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
+							<label class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
+							<textarea name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
@@ -132,24 +135,13 @@
 							</button>
 						</form>
 						<div id="problem-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-							✅ Thank you! The full problem report has been submitted.
+							✅ Thank you! The full problem report has been submitted to the database.
 						</div>
 					</div>
 
 				</div>
 			</main>
 		</div>
-
-		<!-- Hidden Forms for Instant Submission via Fetch -->
-		<!-- Netlify registers these forms when the page is deployed/viewed -->
-		<form name="instant-pickup" data-netlify="true" method="POST" hidden>
-			<input type="hidden" name="form-name" value="instant-pickup">
-			<input type="text" name="box-info" id="instant-pickup-id">
-		</form>
-		<form name="instant-problem" data-netlify="true" method="POST" hidden>
-			<input type="hidden" name="form-name" value="instant-problem">
-			<input type="text" name="box-info" id="instant-problem-id">
-		</form>
 
 
 		<script>
@@ -189,24 +181,33 @@
 						.join("&");
 			}
 
-			// Handles the submission via fetch (for instant, non-page-reloading actions)
+			/**
+			 * Submits form data to the Netlify Serverless Function for processing.
+			 * This uses the Netlify Function architecture to bypass the 100-submission limit.
+			 * @param {string} formName - The name of the form being submitted.
+			 * @param {Object} data - The form data object.
+			 * @returns {Promise<boolean>} True if submission was successful.
+			 */
 			const submitForm = async (formName, data) => {
-				try {
-					// Targeting the canonical Netlify Forms API endpoint for robust AJAX submission.
-					const targetUrl = window.location.origin + "/.netlify/forms";
+				// 1. **CRITICAL CHANGE HERE:** Target the Netlify Function endpoint.
+				const targetUrl = window.location.origin + "/.netlify/functions/process-tots-report";
 
+				try {
 					const response = await fetch(targetUrl, {
 						method: "POST",
 						headers: { "Content-Type": "application/x-www-form-urlencoded" },
-						// The form-name field is crucial for Netlify's processing
+						// Pass the form name and the data to the function
 						body: encode({ "form-name": formName, ...data })
 					});
 
-					// Netlify's Forms endpoint usually returns 200/204 on success.
+					// The function returns a 200 OK or 204 No Content on success
 					if (response.ok || response.status === 204) {
 						return true;
 					} else {
-						console.error("Netlify form submission failed.", response);
+						console.error(`Netlify function submission failed (${response.status}).`, response);
+						// The function should return a status text if possible
+						const errorText = await response.text();
+						console.error("Function Error Detail:", errorText);
 						return false;
 					}
 				} catch (error) {
@@ -214,7 +215,6 @@
 					return false;
 				}
 			};
-
 
 			// --- Main Logic ---
 
@@ -253,8 +253,6 @@
             `;
 
 				// 2. Populate ALL hidden and debug fields for form submissions
-				document.getElementById('instant-pickup-id').value = boxInfoString;
-				document.getElementById('instant-problem-id').value = boxInfoString;
 				document.getElementById('pickup-box-id-detail').value = boxInfoString;
 				document.getElementById('problem-box-id-detail').value = boxInfoString;
 
@@ -268,61 +266,37 @@
 				problemBtn.disabled = false;
 			});
 
-			// --- Event Listeners for Instant Actions ---
+			// --- Event Listeners for Instant Actions (Now just UI triggers) ---
 
 			// --- PICKUP BUTTON HANDLER ---
-			pickupBtn.addEventListener('click', async () => {
+			pickupBtn.addEventListener('click', () => {
+				// 1. Show confirmation for alert
+				pickupConf.classList.remove('hidden');
+
+				// 2. Slide open the optional detail form
+				pickupDetailsSection.classList.add('open');
+
+				// 3. Update button state
 				pickupBtn.disabled = true;
-				pickupBtn.innerHTML = 'Sending...';
-
-				// Get the value from the hidden field
-				const boxInfo = document.getElementById('instant-pickup-id').value;
-				// Submit to Netlify form 'instant-pickup' with 'box-info' data
-				const success = await submitForm('instant-pickup', { "box-info": boxInfo });
-
-				if (success) {
-					// 1. Show confirmation for instant submission
-					pickupConf.classList.remove('hidden');
-
-					// 2. Slide open the optional detail form
-					pickupDetailsSection.classList.add('open');
-
-					// 3. Update button text and enable problem button
-					pickupBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg> <span>Pickup Request Sent!</span>';
-					pickupBtn.classList.remove('bg-tots-green');
-					pickupBtn.classList.add('bg-green-600');
-				} else {
-					pickupBtn.disabled = false;
-					pickupBtn.innerHTML = 'Error! Try Again.';
-				}
+				pickupBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg> <span>Pickup Alert Sent!</span>';
+				pickupBtn.classList.remove('bg-tots-green');
+				pickupBtn.classList.add('bg-green-600');
 			});
 
 			// --- PROBLEM BUTTON HANDLER ---
-			problemBtn.addEventListener('click', async () => {
+			problemBtn.addEventListener('click', () => {
+				// 1. Show confirmation that the alert was sent
+				problemConf.classList.remove('hidden');
+
+				// 2. Slide open the required detail form
+				problemDetailsSection.classList.add('open');
+
+				// 3. Update button state
 				problemBtn.disabled = true;
-				problemBtn.innerHTML = 'Sending Urgent Alert...';
-
-				// Get the value from the hidden field
-				const boxInfo = document.getElementById('instant-problem-id').value;
-				// Submit to Netlify form 'instant-problem' with 'box-info' data
-				const success = await submitForm('instant-problem', { "box-info": boxInfo });
-
-				if (success) {
-					// 1. Show confirmation that the alert was sent
-					problemConf.classList.remove('hidden');
-
-					// 2. Slide open the required detail form
-					problemDetailsSection.classList.add('open');
-
-					// 3. Update button text (silent action is complete)
-					problemBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> <span>Urgent Problem Alert Sent!</span>';
-				} else {
-					problemBtn.disabled = false;
-					problemBtn.innerHTML = 'Error! Try Again.';
-				}
+				problemBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> <span>Urgent Problem Alert Sent!</span>';
 			});
 
-			// --- Event Listeners for Detail Forms (Optional/Required) ---
+			// --- Event Listeners for Detail Forms (Single Submission Point) ---
 
 			// --- PICKUP DETAILS SUBMISSION ---
 			pickupDetailsForm.addEventListener('submit', async (e) => {
@@ -331,19 +305,21 @@
 				const submitButton = form.querySelector('button[type="submit"]');
 
 				submitButton.disabled = true;
-				submitButton.textContent = 'Submitting...';
+				submitButton.textContent = 'Submitting to Database...';
 
-				// Uses the form's natural action (Netlify processing) combined with fetch
+				// Collect form data including hidden box-info
 				const formData = new FormData(form);
-				const success = await submitForm(form.name, Object.fromEntries(formData.entries()));
+				const dataObject = Object.fromEntries(formData.entries());
+
+				// Submit to the Netlify Function
+				const success = await submitForm(form.name, dataObject);
 
 				if (success) {
-					// 1. Show final success message
 					pickupDetailsSuccess.classList.remove('hidden');
 					form.remove(); // Remove the form once submitted
 				} else {
 					submitButton.disabled = false;
-					submitButton.textContent = 'Error sending details. Try again.';
+					submitButton.textContent = 'Error sending request. Check console.';
 				}
 			});
 
@@ -354,19 +330,21 @@
 				const submitButton = form.querySelector('button[type="submit"]');
 
 				submitButton.disabled = true;
-				submitButton.textContent = 'Submitting...';
+				submitButton.textContent = 'Submitting to Database...';
 
-				// Uses the form's natural action (Netlify processing) combined with fetch
+				// Collect form data including hidden box-info
 				const formData = new FormData(form);
-				const success = await submitForm(form.name, Object.fromEntries(formData.entries()));
+				const dataObject = Object.fromEntries(formData.entries());
+
+				// Submit to the Netlify Function
+				const success = await submitForm(form.name, dataObject);
 
 				if (success) {
-					// 1. Show final success message
 					problemDetailsSuccess.classList.remove('hidden');
 					form.remove(); // Remove the form once submitted
 				} else {
 					submitButton.disabled = false;
-					submitButton.textContent = 'Error sending report. Try again.';
+					submitButton.textContent = 'Error sending report. Check console.';
 				}
 			});
 		</script>
