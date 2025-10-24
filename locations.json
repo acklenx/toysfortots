@@ -668,5 +668,15 @@
     "lon": -84.4258625,
     "boxes": 1,
     "volunteer": "Quincy Acklen"
+  },
+  {
+    "label": "Maker Labs",
+    "address": "4572 Chatsworth Overlook NE",
+    "city": "Roswell",
+    "state": "GA",
+    "lat": 34.0616418,
+    "lon": -84.4258625,
+    "boxes": 1,
+    "volunteer": "Quincy Acklen"
   }
 ]
