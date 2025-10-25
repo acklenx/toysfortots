@@ -7,7 +7,7 @@
 		<script type="module">
 			// --- 1. IMPORTS ---
 			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 			import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			const firebaseConfig = {
@@ -26,9 +26,12 @@
 
 
 			// --- 3. FIREBASE SETUP ---
+			// --- 3. FIREBASE SETUP ---
 			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
 			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
-			const setupFirebase = async () => {
+
+			// No longer needs to be async
+			const setupFirebase = () => {
 				console.log("Setting up Firebase...");
 				if (!firebaseConfig.apiKey) {
 					console.error("Firebase configuration is missing.");
@@ -41,14 +44,35 @@
 					auth = getAuth(app);
 					db = getFirestore(app);
 
-					await signInAnonymously(auth);
-					console.log("Firebase initialized and user signed in.");
+					let appInitialized = false; // Flag to prevent initApp from running twice
 
-					// Call the app initializer
-					window.initApp(appId, db, auth);
+					// Set up the listener FIRST. This is the key.
+					onAuthStateChanged(auth, (user) => {
+						console.log("Auth state changed. User:", user ? user.uid : "null");
+
+						// If we get an authenticated user (our anonymous one) AND we haven't run the app yet...
+						if (user && !appInitialized) {
+							appInitialized = true; // Set the flag
+							console.log("User is authenticated. Initializing main app...");
+
+							// Now it is 100% safe to run the app logic
+							window.initApp(appId, db, auth);
+
+						} else if (!user) {
+							// This will fire on first load when user is null
+							console.log("No user found. Attempting anonymous sign-in...");
+							signInAnonymously(auth).catch((err) => {
+								console.error("Anonymous sign-in failed:", err);
+								document.getElementById('loading-message').textContent = `ERROR: Sign-in failed. ${err.message}`;
+							});
+						}
+					});
+
+					// Note: We no longer call initApp() here.
+					// The listener above will handle it.
 
 				} catch (error) {
-					console.error("Firebase Initialization or Auth Error:", error);
+					console.error("Firebase Initialization Error:", error);
 					document.getElementById('loading-message').textContent = `ERROR: Firebase setup failed. ${error.message}`;
 				}
 			};
@@ -138,22 +162,116 @@
 					pickupBtn.disabled = false;
 					problemBtn.disabled = false;
 
-					// --- Event Listeners (These are all fine) ---
+					// --- Event Listeners ---
+
+					// Helper function to serialize form data into a plain object
+					const getFormData = (form) => {
+						const formData = new FormData(form);
+						const data = {};
+						formData.forEach((value, key) => {
+							data[key] = value;
+						});
+						return data;
+					};
+
+					// Helper function to manage the UI state
+					const toggleSection = (sectionToShow, confToShow, sectionToHide, confToHide) => {
+						sectionToShow.classList.add('open');
+						confToShow.classList.remove('hidden');
+						sectionToHide.classList.remove('open');
+						confToHide.classList.add('hidden');
+					};
+
 					pickupBtn.addEventListener('click', () => {
-						// ...
+						toggleSection(
+								pickupDetailsSection,
+								pickupConf,
+								problemDetailsSection,
+								problemConf
+						);
+
+						// Send the initial "alert" report immediately
+						const quickReport = {
+							reportType: 'pickup_alert',
+							description: 'Immediate pickup requested via button click.'
+						};
+						// --- CHANGED HERE ---
+						submitReportToFirestore(quickReport, boxId, location); // Pass location data
+
+						pickupBtnText.textContent = 'Alert Sent! Add Details?';
+						pickupBtn.classList.add('opacity-75'); // Visually show it's "done"
 					});
 
 					problemBtn.addEventListener('click', () => {
-						// ...
+						toggleSection(
+								problemDetailsSection,
+								problemConf,
+								pickupDetailsSection,
+								pickupConf
+						);
+
+						// Send the initial "alert" report immediately
+						const quickReport = {
+							reportType: 'problem_alert',
+							description: 'Urgent problem reported via button click.'
+						};
+						// --- CHANGED HERE ---
+						submitReportToFirestore(quickReport, boxId, location); // Pass location data
+
+						problemBtnText.textContent = 'Alert Sent! Add Details!';
+						problemBtn.classList.add('opacity-75');
 					});
 
 					pickupDetailsForm.addEventListener('submit', async (e) => {
-						// ...
+						e.preventDefault(); // Stop page from reloading
+						const submitButton = pickupDetailsForm.querySelector('button[type="submit"]');
+						submitButton.disabled = true;
+						submitButton.textContent = 'Sending...';
+
+						const reportData = getFormData(pickupDetailsForm);
+						// --- CHANGED HERE ---
+						const success = await submitReportToFirestore(reportData, boxId, location);
+
+						if (success) {
+							pickupDetailsSuccess.classList.remove('hidden');
+							submitButton.textContent = 'Details Sent!';
+						} else {
+							alert('There was an error submitting your report. Please try again.');
+							submitButton.disabled = false;
+							submitButton.textContent = 'Send Detail Report';
+						}
 					});
 
 					problemDetailsForm.addEventListener('submit', async (e) => {
-						// ...
+						e.preventDefault(); // Stop page from reloading
+						const submitButton = problemDetailsForm.querySelector('button[type="submit"]');
+						submitButton.disabled = true;
+						submitButton.textContent = 'Sending...';
+
+						// Manually get the description to check if it's empty
+						const description = problemDetailsForm.querySelector('textarea[name="description"]').value;
+						if (!description || description.trim() === '') {
+							alert('Please fill out the problem description.');
+							submitButton.disabled = false;
+							submitButton.textContent = 'Send Full Problem Report';
+							return; // Stop submission
+						}
+
+						const reportData = getFormData(problemDetailsForm);
+						// --- CHANGED HERE ---
+						const success = await submitReportToFirestore(reportData, boxId, location);
+
+						if (success) {
+							problemDetailsSuccess.classList.remove('hidden');
+							submitButton.textContent = 'Report Sent!';
+						} else {
+							alert('There was an error submitting your report. Please try again.');
+							submitButton.disabled = false;
+							submitButton.textContent = 'Send Full Problem Report';
+						}
 					});
+
+
 
 				} catch (error) {
 					console.error("Error fetching location:", error);
@@ -163,8 +281,8 @@
 			};
 
 
-			// --- 5. FIRESTORE UTILITY ---
-			const submitReportToFirestore = async (reportData) => {
+			// --- 5. FIRESTORE UTILITY (The updated version) ---
+			const submitReportToFirestore = async (reportData, boxId, location) => {
 				if (!appDB || !appAuth.currentUser) {
 					console.error("Firestore not initialized or user not authenticated.");
 					return false;
@@ -179,8 +297,9 @@
 
 
 					const fullReport = {
-						...reportData,
-						boxInfo: currentBoxInfo,
+						...reportData,       // The form data (notes, description, etc.)
+						...location,         // Adds all location fields (label, address, city, state, volunteer)
+						boxId: boxId,         // Adds the box ID
 						timestamp: timestamp,
 						reporterId: userId,
 						status: 'new'
