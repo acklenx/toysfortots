@@ -1,388 +1,48 @@
+
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Drop Box Action Center</title>
-		<script type="module">
-			// --- 1. IMPORTS ---
-			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+		<title>Toys for Tots - N. Fulton & Cherokee County</title>
 
-			// --- 2. CONFIG & TOP-LEVEL VARS ---
-			const firebaseConfig = {
-				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
-				authDomain: "toysfortots-eae4d.firebaseapp.com",
-				projectId: "toysfortots-eae4d",
-				storageBucket: "toysfortots-eae4d.firebasestorage.app",
-				messagingSenderId: "505039956655",
-				appId: "1:505039956655:web:c750c66b28f7facd82025a",
-				measurementId: "G-XKQYPK0GLC"
-			};
-			const appId = firebaseConfig.projectId;
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-			let db, auth; // For Firebase
-			let appDB, appAuth, appID, currentBoxInfo; // For your app logic
-
-			// --- 3. FIREBASE SETUP ---
-			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
-			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
-
-			const setupFirebase = () => {
-				console.log("Setting up Firebase...");
-				if (!firebaseConfig.apiKey) {
-					console.error("Firebase configuration is missing.");
-					document.getElementById('loading-message').textContent = "ERROR: Firebase Config Missing.";
-					return;
-				}
-
-				try {
-					const app = initializeApp(firebaseConfig);
-					auth = getAuth(app);
-					db = getFirestore(app);
-
-					let appInitialized = false; // Flag to prevent initApp from running twice
-
-					onAuthStateChanged(auth, (user) => {
-						console.log("Auth state changed. User:", user ? user.uid : "null");
-
-						if (user && !appInitialized) {
-							appInitialized = true; // Set the flag
-							console.log("User is authenticated. Initializing main app...");
-							window.initApp(appId, db, auth);
-						} else if (!user) {
-							console.log("No user found. Attempting anonymous sign-in...");
-							signInAnonymously(auth).catch((err) => {
-								console.error("Anonymous sign-in failed:", err);
-								document.getElementById('loading-message').textContent = `ERROR: Sign-in failed. ${err.message}`;
-							});
-						}
-					});
-				} catch (error) {
-					console.error("Firebase Initialization Error:", error);
-					document.getElementById('loading-message').textContent = `ERROR: Firebase setup failed. ${error.message}`;
-				}
-			};
-
-			// --- 4. MAIN APP LOGIC ---
-			window.initApp = async (appId, dbInstance, authInstance) => {
-				appDB = dbInstance;
-				appAuth = authInstance;
-				appID = appId;
-
-				const listDiv = document.getElementById('location-display');
-				const loadingMessage = document.getElementById('loading-message');
-
-				const pickupBtn = document.getElementById('pickup-btn');
-				const problemBtn = document.getElementById('problem-btn');
-				const pickupBtnText = document.getElementById('pickup-btn-text');
-				const problemBtnText = document.getElementById('problem-btn-text');
-
-				const pickupConf = document.getElementById('pickup-confirmation');
-				const problemConf = document.getElementById('problem-confirmation');
-
-				const pickupDetailsSection = document.getElementById('pickup-details-section');
-				const problemDetailsSection = document.getElementById('problem-details-section');
-
-				const pickupDetailsForm = document.getElementById('pickup-details-form');
-				const problemDetailsForm = document.getElementById('problem-details-form');
-
-				const pickupDetailsSuccess = document.getElementById('pickup-details-success');
-				const problemDetailsSuccess = document.getElementById('problem-details-success');
-
-				const params = new URLSearchParams(window.location.search);
-				const boxId = params.get('id');
-
-				if (!boxId) {
-					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = "Error: Box ID missing from the link. Cannot display info.";
-					return;
-				}
-
-
-				try {
-					// 1. Create a reference to the specific document
-					// Path: /artifacts/{appId}/public/data/locations/{boxId}
-					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
-
-					// 2. Fetch the document
-					const locSnap = await getDoc(locRef);
-
-					if (!locSnap.exists()) {
-						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-						loadingMessage.textContent = `Error: This Box ID (${boxId}) has not been set up yet.`;
-						return;
-					}
-
-					// 3. Get the data from the document
-					const location = locSnap.data();
-					currentBoxInfo = `${location.label} (ID: ${boxId}) @ ${location.address}`;
-					loadingMessage.remove();
-					listDiv.innerHTML = `
-                   <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
-                       <h2 class="text-xl font-bold text-tots-red">${location.label}</h2>
-                       <p class="text-sm text-gray-700 mt-1">${location.address}, ${location.city}, ${location.state}</p>
-                       <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${boxId}</span></p>
-                       <p class="text-sm font-semibold">Assigned Volunteer: ${location.volunteer}</p>
-                   </div>
-               `;
-
-					document.getElementById('pickup-box-id-detail').value = currentBoxInfo;
-					document.getElementById('problem-box-id-detail').value = currentBoxInfo;
-
-					pickupBtn.disabled = false;
-					problemBtn.disabled = false;
-
-					const getFormData = (form) => {
-						const formData = new FormData(form);
-						const data = {};
-						formData.forEach((value, key) => {
-							data[key] = value;
-						});
-						return data;
-					};
-
-					const toggleSection = (sectionToShow, confToShow, sectionToHide, confToHide) => {
-						sectionToShow.classList.add('open');
-						confToShow.classList.remove('hidden');
-						sectionToHide.classList.remove('open');
-						confToHide.classList.add('hidden');
-					};
-
-					pickupBtn.addEventListener('click', () => {
-						toggleSection(
-								pickupDetailsSection,
-								pickupConf,
-								problemDetailsSection,
-								problemConf
-						);
-
-						const quickReport = {
-							reportType: 'pickup_alert',
-							description: 'Immediate pickup requested via button click.'
-						};
-						submitReportToFirestore(quickReport, boxId, location); // Pass location data
-
-						pickupBtnText.textContent = 'A volunteer has been notified!';
-						pickupBtn.classList.add('opacity-75'); // Visually show it's "done"
-					});
-
-					problemBtn.addEventListener('click', () => {
-						toggleSection(
-								problemDetailsSection,
-								problemConf,
-								pickupDetailsSection,
-								pickupConf
-						);
-
-						const quickReport = {
-							reportType: 'problem_alert',
-							description: 'Problem reported via button click.'
-						};
-						submitReportToFirestore(quickReport, boxId, location); // Pass location data
-
-						problemBtnText.textContent = 'A Volunteer has been notified!';
-						problemBtn.style.display = 'none';
-					});
-
-					pickupDetailsForm.addEventListener('submit', async (e) => {
-						e.preventDefault();
-						const submitButton = pickupDetailsForm.querySelector('button[type="submit"]');
-						submitButton.disabled = true;
-						submitButton.textContent = 'Sending...';
-
-						const reportData = getFormData(pickupDetailsForm);
-						// --- CHANGED HERE ---
-						const success = await submitReportToFirestore(reportData, boxId, location);
-
-						if (success) {
-							pickupDetailsSuccess.classList.remove('hidden');
-							submitButton.textContent = 'Details Sent!';
-						} else {
-							alert('There was an error submitting your report. Please try again.');
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Detail Report';
-						}
-					});
-
-					problemDetailsForm.addEventListener('submit', async (e) => {
-						e.preventDefault();
-						const submitButton = problemDetailsForm.querySelector('button[type="submit"]');
-						submitButton.disabled = true;
-						submitButton.textContent = 'Sending...';
-
-						const description = problemDetailsForm.querySelector('textarea[name="description"]').value;
-						if (!description || description.trim() === '') {
-							alert('Please fill out the problem description.');
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Full Problem Report';
-							return; // Stop submission
-						}
-
-						const reportData = getFormData(problemDetailsForm);
-						// --- CHANGED HERE ---
-						const success = await submitReportToFirestore(reportData, boxId, location);
-
-						if (success) {
-							problemDetailsSuccess.classList.remove('hidden');
-							submitButton.textContent = 'Report Sent!';
-						} else {
-							alert('There was an error submitting your report. Please try again.');
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Full Problem Report';
-						}
-					});
-				} catch (error) {
-					console.error("Error fetching location:", error);
-					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = `Error loading location data: ${error.message}`;
-				}
-			};
-
-			// --- 5. FIRESTORE UTILITY (The updated version) ---
-			const submitReportToFirestore = async (reportData, boxId, location) => {
-				if (!appDB || !appAuth.currentUser) {
-					console.error("Firestore not initialized or user not authenticated.");
-					return false;
-				}
-				try {
-					const userId = appAuth.currentUser.uid;
-					const timestamp = new Date().toISOString();
-					const reportCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
-					const fullReport = {
-						...reportData,
-						...location,
-						boxId: boxId,
-						timestamp: timestamp,
-						reporterId: userId,
-						status: 'new'
-					};
-
-					await addDoc(reportCollectionRef, fullReport);
-					return true;
-
-				} catch (error) {
-					console.error("Firestore submission failed:", error);
-					return false;
-				}
-			};
-
-			// --- 6. EXPOSE SETUP FUNCTION TO GLOBAL SCOPE ---
-			window.setupFirebase = setupFirebase;
-		</script>
-
-		<script src="https://cdn.tailwindcss.com"></script>
-		<style>
-			.collapsible-content {
-				max-height: 0;
-				overflow: hidden;
-				transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
-				padding: 0 1rem;
-			}
-			.collapsible-content.open {
-				max-height: 1000px;
-				padding-top: 1rem;
-				padding-bottom: 1rem;
-			}
-		</style>
-		<script>
-			tailwind.config = {
-				theme: {
-					extend: {
-						fontFamily: {
-							sans: ['Inter', 'sans-serif'],
-						},
-						colors: {
-							'tots-red': '#cc0000',
-							'tots-green': '#008000',
-							'tots-light': '#fcebeb',
-						}
-					}
-				}
-			}
-		</script>
+		<link rel="stylesheet" href="style.css">
 	</head>
-	<body class="bg-gray-50 font-sans p-4" onload="setupFirebase()">
+	<body>
 
-		<div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
-			<header class="bg-tots-red p-6">
-				<h1 class="text-3xl font-extrabold text-white text-center">Tots Box Action Center</h1>
-			</header>
-
-			<main class="p-6">
-				<div id="location-display" class="mb-6">
-					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
+		<header>
+			<div class="header-content">
+				<img src="images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				<div class="header-text">
+					<h1>Toys for Tots Drop-Off Locations</h1>
+					<h2>North Fulton & Cherokee County, GA</h2>
+					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
+				<img src="images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+			</div>
+		</header>
 
-				<div id="main-actions" class="space-y-4">
-					<button id="pickup-btn" class="w-full py-3 bg-tots-green hover:bg-green-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
-						<span id="pickup-btn-text">Request Immediate Pickup</span>
-					</button>
-					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-						✅ Message Sent! Would you like to send any additional details?
-					</div>
-					<div id="pickup-details-section" class="collapsible-content bg-tots-light rounded-lg border border-tots-red/30">
-						<p class="text-sm font-semibold text-tots-red mb-3 text-center">
-							<span class="font-extrabold">OPTIONAL:</span> Add more details below.
-						</p>
-						<form id="pickup-details-form" class="space-y-3">
-							<input type="hidden" id="pickup-box-id-detail" name="box-info">
-							<input type="hidden" name="report-type" value="pickup_details">
-
-							<label class="block text-sm font-medium text-gray-700">Detailed Notes:
-								<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
-							</label>
-
-							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1"><label for="pickupEmail">Follow-up</label> <label for="pickupContact">Contact</label> (Optional):</legend>
-								<input type="text" name="contact-name" id="pickupContact" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contact-email" id="pickupEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-							</fieldset>
-
-							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
-								Send Detail Report
-							</button>
-						</form>
-						<div id="pickup-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-							Thanks! Your detailed notes have been recorded instantly!
-						</div>
-					</div>
-
-					<div class="h-px bg-gray-200"></div>
-
-					<button id="problem-btn" class="w-full py-3 bg-gray-700 hover:bg-gray-800 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
-						<span id="problem-btn-text">Report a Problem</span>
-					</button>
-					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
-						⚠️ Please tell us the nature of the problem.
-					</div>
-
-					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
-						<form id="problem-details-form" class="space-y-3">
-							<input type="hidden" id="problem-box-id-detail" name="box-info">
-							<input type="hidden" name="report-type" value="problem_report">
-
-							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the problem? <span class="text-tots-red">*</span></label>
-							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
-
-							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1"><label for="problemFollowUp">Follow-up</label> <label for="problemContact">Contact</label> (Optional):</legend>
-								<input type="text" name="contact-name" id="problemContact" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contact-email" id="problemFollowUp" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-							</fieldset>
-
-							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
-								Send Full Problem Report
-							</button>
-						</form>
-						<div id="problem-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-							✅ Thank you! The problem has been recorded instantly!
-						</div>
-					</div>
-
+		<main class="container">
+			<div id="map"></div>
+			<div id="location-list-container">
+				<div class="list-header">
+					<h3>Find a Donation Box Near You</h3>
 				</div>
-			</main>
-		</div>
+				<div id="location-list">
+				</div>
+			</div>
+		</main>
+
+		<footer>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<img src="images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.ctrlKey){document.location+='/box/?id=003';}else if(event.shiftKey){document.location+='/print/';}">
+		</footer>
+
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+		<script src="main.js"></script>
+
 	</body>
 </html>
