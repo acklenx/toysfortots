@@ -110,9 +110,10 @@
 					const locSnap = await getDoc(locRef);
 
 					if (!locSnap.exists()) {
-						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-						loadingMessage.textContent = `Error: This Box ID (${boxId}) has not been set up yet.`;
-						return;
+						// This Box ID has not been set up. Redirect to the setup page.
+						console.log(`Box ID ${boxId} not found. Redirecting to setup page...`);
+						window.location.href = `/setup/?id=${boxId}`;
+						return; // Stop further execution
 					}
 
 					// 3. Get the data from the document
