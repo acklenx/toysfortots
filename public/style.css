@@ -174,6 +174,9 @@ footer {
     .footer-bear {
         height: 100px;
         margin-top: 10px;
+        display: block; /* Treat the image as a block */
+        margin-left: auto; /* Auto margin left */
+        margin-right: auto; /* Auto margin right */
     }
 }
 
