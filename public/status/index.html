@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Box History</title>
+		<script type="module">
+			// --- 1. IMPORTS (Added getDocs, query, where, orderBy) ---
+			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+			import { getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+			// --- 2. CONFIG & TOP-LEVEL VARS ---
+			const firebaseConfig = {
+				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
+				authDomain: "toysfortots-eae4d.firebaseapp.com",
+				projectId: "toysfortots-eae4d",
+				storageBucket: "toysfortots-eae4d.firebasestorage.app",
+				messagingSenderId: "505039956655",
+				appId: "1:505039956655:web:c750c66b28f7facd82025a",
+				measurementId: "G-XKQYPK0GLC"
+			};
+			const appId = firebaseConfig.projectId;
+			let db, auth;
+			let appDB, appAuth, appID;
+
+			// --- 3. FIREBASE SETUP ---
+			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
+			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+			let reportsCollectionRef;
+
+			const setupFirebase = () => {
+				console.log("Setting up Firebase...");
+				try {
+					const app = initializeApp(firebaseConfig);
+					auth = getAuth(app);
+					db = getFirestore(app);
+
+					let appInitialized = false;
+					onAuthStateChanged(auth, (user) => {
+						if (user && !appInitialized) {
+							appInitialized = true;
+							window.initApp(appId, db, auth);
+						} else if (!user) {
+							signInAnonymously(auth).catch((err) => {
+								console.error("Anonymous sign-in failed:", err);
+							});
+						}
+					});
+				} catch (error) {
+					console.error("Firebase Initialization Error:", error);
+				}
+			};
+
+			// --- 4. HELPER FUNCTIONS ---
+			const formatDate = (isoString) => {
+				if (!isoString) return 'No date';
+				const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+				return new Date(isoString).toLocaleString(undefined, options);
+			};
+
+			const renderReportItem = (report) => {
+				// Check for both 'reportType' (from button) and 'report-type' (from form)
+				const reportTypeName = report.reportType || report['report-type'] || 'unknown_report';
+
+				const isProblem = reportTypeName.includes('problem');
+				const bgColor = isProblem ? 'bg-red-50' : 'bg-white';
+				const borderColor = isProblem ? 'border-tots-red/50' : 'border-gray-200';
+				const statusColor = report.status === 'new' ? 'text-tots-red' : 'text-tots-green';
+				const statusText = report.status === 'new' ? 'New' : 'Cleared';
+
+				return `
+                <li class="${bgColor} p-4 rounded-lg border ${borderColor} shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-gray-800">${reportTypeName.replace(/_/g, ' ').toUpperCase()}</span>
+                        <span class="text-sm font-semibold ${statusColor}">${statusText}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">
+                        ${report.description || report.notes || 'No details provided.'}
+                    </p>
+                    <div class="text-xs text-gray-500 flex justify-between">
+                        <span>${formatDate(report.timestamp)}</span>
+                        <span>${report.contactName || '?'} ${report.contactEmail || '??'}</span>
+                    </div>
+                </li>
+            `;
+			};
+
+			// --- 5. MAIN APP LOGIC ---
+			window.initApp = async (appId, dbInstance, authInstance) => {
+				appDB = dbInstance;
+				appAuth = authInstance;
+				appID = appId;
+
+				const listDiv = document.getElementById('location-display');
+				const loadingMessage = document.getElementById('loading-message');
+				const historyContainer = document.getElementById('history-container');
+				const historyLoading = document.getElementById('history-loading');
+
+				const params = new URLSearchParams(window.location.search);
+				const boxId = params.get('id');
+
+				if (!boxId) {
+					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+					loadingMessage.textContent = "Error: Box ID missing from the link.";
+					return;
+				}
+
+				reportsCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
+
+				try {
+					// --- Task 1: Get the Box's main info (Same as your page) ---
+					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
+					const locSnap = await getDoc(locRef);
+
+					if (locSnap.exists()) {
+						const location = locSnap.data();
+						loadingMessage.remove();
+						listDiv.innerHTML = `
+                        <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
+                            <h2 class="text-xl font-bold text-tots-red">${location.label}</h2>
+                            <p class="text-sm text-gray-700 mt-1">${location.address}, ${location.city}, ${location.state}</p>
+                            <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${boxId}</span></p>
+                            <p class="text-sm font-semibold">Assigned Volunteer: ${location.volunteer}</p>
+                        </div>
+                    `;
+					} else {
+						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+						loadingMessage.textContent = "Error: Box ID not found.";
+						historyLoading.remove();
+						return; // Stop if box doesn't exist
+					}
+
+					// --- Task 2: Get all reports for this box ---
+					const q = query(reportsCollectionRef,
+							where("boxId", "==", boxId),
+							orderBy("timestamp", "desc")
+					);
+
+					const querySnapshot = await getDocs(q);
+					historyLoading.remove();
+
+					if (querySnapshot.empty) {
+						historyContainer.innerHTML = '<p class="text-gray-500 text-center">No reports found for this box.</p>';
+						return;
+					}
+
+					let historyHtml = '';
+					querySnapshot.forEach(docSnap => {
+						historyHtml += renderReportItem(docSnap.data());
+					});
+					historyContainer.innerHTML = historyHtml;
+
+				} catch (error) {
+					console.error("Error loading data:", error);
+					loadingMessage.textContent = `Error: ${error.message}`;
+				}
+			};
+
+			// --- 6. EXPOSE SETUP FUNCTION ---
+			window.setupFirebase = setupFirebase;
+		</script>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						fontFamily: { sans: ['Inter', 'sans-serif'] },
+						colors: {
+							'tots-red': '#cc0000',
+							'tots-green': '#008000',
+							'tots-light': '#fcebeb',
+						}
+					}
+				}
+			}
+		</script>
+	</head>
+	<body class="bg-gray-100 font-sans p-4" onload="setupFirebase()">
+
+		<div class="max-w-md mx-auto">
+			<header class="bg-tots-red p-6 rounded-t-xl shadow-lg">
+				<h1 class="text-3xl font-extrabold text-white text-center">Box Report History</h1>
+			</header>
+
+			<main class="p-4 md:p-6 bg-white shadow-lg rounded-b-xl">
+				<section id="location-display" class="mb-6">
+					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
+				</section>
+
+				<section id="history">
+					<h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">
+						Report Log
+					</h2>
+					<p id="history-loading" class="text-center text-gray-500">Loading history...</p>
+					<ul id="history-container" class="space-y-3">
+					</ul>
+				</section>
+			</main>
+		</div>
+	</body>
+</html>

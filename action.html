@@ -70,15 +70,15 @@
 						</p>
 						<form id="pickup-details-form" name="pickup-details-form" class="space-y-3">
 							<input type="hidden" name="form-name" value="pickup-details-form">
-							<input type="hidden" id="pickup-box-id-detail" name="box-info">
+							<input type="hidden" id="pickup-box-id-detail" name="boxInfo">
 
 							<label class="block text-sm font-medium text-gray-700">Detailed Notes:</label>
 							<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
-								<input type="text" name="contact-name" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contact-email" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
@@ -106,15 +106,15 @@
 					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
 						<form id="problem-details-form" name="problem-details-form" class="space-y-3">
 							<input type="hidden" name="form-name" value="problem-details-form">
-							<input type="hidden" id="problem-box-id-detail" name="box-info">
+							<input type="hidden" id="problem-box-id-detail" name="boxInfo">
 
 							<label class="block text-sm font-medium text-gray-700">What is the problem? <span class="text-tots-red">*</span></label>
 							<textarea name="description" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
-								<input type="text" name="contact-name" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contact-email" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
@@ -134,11 +134,11 @@
 		<!-- Netlify registers these forms when the page is deployed/viewed -->
 		<form name="instant-pickup" data-netlify="true" hidden>
 			<input type="hidden" name="form-name" value="instant-pickup">
-			<input type="text" name="box-info" id="instant-pickup-id">
+			<input type="text" name="boxInfo" id="instant-pickup-id">
 		</form>
 		<form name="instant-problem" data-netlify="true" hidden>
 			<input type="hidden" name="form-name" value="instant-problem">
-			<input type="text" name="box-info" id="instant-problem-id">
+			<input type="text" name="boxInfo" id="instant-problem-id">
 		</form>
 
 
@@ -252,7 +252,7 @@
 				pickupBtn.innerHTML = 'Sending...';
 
 				const boxInfo = document.getElementById('instant-pickup-id').value;
-				const success = await submitForm('instant-pickup', { "box-info": boxInfo });
+				const success = await submitForm('instant-pickup', { "boxInfo": boxInfo });
 
 				if (success) {
 					// 1. Show confirmation for instant submission
@@ -277,7 +277,7 @@
 				problemBtn.innerHTML = 'Sending Urgent Alert...';
 
 				const boxInfo = document.getElementById('instant-problem-id').value;
-				const success = await submitForm('instant-problem', { "box-info": boxInfo });
+				const success = await submitForm('instant-problem', { "boxInfo": boxInfo });
 
 				if (success) {
 					// 1. Show confirmation that the alert was sent

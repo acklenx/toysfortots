@@ -46,10 +46,10 @@ exports.handler = async (event, context) => {
 		const bodyParams = new URLSearchParams(event.body);
 		const data = Object.fromEntries(bodyParams.entries());
 
-		const { 'form-name': formName, 'box-info': boxInfo, notes, description, 'contact-name': contactName, 'contact-email': contactEmail } = data;
+		const { 'form-name': formName, 'boxInfo': boxInfo, notes, description, 'contactName': contactName, 'contactEmail': contactEmail } = data;
 
 		if (!boxInfo) {
-			return { statusCode: 400, body: JSON.stringify({ error: 'Missing box-info identifier.' }) };
+			return { statusCode: 400, body: JSON.stringify({ error: 'Missing boxInfo identifier.' }) };
 		}
 
 		const date = new Date();
