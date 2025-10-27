@@ -1,6 +1,32 @@
+// --- 1. IMPORTS ---
+// We need these to connect to Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- 2. CONFIG & TOP-LEVEL VARS ---
+const firebaseConfig = {
+	apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
+	authDomain: "toysfortots-eae4d.firebaseapp.com",
+	projectId: "toysfortots-eae4d",
+	storageBucket: "toysfortots-eae4d.firebasestorage.app",
+	messagingSenderId: "505039956655",
+	appId: "1:505039956655:web:c750c66b28f7facd82025a",
+	measurementId: "G-XKQYPK0GLC"
+};
+const appId = firebaseConfig.projectId;
+let db; // This will hold our database connection
+
+// --- 3. FIREBASE PATHS ---
+// These are from your project's configuration
+const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
+const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+const locationsCollectionPath = `artifacts/${appId}/public/${publicDocumentId}/data/${dataDocumentId}/locations`;
+
+// --- 4. LEAFLET SETUP (from your original file) ---
 document.addEventListener('DOMContentLoaded', () => {
 	// Initialize the map, centered on Woodstock, GA
-	const map = L.map('map').setView([34.05, -84.55], 10); // Adjusted initial view
+	const map = L.map('map').setView([34.05, -84.55], 10);
 
 	// Add the tile layer from OpenStreetMap
 	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -9,53 +35,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const locationList = document.getElementById('location-list');
 
-	// --- Define custom icon ---
+	// --- Define custom icon (your code) ---
 	const customIcon = L.icon({
-		iconUrl: 'images/pin.png', // Path to your custom icon
-		iconSize: [40, 40],                     // Size of the icon (width, height)
-		iconAnchor: [20, 40],                   // Point of the icon which will correspond to marker's location (half of iconSize width, full height for bottom-center)
-		popupAnchor: [0, -40]                   // Point from which the popup should open relative to the iconAnchor
+		iconUrl: 'images/pin.png',
+		iconSize: [40, 40],
+		iconAnchor: [20, 40],
+		popupAnchor: [0, -40]
 	});
 
+	// --- 5. NEW: FIREBASE FUNCTIONS ---
 
-	// Fetch the location data from your JSON file
-	fetch('locations.json')
-		.then(response => response.json())
-		.then(locations => {
-			locations.forEach(location => {
+	/**
+	 * Fetches locations from Firestore and populates the map and list.
+	 */
+	async function loadLocations() {
+		locationList.innerHTML = '<p style="padding: 15px; text-align: center;">Loading locations...</p>';
+
+		try {
+			const locationsRef = collection(db, locationsCollectionPath);
+
+			// --- THIS IS THE FIX ---
+			// 1. Create a query to order by the "created" field, descending
+			const q = query(locationsRef, orderBy("created", "desc"));
+
+			// 2. Fetch the documents using that query
+			const querySnapshot = await getDocs(q);
+
+			if (querySnapshot.empty) {
+				locationList.innerHTML = '<p style="padding: 15px; text-align: center;">No donation locations have been set up yet.</p>';
+				return;
+			}
+
+			locationList.innerHTML = ''; // Clear "Loading..."
+
+			// 3. Loop through the results (they are already sorted!)
+			querySnapshot.forEach((doc) => {
+				const location = doc.data();
+				const boxId = doc.id; // Get the boxId just in case
+
+				// This is your exact logic from before
 				if (location.lat && location.lon) {
-					// Create a marker on the map
-					// --- Use the customIcon here ---
 					const marker = L.marker([location.lat, location.lon], { icon: customIcon }).addTo(map);
 
-
-					// Create the popup content
 					let popupContent = `<b>${location.label}</b><br>${location.address}`;
 					if (location.contact) {
 						popupContent += `<br><small>Contact: ${location.contact}</small>`;
 					}
 					marker.bindPopup(popupContent);
 
-					// Create the list item
 					const listItem = document.createElement('div');
 					listItem.className = 'location-item';
 					listItem.innerHTML = `
-                        <h4>${location.label}</h4>
-                        <p>${location.address}</p>
-                    `;
+                            <h4>${location.label}</h4>
+                            <p>${location.address}</p>
+                        `;
 
-					// Add click event to list item to pan map and open popup
 					listItem.addEventListener('click', () => {
-						map.setView([location.lat, location.lon], 14); // Zoom in closer
+						map.setView([location.lat, location.lon], 14);
 						marker.openPopup();
 					});
 
 					locationList.appendChild(listItem);
 				}
 			});
-		})
-		.catch(error => {
+
+		} catch (error) {
 			console.error('Error fetching location data:', error);
-			locationList.innerHTML = '<p style="padding: 15px;">Could not load location data.</p>';
-		});
+			// This will show permission errors if they happen
+			locationList.innerHTML = `<p style="padding: 15px; text-align: center; color: red;">Could not load location data: ${error.message}</p>`;
+		}
+	}
+
+	/**
+	 * Initializes Firebase and signs in anonymously.
+	 */
+	function initFirebase() {
+		try {
+			const app = initializeApp(firebaseConfig);
+			db = getFirestore(app); // Set the global db variable
+			const auth = getAuth(app);
+
+			onAuthStateChanged(auth, (user) => {
+				if (user) {
+					// User is signed in, load the data
+					console.log("Anonymous user signed in:", user.uid);
+					loadLocations();
+				} else {
+					// User is not signed in, attempt to sign in
+					signInAnonymously(auth).catch((error) => {
+						console.error("Anonymous sign-in failed:", error);
+						locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not connect to database.</p>';
+					});
+				}
+			});
+		} catch (error) {
+			console.error("Firebase Init Error:", error);
+			locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not initialize app.</p>';
+		}
+	}
+
+	// --- 6. START THE APP ---
+	initFirebase();
 });

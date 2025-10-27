@@ -2,8 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- HELPER FUNCTION HAS BEEN SIMPLIFIED ---
-    // This now directly checks the path in your screenshot
+    // --- HELPER FUNCTION (Unchanged) ---
     function isAuthorizedVolunteer() {
       return request.auth.token.firebase.sign_in_provider == 'google.com'
              && exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY/authorizedVolunteers/$(request.auth.uid));
@@ -12,39 +11,33 @@ service cloud.firestore {
     // --- Public Data ---
     match /artifacts/toysfortots-eae4d/public/3USFkKsJe7T8ZYdW5YfE/data/EF1QWEKWPMuoLN7fC4Ri {
 
-      // Allow ANY authenticated user to read (get) a single location
+      // --- THIS IS THE FIX ---
+      // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
       match /locations/{boxId} {
-        allow get: if request.auth != null;
-        allow list, create, update, delete: if false;
+        allow get, list: if request.auth != null; // <--- ADDED "list" HERE
+        allow create, update, delete: if false;
       }
 
-      // --- TOTSREPORTS RULE ---
+      // --- TOTSREPORTS RULE (Unchanged) ---
       match /totsReports/{reportId} {
-        // Allow ANYONE to create a report
         allow create: if request.auth != null;
-
-        // Allow ONLY authorized volunteers to read or update
         allow list, get, update: if isAuthorizedVolunteer();
-
         allow delete: if false;
       }
     }
 
-    // --- Private Data ---
+    // --- Private Data (Unchanged) ---
     match /artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY {
 
-      // Allow Google users to read contacts (for the setup page)
       match /contacts/{contactId} {
         allow list, get: if request.auth.token.firebase.sign_in_provider == 'google.com';
         allow write: if false;
       }
 
-      // DENY client access to config
       match /metadata/config {
          allow read, write: if false;
       }
 
-      // DENY client access to auth list
       match /authorizedVolunteers/{userId} {
         allow read, write: if false;
       }

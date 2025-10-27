@@ -58,24 +58,30 @@ header {
     height: 60px;
 }
 
+/* --- MODIFIED CONTAINER (Desktop) --- */
 .container {
     display: flex;
     max-width: 1200px;
     margin: 20px auto;
     gap: 20px;
     padding: 0 20px;
+    /* Added height property for desktop */
+    height: 75vh;
+    min-height: 500px; /* Ensure it has a good minimum size */
 }
 
+/* --- MODIFIED MAP (Desktop) --- */
 #map {
-    height: 70vh;
+    height: 100%; /* Change to 100% to fill the container's height */
     flex: 2; /* Takes 2/3 of the width */
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* --- MODIFIED LIST (Desktop) --- */
 #location-list-container {
     flex: 1; /* Takes 1/3 of the width */
-    height: 70vh;
+    height: 100%; /* Change to 100% to fill the container's height */
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -137,7 +143,7 @@ footer {
     margin-top: 10px;
 }
 
-/* Mobile Responsive */
+/* --- MODIFIED Mobile Responsive --- */
 @media (max-width: 768px) {
     .header-content {
         flex-direction: column;
@@ -148,8 +154,22 @@ footer {
     }
     .container {
         flex-direction: column;
+        height: auto; /* Let the container grow naturally */
     }
-    #map, #location-list-container {
-        height: 50vh;
+
+    /* * This is the main fix.
+     * We give the map a preferred height (40vh)
+     * but also a *guaranteed* minimum pixel height.
+     */
+    #map {
+        height: 40vh;
+        min-height: 300px; /* Guarantees the map will render */
+        width: 100%;
+    }
+
+    #location-list-container {
+        height: 50vh; /* This is fine for the list */
+        min-height: 300px; /* Give it a min-height too */
+        width: 100%;
     }
 }
