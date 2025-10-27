@@ -1,8 +1,0 @@
-[build]
-  functions = "netlify/functions"
-[functions.process-tots-report.environment]
-command = "echo $FIREBASE_SERVICE_ACCOUNT_BASE64 | base64 -d > netlify/functions/firebase-key.json"
-[functions.process-tots-report.environment]
-MAILGUN_API_KEY = "${MAILGUN_API_KEY}"
-MAILGUN_DOMAIN = "${MAILGUN_DOMAIN}"
-TOTS_RECIPIENT_EMAIL = "${TOTS_RECIPIENT_EMAIL}"

@@ -30,7 +30,6 @@
 			let reportsCollectionRef;
 
 			const setupFirebase = () => {
-				console.log("Setting up Firebase...");
 				try {
 					const app = initializeApp(firebaseConfig);
 					auth = getAuth(app);
@@ -80,7 +79,8 @@
                     </p>
                     <div class="text-xs text-gray-500 flex justify-between">
                         <span>${formatDate(report.timestamp)}</span>
-                        <span>${report.contactName || '?'} ${report.contactEmail || '??'}</span>
+                        <span>${report.contactName? 'Name: ' : ''} ${report.contactName || ''}</span>
+                        <span>${report.contactEmail? 'Email: ' : ''} ${report.contactEmail || ''}</span>
                     </div>
                 </li>
             `;

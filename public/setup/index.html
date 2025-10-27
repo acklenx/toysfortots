@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Set Up New T4T Location</title>
+		<title>Set Up New Location</title>
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
 			:root {
@@ -126,12 +126,6 @@
 					<input type="number" id="boxes" name="boxes" value="1" min="1">
 				</div>
 
-				<div class="form-group">
-					<label for="volunteer">Your Name (Volunteer)</label>
-					<input type="text" id="volunteer" name="volunteer" list="volunteers-list" required>
-					<datalist id="volunteers-list">
-					</datalist>
-				</div>
 
 				<div class="form-group">
 					<label for="passcode">Password</label>
@@ -185,11 +179,9 @@
 			const appId = firebaseConfig.projectId;
 			let scannedBoxId = null;
 
-			// --- Firestore Paths ---
-			const contactsCollectionPath = `artifacts/${appId}/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY/contacts`;
 
 			// Firebase instances
-			let app, auth, db, functions, provisionBox; // Added functions
+			let app, auth, db, functions, provisionBox, isAuthorizedVolunteer; // Added functions
 
 			// DOM Elements
 			const authContainer = document.getElementById('auth-container');
@@ -208,20 +200,7 @@
 
 			// --- 4. CORE APP LOGIC ---
 
-			async function fetchVolunteers() {
-				try {
-					const querySnapshot = await getDocs(collection(db, contactsCollectionPath));
-					let options = '';
-					querySnapshot.forEach((doc) => {
-						const contact = doc.data();
-						options += `<option value="${contact.callsign}"></option>`;
-					});
-					volunteersDatalist.innerHTML = options;
-				} catch (error) {
-					console.error("Error fetching volunteers:", error);
-					showMessage('error', 'Could not load volunteer list. Check permissions.');
-				}
-			}
+
 
 			/**
 			 * Handles the form submission by calling a Cloud Function
@@ -241,7 +220,7 @@
 				// Get data from the form
 				const formData = new FormData(form);
 
-				// Build the payload for the Cloud Function
+				// Build the payload (NO 'volunteer' field)
 				const payload = {
 					boxId: scannedBoxId,
 					label: formData.get('label'),
@@ -249,24 +228,27 @@
 					city: formData.get('city'),
 					state: formData.get('state'),
 					boxes: parseInt(formData.get('boxes'), 10),
-					volunteer: formData.get('volunteer'),
-					passcode: formData.get('passcode') // The new secret field
+					passcode: formData.get('passcode') // This will be blank if hidden
 				};
 
 				try {
 					// --- Call the Cloud Function ---
 					const result = await provisionBox(payload);
 
-					// Success!
-					showMessage('success', `Success! Location for Box ID: <strong>${result.data.boxId}</strong> has been saved.`);
+					// --- SUCCESS BLOCK ---
+					const newBoxId = result.data.boxId;
+					showMessage('success', `Success! Box ID: <strong>${newBoxId}</strong> saved. Redirecting in 2 seconds...`);
+
 					form.reset();
 					boxIdDisplay.textContent = scannedBoxId;
 
+					setTimeout(() => {
+						window.location.href = `/status/?id=${newBoxId}`;
+					}, 2000);
+
 				} catch (error) {
 					console.error("Error submitting location:", error);
-					// The HttpsError from the function will have a .message
 					showMessage('error', `Submission failed: ${error.message}`);
-				} finally {
 					submitBtn.disabled = false;
 					submitBtn.textContent = 'Submit Location';
 				}
@@ -293,6 +275,7 @@
 				// --- NEW: Initialize Functions ---
 				functions = getFunctions(app);
 				provisionBox = httpsCallable(functions, 'provisionBox');
+				isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteer');
 
 				const provider = new GoogleAuthProvider();
 
@@ -300,15 +283,56 @@
 				signOutBtn.onclick = () => signOut(auth);
 				form.onsubmit = handleFormSubmit;
 
-				onAuthStateChanged(auth, (user) => {
+				onAuthStateChanged(auth, async (user) => { // Added "async"
 					if (user && !user.isAnonymous) {
+						// User is signed in with Google
 						authContainer.classList.add('hidden');
 						form.classList.remove('hidden');
-						fetchVolunteers();
+
+						// --- Get both the group and the input itself ---
+						const passcodeGroup = document.getElementById('passcode').parentElement;
+						const passcode = document.getElementById('passcode'); // --- ADDED ---
+						const passcodeLabel = passcodeGroup.querySelector('label');
+
+						try {
+							// --- NEW: Check if user is already authorized ---
+							passcodeLabel.textContent = "Verifying authorization...";
+							const result = await isAuthorizedVolunteer();
+
+							if (result.data.isAuthorized) {
+								// YES, user is authorized. Hide password AND make it not required.
+								passcodeGroup.classList.add('hidden');
+								passcode.required = false; // --- THE FIX ---
+								passcode.value = ''; // Clear it just in case
+								passcodeLabel.textContent = "Password (Authorized)";
+							} else {
+								// NO, user is new. Show password AND make it required.
+								passcodeGroup.classList.remove('hidden');
+								passcode.required = true; // --- THE FIX ---
+								passcodeLabel.textContent = "Password (New Volunteer)";
+							}
+
+							// (You can safely delete this line now, it's not used)
+							// fetchVolunteers();
+
+						} catch (error) {
+							console.error("Auth check failed:", error);
+							showMessage('error', 'Could not verify authorization. Please refresh.');
+							passcodeGroup.classList.remove('hidden');
+							passcode.required = true; // --- ADDED for safety ---
+							passcodeLabel.textContent = "Password";
+						}
+
 					} else {
+						// User is signed out
 						authContainer.classList.remove('hidden');
 						form.classList.add('hidden');
 						volunteersDatalist.innerHTML = '';
+
+						// Show password field and make it required by default when logged out
+						document.getElementById('passcode').parentElement.classList.remove('hidden');
+						document.getElementById('passcode').required = true; // --- ADDED ---
+
 						if (user && user.isAnonymous) {
 							signOut(auth);
 						}
