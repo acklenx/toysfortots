@@ -2,39 +2,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Public Data (For your submit.html page) ---
+    // --- Helper function for Private Data Path
+    function privateDataPath() {
+      return /databases/$(database)/documents/artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY;
+    }
+
+    // --- Helper function to check authorization
+    function isAuthorizedVolunteer() {
+      return request.auth.token.firebase.sign_in_provider == 'google.com'
+             && exists(privateDataPath().path() + '/authorizedVolunteers/' + request.auth.uid);
+    }
+
+    // --- Public Data ---
     match /artifacts/toysfortots-eae4d/public/3USFkKsJe7T8ZYdW5YfE/data/EF1QWEKWPMuoLN7fC4Ri {
 
       // Allow ANY authenticated user to read (get) a single location
       match /locations/{boxId} {
         allow get: if request.auth != null;
-        allow list, create, update, delete: if false; // Deny all writes
+        allow list, create, update, delete: if false;
       }
 
-      // Allow ANY authenticated user to create a new report
+      // --- TOTSREPORTS RULE ---
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow read, update, delete: if false;
+        allow list, get, update: if isAuthorizedVolunteer();
+        allow delete: if false;
       }
     }
 
-    // --- Private Data (For your setup.html page) ---
+    // --- Private Data ---
     match /artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY {
 
-      // Allow ONLY authenticated Google users to LIST (read) the contacts
+      // --- RULE FIX IS HERE ---
+      // Allow any Google user (not just authorized ones) to read contacts
       match /contacts/{contactId} {
         allow list, get: if request.auth.token.firebase.sign_in_provider == 'google.com';
         allow write: if false;
       }
 
-      // Allow ONLY authenticated Google users to READ the config
+      // DENY client access to config
       match /metadata/config {
-         allow get: if request.auth.token.firebase.sign_in_provider == 'google.com';
-         allow write: if false;
+         allow read, write: if false;
+      }
+
+      // DENY client access to auth list
+      match /authorizedVolunteers/{userId} {
+        allow read, write: if false;
       }
     }
 
-    // Denal all other access
+    // Deny all other access
     match /{document=**} {
       allow read, write: if false;
     }
