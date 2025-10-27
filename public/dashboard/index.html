@@ -148,7 +148,7 @@
                         <p class="font-semibold ${ isProblem ? 'text-tots-red' : 'text-yellow-700' }">
                             Status: ${ report.reportType.replace( /_/g, ' ' ) }
                         </p>
-                        <p class="text-sm text-gray-600">${ report.description }</p>
+                        <p class="text-sm text-gray-600">${ report.description || report.notes || 'No details provided.' }</p>
                         <button
                             class="clear-status-btn mt-3 w-full py-2 px-3 bg-tots-green hover:bg-green-700 text-white text-sm font-semibold rounded-md transition duration-200"
                             data-report-id="${ report.id }">
