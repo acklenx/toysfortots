@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Set Up New Location</title>
 		<script src="https://cdn.tailwindcss.com"></script>
-		<link rel="stylesheet" href="../style.css">
+		<link rel="stylesheet" href="/style.css?v=1.0.0">
 		<style>
 			:root {
 				/* These will be overridden by style.css, but are good fallbacks */
@@ -116,23 +116,19 @@
 		<header>
 			<div class="header-content">
 				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
-					<img src="../images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+					<img src="/images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
 				</a>
 				<div class="header-text">
-					<h1>
-						<a href="/" style="color: var(--marine-blue); text-decoration: none;">
-							Toys for Tots Drop-Off Locations
-						</a>
-					</h1>
-					<h2>
-						<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red); text-decoration: none;">
-							North Fulton & Cherokee County, GA
-						</a>
-					</h2>
+					<a href="https://toysfortots.mcl1311.com/" rel="noopener noreferrer" style="color: var(--marine-blue); text-decoration: none;">
+						<h1>Toys for Tots Drop-Off Locations</h1>
+					</a>
+					<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red); text-decoration: none;">
+						<h2>North Metro Atlanta Area</h2>
+					</a>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
 				<a href="/dashboard">
-					<img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+					<img src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
 				</a>
 			</div>
 		</header>
@@ -464,6 +460,12 @@
 
 				init();
 			</script>
+
 		</div>
+		<footer>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
+				official representatives of this Toys for Tots campaign.</p>
+			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
+		</footer>
 	</body>
 </html>

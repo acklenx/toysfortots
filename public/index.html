@@ -5,20 +5,25 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Toys for Tots - North Metro Atlanta Area</title>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/style.css?v=1.0.0">
 	</head>
 	<body>
-
 		<header>
 			<div class="header-content">
-				<img src="images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
+					<img src="/images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				</a>
 				<div class="header-text">
-					<h1>Toys for Tots Drop-Off Locations</h1>
-					<h2>North Metro Atlanta Area</h2>
+					<a href="https://toysfortots.mcl1311.com/" rel="noopener noreferrer" style="color: var(--marine-blue); text-decoration: none;">
+						<h1>Toys for Tots Drop-Off Locations</h1>
+					</a>
+					<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red); text-decoration: none;">
+						<h2>North Metro Atlanta Area</h2>
+					</a>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
 				<a href="/dashboard">
-					<img src="images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+					<img src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
 				</a>
 			</div>
 		</header>
@@ -37,7 +42,7 @@
 		<footer>
 			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
 				official representatives of this Toys for Tots campaign.</p>
-			<img src="images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
+			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
 		</footer>
 
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
