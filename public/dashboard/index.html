@@ -3,12 +3,15 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Volunteer Dashboard</title>
+		<title>My Dashboard</title>
+		<link rel="stylesheet" href="../style.css">
+
 		<script type="module">
-			// --- 1. IMPORTS (Added getDocs, query, where, orderBy, updateDoc, writeBatch) ---
+			// --- 1. IMPORTS ---
 			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import { getFirestore, collection, getDocs, query, where, orderBy, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+			import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+			import { getFirestore, collection, getDocs, query, where, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+			import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			const firebaseConfig = {
@@ -21,230 +24,303 @@
 				measurementId: "G-XKQYPK0GLC"
 			};
 			const appId = firebaseConfig.projectId;
-			let db, auth;
+			let db, auth, functions;
 			let appDB, appAuth, appID;
 
-			// --- 3. FIREBASE SETUP ---
+			// --- 3. FIREBASE PATHS ---
 			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
 			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
-			let reportsCollectionRef; // We'll define this in initApp
+			const reportsCollectionPath = `artifacts/${appId}/public/${publicDocumentId}/data/${dataDocumentId}/totsReports`;
+
+			// --- 4. FIREBASE SETUP (Google Auth + Auth Check) ---
 
 			const setupFirebase = () => {
-				console.log("Setting up Firebase...");
 				try {
 					const app = initializeApp(firebaseConfig);
 					auth = getAuth(app);
 					db = getFirestore(app);
+					functions = getFunctions(app);
 
-					let appInitialized = false;
-					onAuthStateChanged(auth, (user) => {
-						if (user && !appInitialized) {
-							appInitialized = true;
-							window.initApp(appId, db, auth);
-						} else if (!user) {
-							signInAnonymously(auth).catch((err) => {
-								console.error("Anonymous sign-in failed:", err);
-							});
+					const isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteer');
+
+					onAuthStateChanged(auth, async (user) => {
+						if (user && user.providerData.some(p => p.providerId === 'google.com')) {
+
+							try {
+								const result = await isAuthorizedVolunteer();
+
+								if (result.data.isAuthorized) {
+									// --- THIS IS THE CHANGE ---
+									// Get the displayName and pass it to initApp
+									const displayName = result.data.displayName || user.displayName;
+									// --- END CHANGE ---
+
+									document.getElementById('auth-container').style.display = 'none';
+									document.getElementById('main-content').style.display = 'block';
+									document.getElementById('volunteer-name').textContent = displayName;
+
+									// --- PASS DISPLAYNAME HERE ---
+									window.initApp(appId, db, auth, user, displayName);
+
+								} else {
+									// --- Not Authorized ---
+									document.getElementById('main-content').style.display = 'none';
+									document.getElementById('auth-container').style.display = 'block';
+									document.getElementById('auth-message').textContent = "You are not an authorized volunteer. Please contact an administrator.";
+									document.getElementById('google-login-btn').style.display = 'none';
+								}
+							} catch (err) {
+								console.error("Authorization check failed:", err);
+								document.getElementById('auth-message').textContent = `An error occurred: ${err.message}`;
+							}
+
+						} else {
+							// No Google user. Show login button.
+							document.getElementById('main-content').style.display = 'none';
+							document.getElementById('auth-container').style.display = 'block';
 						}
 					});
+
+					// Handle the redirect result
+					getRedirectResult(auth).catch((error) => {
+						console.error("Redirect login failed:", error);
+						document.getElementById('auth-message').textContent = `Login failed: ${error.message}`;
+					});
+
+					// Add listener for the login button
+					document.getElementById('google-login-btn').addEventListener('click', () => {
+						const provider = new GoogleAuthProvider();
+						signInWithRedirect(auth, provider);
+					});
+
 				} catch (error) {
 					console.error("Firebase Initialization Error:", error);
 				}
 			};
 
-			// --- 4. HELPER FUNCTIONS ---
-			const formatDate = (isoString) => {
-				if (!isoString) return 'No date';
-				const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-				return new Date(isoString).toLocaleString(undefined, options);
-			};
+			// --- 5. HELPER FUNCTIONS ---
+
 
 			const renderBoxCard = (box) => {
-				const isPending = box.pendingReports.length > 0;
-				const statusColor = isPending ? 'red' : 'green';
-				const statusText = isPending ? `PENDING (${box.pendingReports.length})` : 'OK';
+				let statusHtml = '';
 
-				// Get the most recent report's description, if one exists
-				let recentActivity = 'No reports yet.';
-				if (box.allReports.length > 0) {
-					const mostRecentReport = box.allReports[0]; // Already sorted
-					recentActivity = `<b>${mostRecentReport.reportType}:</b> ${formatDate(mostRecentReport.timestamp)}`;
+				if (box.latestPendingReport) {
+					// There is an active, uncleared status
+					const report = box.latestPendingReport;
+					const isProblem = report.reportType.includes('problem');
+					statusHtml = `
+                    <div class="p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p class="font-semibold ${isProblem ? 'text-tots-red' : 'text-yellow-700'}">
+                            Status: ${report.reportType.replace(/_/g, ' ')}
+                        </p>
+                        <p class="text-sm text-gray-600">${report.description}</p>
+                        <button
+                            class="clear-status-btn mt-3 w-full py-2 px-3 bg-tots-green hover:bg-green-700 text-white text-sm font-semibold rounded-md transition duration-200"
+                            data-report-id="${report.id}">
+                            Mark as Cleared
+                        </button>
+                    </div>
+                `;
+				} else {
+					// All statuses are cleared
+					statusHtml = `
+                    <div class="p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p class="font-semibold text-tots-green">Status: Good</p>
+                        <p class="text-sm text-gray-600">All reports are cleared.</p>
+                    </div>
+                `;
 				}
 
 				return `
-                <div class="box-card bg-white p-4 rounded-lg border border-gray-200 shadow-md mb-4" data-box-id="${box.boxId}">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-lg font-bold text-tots-red">${box.label}</h3>
-                            <p class="text-sm text-gray-600">${box.address}</p>
-                            <p class="text-xs text-gray-500 mt-1">ID: ${box.boxId}</p>
-                        </div>
-                        <span class="status-badge text-xs font-bold py-1 px-2 rounded-full bg-${statusColor}-100 text-${statusColor}-700 border border-${statusColor}-300">
-                            ${statusText}
-                        </span>
+                <div class="box-card bg-white p-4 rounded-lg border border-gray-200 shadow-md">
+                    <div>
+                        <h3 class="text-lg font-bold text-tots-red">${box.label}</h3>
+                        <p class="text-sm text-gray-600">${box.address}, ${box.city}</p>
+                        <p class="text-xs text-gray-500 mt-1">ID: ${box.boxId}</p>
                     </div>
-                    <p class="text-sm text-gray-800 mt-3">
-                        <strong>Recent Activity:</strong> ${recentActivity}
-                    </p>
-                    <div class="flex gap-2 mt-4">
-                        <a href="box.html?id=${box.boxId}" class="flex-1 text-center py-2 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-md transition duration-200">
-                            View History
-                        </a>
-                        ${isPending ? `
-                        <button class="clear-status-btn flex-1 py-2 px-3 bg-tots-green hover:bg-green-700 text-white text-sm font-semibold rounded-md transition duration-200" data-box-id="${box.boxId}">
-                            Clear Status
-                        </button>
-                        ` : ''}
+                    <div class="mt-4">
+                        ${statusHtml}
                     </div>
+                    <a href="/status/?id=${box.boxId}" class="block text-center w-full mt-3 py-2 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-md transition duration-200">
+                        View Full History
+                    </a>
                 </div>
             `;
 			};
 
-			// --- 5. MAIN APP LOGIC ---
-			window.initApp = async (appId, dbInstance, authInstance) => {
-				appDB = dbInstance;
-				appAuth = authInstance;
-				appID = appId;
+			// --- 6. MAIN APP LOGIC ---
+			// --- 6. MAIN APP LOGIC ---
 
-				const loadingMessage = document.getElementById('loading-message');
-				const volunteerNameEl = document.getElementById('volunteer-name');
-				const pendingBoxesContainer = document.getElementById('pending-boxes-container');
-				const allBoxesContainer = document.getElementById('all-boxes-container');
+			// --- NEW GLOBAL VARS ---
+			// We'll store the full map of boxes and the user's ID globally for this script
+			let allBoxesMap = new Map();
+			let currentUserId = null;
 
-				const params = new URLSearchParams(window.location.search);
-				const volunteerName = params.get('volunteer');
+			/**
+			 * Renders the dashboard based on the selected filter key
+			 * @param {string} filterKey - "my_boxes", "all_boxes", or a volunteer's name
+			 */
 
-				if (!volunteerName) {
-					loadingMessage.textContent = "Error: Volunteer name missing from URL.";
-					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+
+			const renderDashboard = (filterKey) => {
+				const boxesContainer = document.getElementById('boxes-container');
+				const boxesTitle = document.getElementById('boxes-title');
+				boxesContainer.innerHTML = ''; // Clear previous content
+
+				let boxesToRender = [];
+
+				if (filterKey === "all_boxes") {
+					// --- Show All Boxes ---
+					boxesToRender = Array.from(allBoxesMap.values());
+					boxesTitle.textContent = "All Box Statuses";
+
+				} else {
+					// --- Show by Volunteer Name ---
+					// This will now catch "Quincy Acklen" on first load
+					// and any other name selected from the dropdown.
+					boxesTitle.textContent = `Boxes Assigned to ${filterKey}`;
+					allBoxesMap.forEach(box => {
+						if (box.volunteer === filterKey) {
+							boxesToRender.push(box);
+						}
+					});
+				}
+
+				// --- Render the filtered list ---
+				if (boxesToRender.length === 0) {
+					boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No boxes found for this filter.</p>';
 					return;
 				}
 
-				volunteerNameEl.textContent = volunteerName;
-				reportsCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
+				let html = '';
+				boxesToRender.sort((a, b) => a.label.localeCompare(b.label));
+
+				boxesToRender.forEach(box => {
+					html += renderBoxCard(box);
+				});
+				boxesContainer.innerHTML = html;
+			};
+
+
+			window.initApp = async (appId, dbInstance, authInstance, user, displayName) => {
+				appDB = dbInstance;
+				appAuth = authInstance;
+				appID = appId;
+				currentUserId = user.uid;
+				const currentUserDisplayName = displayName; // Store the user's name
+
+				const boxesContainer = document.getElementById('boxes-container');
+				const loadingMessage = document.getElementById('loading-message');
+				const filterSelect = document.getElementById('view-filter');
 
 				try {
-					// 1. Query all reports for this volunteer, sorted by time
-					const q = query(reportsCollectionRef,
-							where("volunteer", "==", volunteerName),
-							orderBy("timestamp", "desc")
+					// 1. Query ALL reports, sorted by OLDEST first (this is correct)
+					const reportsRef = collection(appDB, reportsCollectionPath);
+					const q = query(reportsRef,
+							orderBy("timestamp", "asc") // Sort oldest to newest
 					);
 
 					const querySnapshot = await getDocs(q);
 					loadingMessage.remove();
 
 					if (querySnapshot.empty) {
-						allBoxesContainer.innerHTML = '<p class="text-gray-600">No boxes found for this volunteer.</p>';
+						boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No reports have been filed for any boxes yet.</p>';
 						return;
 					}
 
-					// 2. Process reports into a map of boxes
-					const boxes = new Map();
-					const allPendingReports = []; // To hold reports that need clearing
+					// 2. Process reports (this logic is now correct)
+					const volunteerNames = new Set();
+					allBoxesMap.clear();
 
-					querySnapshot.forEach(docSnap => {
-						const report = { id: docSnap.id, ...docSnap.data() };
+					querySnapshot.forEach(doc => {
+						const report = { id: doc.id, ...doc.data() };
 						const boxId = report.boxId;
 
-						// Initialize box if it's not in the map
-						if (!boxes.has(boxId)) {
-							boxes.set(boxId, {
+						if (report.volunteer) {
+							volunteerNames.add(report.volunteer);
+						}
+
+						if (!allBoxesMap.has(boxId)) {
+							allBoxesMap.set(boxId, {
 								boxId: boxId,
 								label: report.label,
-								address: `${report.address}, ${report.city}`,
-								allReports: [],
-								pendingReports: []
+								address: report.address,
+								city: report.city,
+								latestPendingReport: null,
+								provisionedBy: report.provisionedBy,
+								volunteer: report.volunteer
 							});
 						}
 
-						// Add report to the correct lists
-						const box = boxes.get(boxId);
-						box.allReports.push(report);
+						const box = allBoxesMap.get(boxId);
 						if (report.status === 'new') {
-							box.pendingReports.push(report);
-							allPendingReports.push(report); // Add to master pending list
+							box.latestPendingReport = report;
 						}
 					});
 
-					// 3. Render boxes
-					let pendingHtml = '';
-					let allBoxesHtml = '';
+					// 3. Populate the filter dropdown (using your new logic)
+					filterSelect.innerHTML = `
+                    <option value="${currentUserDisplayName}">My Boxes</option>
+                    <option value="all_boxes">All Boxes</option>
+                    <option value="" disabled>--- Filter by Volunteer ---</option>
+                `;
 
-					if (boxes.size === 0) {
-						allBoxesContainer.innerHTML = '<p class="text-gray-600">No boxes assigned to this volunteer.</p>';
-					}
-
-					boxes.forEach(box => {
-						const cardHtml = renderBoxCard(box);
-						allBoxesHtml += cardHtml;
-						if (box.pendingReports.length > 0) {
-							pendingHtml += cardHtml;
+					const sortedNames = Array.from(volunteerNames).sort();
+					sortedNames.forEach(name => {
+						// Don't add the current user's name twice
+						if (true || name !== currentUserDisplayName) {
+							const option = document.createElement('option');
+							option.value = name;
+							option.textContent = name;
+							filterSelect.appendChild(option);
 						}
 					});
 
-					if (pendingHtml === '') {
-						pendingBoxesContainer.innerHTML = '<p class="text-sm text-gray-500 text-center p-4 bg-green-50 rounded-lg border">No pending actions. Great job!</p>';
-					} else {
-						pendingBoxesContainer.innerHTML = pendingHtml;
-					}
-					allBoxesContainer.innerHTML = allBoxesHtml;
-
-					// 4. Add event listeners for "Clear Status" buttons
-					document.body.addEventListener('click', async (e) => {
-						if (e.target && e.target.classList.contains('clear-status-btn')) {
-							const button = e.target;
-							const boxId = button.dataset.boxId;
-
-							button.disabled = true;
-							button.textContent = 'Clearing...';
-
-							// Find all pending reports for THIS box
-							const reportsToClear = allPendingReports.filter(r => r.boxId === boxId);
-
-							if (reportsToClear.length === 0) {
-								console.warn("No reports to clear, but button was clicked.");
-								button.textContent = 'Already Cleared';
-								return;
-							}
-
-							try {
-								// Use a batch write to update all at once
-								const batch = writeBatch(appDB);
-								reportsToClear.forEach(report => {
-									const reportRef = doc(reportsCollectionRef, report.id);
-									batch.update(reportRef, { status: "cleared" });
-								});
-
-								await batch.commit();
-
-								// Easiest way to update UI is to refresh
-								location.reload();
-
-								// // Fancier way (no reload):
-								// button.closest('.box-card').querySelector('.status-badge').textContent = 'OK';
-								// button.closest('.box-card').querySelector('.status-badge').className = 'status-badge text-xs font-bold py-1 px-2 rounded-full bg-green-100 text-green-700 border border-green-300';
-								// button.remove();
-								// // Also remove from "Pending" section
-								// const pendingCard = pendingBoxesContainer.querySelector(`[data-box-id="${boxId}"]`);
-								// if (pendingCard) pendingCard.remove();
-
-							} catch (err) {
-								console.error("Error clearing status: ", err);
-								alert("Error clearing status. Please try again.");
-								button.disabled = false;
-								button.textContent = 'Clear Status';
-							}
-						}
+					// 4. Add event listener for the filter
+					filterSelect.addEventListener('change', (e) => {
+						renderDashboard(e.target.value);
 					});
+
+					// 5. Render the default view using the user's name
+					renderDashboard(currentUserDisplayName);
 
 				} catch (error) {
 					console.error("Error fetching reports:", error);
-					loadingMessage.textContent = `Error loading reports: ${error.message}`;
-					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+					loadingMessage.innerHTML = `<p class="text-center text-tots-red font-bold p-4">Error loading reports: ${error.message}</p>`;
 				}
 			};
 
-			// --- 6. EXPOSE SETUP FUNCTION ---
+
+
+
+			// 4. Add event listener for "Clear Status" buttons
+			document.getElementById('main-content').addEventListener('click', async (e) => {
+				if (e.target && e.target.classList.contains('clear-status-btn')) {
+					const button = e.target;
+					const reportId = button.dataset.reportId;
+
+					button.disabled = true;
+					button.textContent = 'Clearing...';
+
+					try {
+						const reportRef = doc(db, reportsCollectionPath, reportId);
+						await updateDoc(reportRef, {
+							status: "cleared"
+						});
+
+						// Reload the page to show the next status (if any)
+						location.reload();
+
+					} catch (err) {
+						console.error("Error clearing status: ", err);
+						alert("Error clearing status. Please try again.");
+						button.disabled = false;
+						button.textContent = 'Clear Status';
+					}
+				}
+			});
+
+			// --- 7. EXPOSE SETUP FUNCTION ---
 			window.setupFirebase = setupFirebase;
 		</script>
 		<script src="https://cdn.tailwindcss.com"></script>
@@ -263,36 +339,60 @@
 			}
 		</script>
 	</head>
-	<body class="bg-gray-100 font-sans" onload="setupFirebase()">
+	<body class="bg-gray-100" onload="setupFirebase()">
 
-		<div class="max-w-2xl mx-auto">
-			<header class="bg-tots-red p-6 mt-6 rounded-t-xl shadow-lg">
-				<h1 class="text-3xl font-extrabold text-white text-center">Volunteer Dashboard</h1>
-				<p class="text-center text-red-100 text-lg mt-1">
-					Welcome, <span id="volunteer-name" class="font-bold">...</span>
-				</p>
+		<div id="auth-container" class="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-xl text-center" style="display: none;">
+			<header class="bg-tots-red p-6 -m-8 mb-8 rounded-t-xl">
+				<h1 class="text-3xl font-extrabold text-white text-center">Volunteer Access</h1>
+			</header>
+			<p id="auth-message" class="text-gray-700 mb-6">Please sign in with your Google account to access the dashboard.</p>
+			<button id="google-login-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200">
+				Sign In with Google
+			</button>
+		</div>
+
+		<div id="main-content" style="display: none;">
+
+			<header>
+				<div class="header-content">
+					<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
+						<img src="../images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+					</a>
+					<div class="header-text">
+						<h1>
+							<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--marine-blue); text-decoration: none;">
+								Toys for Tots Drop-Off Locations
+							</a>
+						</h1>
+						<h2>North Fulton & Cherokee County, GA</h2>
+						<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
+					</div>
+					<a href="/"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+				</div>
 			</header>
 
-			<main class="p-4 md:p-6 bg-gray-50 shadow-lg rounded-b-xl">
+			<div class="max-w-2xl mx-auto p-4 md:p-6">
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
+						<p class="text-lg text-gray-600 mb-4 sm:mb-0">Welcome, <span id="volunteer-name" class="font-semibold">...</span></p>
+					</div>
+					<div class="w-full sm:w-auto">
+						<label for="view-filter" class="block text-sm font-medium text-gray-700">Show boxes:</label>
+						<select id="view-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tots-red focus:border-tots-red sm:text-sm rounded-md shadow-sm">
+						</select>
+					</div>
+				</div>
 
-				<section id="pending-actions" class="mb-8">
-					<h2 class="text-2xl font-bold text-gray-800 border-b-2 border-tots-red pb-2 mb-4">
-						Pending Actions
+				<section id="boxes-section" class="mt-6">
+					<h2 id="boxes-title" class="text-2xl font-bold text-gray-800 border-b-2 border-tots-red pb-2 mb-4">
+						Loading...
 					</h2>
-					<div id="pending-boxes-container">
-						<p id="loading-message" class="text-center text-gray-500">Loading pending reports...</p>
+					<div id="boxes-container" class="space-y-4">
+						<p id="loading-message" class="text-center text-gray-500 p-4">Loading reports...</p>
 					</div>
 				</section>
+			</div>
 
-				<section id="all-boxes">
-					<h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">
-						All My Boxes
-					</h2>
-					<div id="all-boxes-container">
-					</div>
-				</section>
-
-			</main>
-		</div>
-	</body>
+		</div> </body>
 </html>

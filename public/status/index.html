@@ -4,6 +4,9 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Box History</title>
+
+		<link rel="stylesheet" href="../style.css">
+
 		<script type="module">
 			// --- 1. IMPORTS (Added getDocs, query, where, orderBy) ---
 			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -58,8 +61,8 @@
 				return new Date(isoString).toLocaleString(undefined, options);
 			};
 
+			// This is your last working render function
 			const renderReportItem = (report) => {
-				// Check for both 'reportType' (from button) and 'report-type' (from form)
 				const reportTypeName = report.reportType || report['report-type'] || 'unknown_report';
 
 				const isProblem = reportTypeName.includes('problem');
@@ -126,9 +129,15 @@
                     `;
 					} else {
 						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-						loadingMessage.textContent = "Error: Box ID not found.";
+						loadingMessage.textContent = `Error: Box ID not found. Redirecting to setup page in 2 seconds...`;
 						historyLoading.remove();
-						return; // Stop if box doesn't exist
+
+						// Wait 2 seconds then redirect
+						setTimeout(() => {
+							window.location.href = `/setup/?id=${boxId}`;
+						}, 2000); // 2000 milliseconds
+
+						return; // Stop further execution
 					}
 
 					// --- Task 2: Get all reports for this box ---
@@ -175,13 +184,40 @@
 				}
 			}
 		</script>
+		<style>
+			header h1 a:hover, header h2 a:hover {
+				text-decoration: underline;
+			}
+		</style>
 	</head>
-	<body class="bg-gray-100 font-sans p-4" onload="setupFirebase()">
+	<body onload="setupFirebase()">
 
-		<div class="max-w-md mx-auto">
-			<header class="bg-tots-red p-6 rounded-t-xl shadow-lg">
+		<header>
+			<div class="header-content">
+				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
+					<img src="../images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				</a>
+				<div class="header-text">
+					<h1>
+						<a href="/" style="color: var(--marine-blue); text-decoration: none;">
+							Toys for Tots Drop-Off Locations
+						</a>
+					</h1>
+					<h2>
+						<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red); text-decoration: none;">
+							North Fulton & Cherokee County, GA
+						</a>
+					</h2>
+					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
+				</div>
+				<a href="/dashboard"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+			</div>
+		</header>
+
+		<div class="max-w-md mx-auto" style="margin-top: 20px; margin-bottom: 20px;">
+			<div class="bg-tots-red p-6 rounded-t-xl shadow-lg">
 				<h1 class="text-3xl font-extrabold text-white text-center">Box Report History</h1>
-			</header>
+			</div>
 
 			<main class="p-4 md:p-6 bg-white shadow-lg rounded-b-xl">
 				<section id="location-display" class="mb-6">
@@ -198,5 +234,11 @@
 				</section>
 			</main>
 		</div>
+
+		<footer>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
+		</footer>
+
 	</body>
 </html>

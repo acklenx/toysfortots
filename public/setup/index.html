@@ -5,18 +5,25 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Set Up New Location</title>
 		<script src="https://cdn.tailwindcss.com"></script>
+		<link rel="stylesheet" href="../style.css">
 		<style>
 			:root {
+				/* These will be overridden by style.css, but are good fallbacks */
 				--t4t-red: #cc0000;
 				--marine-blue: #003366;
 			}
 			.form-container {
 				max-width: 600px;
-				margin: 30px auto;
+				/* Removed margin: 30px auto; to let header/footer sit normally */
+				margin: 0 auto;
 				padding: 30px;
 				background: white;
 				border-radius: 8px;
 				box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+			}
+			/* Added wrapper for spacing */
+			.form-wrapper {
+				padding: 20px 0;
 			}
 			.form-group {
 				margin-bottom: 20px;
@@ -84,12 +91,39 @@
 				font-weight: bold;
 				color: var(--marine-blue);
 			}
+			/* Added to prevent style conflicts */
+			header h1 a:hover, header h2 a:hover {
+				text-decoration: underline;
+			}
 		</style>
 	</head>
 	<body class="bg-gray-100">
 
-		<div class="form-container">
-			<h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Set Up New Box Location</h1>
+		<header>
+			<div class="header-content">
+				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
+					<img src="../images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				</a>
+				<div class="header-text">
+					<h1>
+						<a href="/" style="color: var(--marine-blue); text-decoration: none;">
+							Toys for Tots Drop-Off Locations
+						</a>
+					</h1>
+					<h2>
+						<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red); text-decoration: none;">
+							North Fulton & Cherokee County, GA
+						</a>
+					</h2>
+					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
+				</div>
+				<a href="/dashboard"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+			</div>
+		</header>
+
+		<div class="form-wrapper">
+			<div class="form-container">
+				<h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Set Up New Box Location</h1>
 
 			<div id="auth-container">
 				<p class="mb-4">You must be signed in to set up a new location.</p>
@@ -144,6 +178,11 @@
 			</form>
 		</div>
 
+		<footer>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
+		</footer>
+
 		<script type="module">
 			// --- 1. IMPORTS ---
 			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -157,7 +196,9 @@
 			import {
 				getFirestore,
 				collection,
-				getDocs
+				getDocs,
+				doc,
+				getDoc
 			} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 			// --- NEW: Import Functions ---
 			import {
@@ -178,7 +219,9 @@
 
 			const appId = firebaseConfig.projectId;
 			let scannedBoxId = null;
-
+			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
+			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+			const locationsCollectionPath = `artifacts/${appId}/public/${publicDocumentId}/data/${dataDocumentId}/locations`;
 
 			// Firebase instances
 			let app, auth, db, functions, provisionBox, isAuthorizedVolunteer; // Added functions
@@ -283,55 +326,76 @@
 				signOutBtn.onclick = () => signOut(auth);
 				form.onsubmit = handleFormSubmit;
 
-				onAuthStateChanged(auth, async (user) => { // Added "async"
+				onAuthStateChanged(auth, async (user) => {
 					if (user && !user.isAnonymous) {
-						// User is signed in with Google
-						authContainer.classList.add('hidden');
-						form.classList.remove('hidden');
+						// User is signed in with Google.
 
-						// --- Get both the group and the input itself ---
-						const passcodeGroup = document.getElementById('passcode').parentElement;
-						const passcode = document.getElementById('passcode'); // --- ADDED ---
-						const passcodeLabel = passcodeGroup.querySelector('label');
+						// --- NEW: Check if box is already set up ---
+						if (!scannedBoxId) {
+							// No ID, just show the form (or an error)
+							authContainer.classList.add('hidden');
+							form.classList.add('hidden'); // Keep form hidden
+							showMessage('error', 'No Box ID found in URL. Cannot check status.');
+							return;
+						}
 
 						try {
-							// --- NEW: Check if user is already authorized ---
+							// 1. Check the 'locations' collection for this ID
+							const locRef = doc(db, locationsCollectionPath, scannedBoxId);
+							const locSnap = await getDoc(locRef);
+
+							if (locSnap.exists()) {
+								// --- IT EXISTS! Redirect to status page ---
+								authContainer.classList.add('hidden');
+								form.classList.add('hidden');
+								showMessage('success', 'This box is already set up. Redirecting to status page...');
+
+								// Immediate redirect
+								window.location.href = `/status/?id=${scannedBoxId}`;
+								return; // Stop processing
+							}
+
+							// --- Box does NOT exist, proceed with setup logic ---
+
+							authContainer.classList.add('hidden');
+							form.classList.remove('hidden');
+
+							const passcodeGroup = document.getElementById('passcode').parentElement;
+							const passcode = document.getElementById('passcode');
+							const passcodeLabel = passcodeGroup.querySelector('label');
+
+							// 2. Check if user is already an authorized volunteer
 							passcodeLabel.textContent = "Verifying authorization...";
 							const result = await isAuthorizedVolunteer();
 
 							if (result.data.isAuthorized) {
-								// YES, user is authorized. Hide password AND make it not required.
+								// YES, user is authorized. Hide password.
 								passcodeGroup.classList.add('hidden');
-								passcode.required = false; // --- THE FIX ---
-								passcode.value = ''; // Clear it just in case
+								passcode.required = false;
+								passcode.value = '';
 								passcodeLabel.textContent = "Password (Authorized)";
 							} else {
-								// NO, user is new. Show password AND make it required.
+								// NO, user is new. Show password.
 								passcodeGroup.classList.remove('hidden');
-								passcode.required = true; // --- THE FIX ---
+								passcode.required = true;
 								passcodeLabel.textContent = "Password (New Volunteer)";
 							}
 
-							// (You can safely delete this line now, it's not used)
-							// fetchVolunteers();
-
 						} catch (error) {
-							console.error("Auth check failed:", error);
-							showMessage('error', 'Could not verify authorization. Please refresh.');
-							passcodeGroup.classList.remove('hidden');
-							passcode.required = true; // --- ADDED for safety ---
-							passcodeLabel.textContent = "Password";
+							console.error("Setup page check failed:", error);
+							authContainer.classList.add('hidden');
+							form.classList.add('hidden');
+							showMessage('error', `An error occurred: ${error.message}`);
 						}
 
 					} else {
 						// User is signed out
 						authContainer.classList.remove('hidden');
 						form.classList.add('hidden');
-						volunteersDatalist.innerHTML = '';
 
 						// Show password field and make it required by default when logged out
 						document.getElementById('passcode').parentElement.classList.remove('hidden');
-						document.getElementById('passcode').required = true; // --- ADDED ---
+						document.getElementById('passcode').required = true;
 
 						if (user && user.isAnonymous) {
 							signOut(auth);

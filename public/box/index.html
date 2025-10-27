@@ -4,6 +4,9 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Drop Box Action Center</title>
+
+		<link rel="stylesheet" href="../style.css">
+
 		<script type="module">
 			// --- 1. IMPORTS ---
 			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -42,13 +45,13 @@
 					auth = getAuth(app);
 					db = getFirestore(app);
 
-					let appInitialized = false; // Flag to prevent initApp from running twice
+					let appInitialized = false;
 
 					onAuthStateChanged(auth, (user) => {
 						console.log("Auth state changed. User:", user ? user.uid : "null");
 
 						if (user && !appInitialized) {
-							appInitialized = true; // Set the flag
+							appInitialized = true;
 							console.log("User is authenticated. Initializing main app...");
 							window.initApp(appId, db, auth);
 						} else if (!user) {
@@ -102,21 +105,15 @@
 
 
 				try {
-					// 1. Create a reference to the specific document
-					// Path: /artifacts/{appId}/public/data/locations/{boxId}
 					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
-
-					// 2. Fetch the document
 					const locSnap = await getDoc(locRef);
 
 					if (!locSnap.exists()) {
-						// This Box ID has not been set up. Redirect to the setup page.
 						console.log(`Box ID ${boxId} not found. Redirecting to setup page...`);
 						window.location.href = `/setup/?id=${boxId}`;
-						return; // Stop further execution
+						return;
 					}
 
-					// 3. Get the data from the document
 					const location = locSnap.data();
 					currentBoxInfo = `${location.label} (ID: ${boxId}) @ ${location.address}`;
 					loadingMessage.remove();
@@ -163,10 +160,10 @@
 							reportType: 'pickup_alert',
 							description: 'Immediate pickup requested via button click.'
 						};
-						submitReportToFirestore(quickReport, boxId, location); // Pass location data
+						submitReportToFirestore(quickReport, boxId, location);
 
 						pickupBtnText.textContent = 'A volunteer has been notified!';
-						pickupBtn.classList.add('opacity-75'); // Visually show it's "done"
+						pickupBtn.classList.add('opacity-75');
 					});
 
 					problemBtn.addEventListener('click', () => {
@@ -181,7 +178,7 @@
 							reportType: 'problem_alert',
 							description: 'Problem reported via button click.'
 						};
-						submitReportToFirestore(quickReport, boxId, location); // Pass location data
+						submitReportToFirestore(quickReport, boxId, location);
 
 						problemBtnText.textContent = 'A Volunteer has been notified!';
 						problemBtn.style.display = 'none';
@@ -194,7 +191,6 @@
 						submitButton.textContent = 'Sending...';
 
 						const reportData = getFormData(pickupDetailsForm);
-						// --- CHANGED HERE ---
 						const success = await submitReportToFirestore(reportData, boxId, location);
 
 						if (success) {
@@ -218,11 +214,10 @@
 							alert('Please fill out the problem description.');
 							submitButton.disabled = false;
 							submitButton.textContent = 'Send Full Problem Report';
-							return; // Stop submission
+							return;
 						}
 
 						const reportData = getFormData(problemDetailsForm);
-						// --- CHANGED HERE ---
 						const success = await submitReportToFirestore(reportData, boxId, location);
 
 						if (success) {
@@ -241,7 +236,7 @@
 				}
 			};
 
-			// --- 5. FIRESTORE UTILITY (The updated version) ---
+			// --- 5. FIRESTORE UTILITY ---
 			const submitReportToFirestore = async (reportData, boxId, location) => {
 				if (!appDB || !appAuth.currentUser) {
 					console.error("Firestore not initialized or user not authenticated.");
@@ -286,6 +281,11 @@
 				padding-top: 1rem;
 				padding-bottom: 1rem;
 			}
+			/* Added to prevent Tailwind from overwriting header link styles */
+			header h1 a:hover,
+			header h2 a:hover {
+				text-decoration: underline;
+			}
 		</style>
 		<script>
 			tailwind.config = {
@@ -304,12 +304,34 @@
 			}
 		</script>
 	</head>
-	<body class="bg-gray-50 font-sans p-4" onload="setupFirebase()">
+	<body onload="setupFirebase()">
 
-		<div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
-			<header class="bg-tots-red p-6">
+		<header>
+			<div class="header-content">
+				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
+					<img src="../images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
+				</a>
+				<div class="header-text">
+					<h1>
+						<a href="/" target="_blank" rel="noopener noreferrer" style="color: var(--marine-blue);">
+							Toys for Tots Drop-Off Locations
+						</a>
+					</h1>
+					<h2>
+						<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red);">
+						North Fulton & Cherokee County, GA
+						</a>
+					</h2>
+					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
+				</div>
+				<a href="/dashboard"><img src="images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+			</div>
+		</header>
+
+		<div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden" style="margin-top: 20px; margin-bottom: 20px;">
+			<div class="bg-tots-red p-6">
 				<h1 class="text-3xl font-extrabold text-white text-center">Tots Box Action Center</h1>
-			</header>
+			</div>
 
 			<main class="p-6">
 				<div id="location-display" class="mb-6">
@@ -318,7 +340,7 @@
 
 				<div id="main-actions" class="space-y-4">
 					<button id="pickup-btn" class="w-full py-3 bg-tots-green hover:bg-green-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
-						<span id="pickup-btn-text">Request Pickup</span>
+						<span id="pickup-btn-text">Request Immediate Pickup</span>
 					</button>
 					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
 						✅ Message Sent! Would you like to send any additional details?
@@ -336,9 +358,9 @@
 							</label>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1"><label for="pickupEmail">Follow-up</label> <label for="pickupContact">Contact</label> (Optional):</legend>
-								<input type="text" name="contactName" id="pickupContact" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contactEmail" id="pickupEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
@@ -355,6 +377,7 @@
 					<button id="problem-btn" class="w-full py-2 text-center text-sm font-medium text-gray-600 hover:text-tots-red hover:underline transition duration-200 disabled:opacity-50" disabled>
 						<span id="problem-btn-text">Report a Problem</span>
 					</button>
+
 					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
 						⚠️ Please tell us the nature of the problem.
 					</div>
@@ -368,9 +391,9 @@
 							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1"><label for="problemFollowUp">Follow-up</label> <label for="problemContact">Contact</label> (Optional):</legend>
-								<input type="text" name="contactName" id="problemContact" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contactEmail" id="problemFollowUp" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
@@ -385,5 +408,11 @@
 				</div>
 			</main>
 		</div>
+
+		<footer>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" align="center">
+		</footer>
+
 	</body>
 </html>
