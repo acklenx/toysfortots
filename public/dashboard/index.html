@@ -21,7 +21,6 @@
 				collection,
 				getDocs,
 				query,
-				where,
 				orderBy,
 				doc,
 				updateDoc
@@ -137,7 +136,7 @@
 
 			const renderBoxCard = ( box ) =>
 			{
-				let statusHtml = '';
+				let statusHtml;
 
 				if( box.latestPendingReport )
 				{
@@ -321,14 +320,10 @@
 					const sortedNames = Array.from( volunteerNames ).sort();
 					sortedNames.forEach( name =>
 					{
-						// Don't add the current user's name twice
-						if( true || name !== currentUserDisplayName )
-						{
-							const option = document.createElement( 'option' );
-							option.value = name;
-							option.textContent = name;
-							filterSelect.appendChild( option );
-						}
+						const option = document.createElement( 'option' );
+						option.value = name;
+						option.textContent = name;
+						filterSelect.appendChild( option );
 					} );
 
 					// 4. Add event listener for the filter
@@ -433,8 +428,6 @@
 
 		<div id="main-content" style="display: none;">
 
-
-
 			<div class="max-w-2xl mx-auto p-4 md:p-6">
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 					<div>
@@ -462,7 +455,7 @@
 		<footer>
 			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
 				official representatives of this Toys for Tots campaign.</p>
-			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
+			<center><img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location='/box/?id=007';}"></center>
 		</footer>
 	</body>
 </html>

@@ -205,12 +205,6 @@
 				</form>
 			</div>
 
-			<footer>
-				<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they
-					are official representatives of this Toys for Tots campaign.</p>
-				<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
-			</footer>
-
 			<script type="module">
 				// --- 1. IMPORTS ---
 				import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
@@ -223,8 +217,6 @@
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 				import {
 					getFirestore,
-					collection,
-					getDocs,
 					doc,
 					getDoc
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
@@ -465,7 +457,7 @@
 		<footer>
 			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
 				official representatives of this Toys for Tots campaign.</p>
-			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
+			<center><img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location='/box/?id=007';}"></center>
 		</footer>
 	</body>
 </html>

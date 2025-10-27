@@ -403,10 +403,10 @@
 							</label>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):
+								<legend class="text-sm font-medium text-gray-700 px-1"><label for="contactEmail">Follow-up</label> <label for="contactName">Contact</label> (Optional):
 								</legend>
-								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="text" id="contactName" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+								<input type="email" id="contactEmail" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
 							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
@@ -438,7 +438,7 @@
 							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):
+								<legend class="text-sm font-medium text-gray-700 px-1"><label for="contactEmail">Follow-up</label> <label for="contactName">Contact</label> (Optional):
 								</legend>
 								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
@@ -460,7 +460,7 @@
 		<footer>
 			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
 				official representatives of this Toys for Tots campaign.</p>
-			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location+='/box/?id=003';}">
+			<center><img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location='/box/?id=007';}"></center>
 		</footer>
 	</body>
 </html>
