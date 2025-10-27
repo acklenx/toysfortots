@@ -2,32 +2,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- HELPER FUNCTION (Unchanged) ---
+    // --- HELPER FUNCTION FOR AUTHORIZATION ---
     function isAuthorizedVolunteer() {
       return request.auth.token.firebase.sign_in_provider == 'google.com'
-             && exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY/authorizedVolunteers/$(request.auth.uid));
+             && exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid));
     }
 
     // --- Public Data ---
-    match /artifacts/toysfortots-eae4d/public/3USFkKsJe7T8ZYdW5YfE/data/EF1QWEKWPMuoLN7fC4Ri {
+    match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
-      // --- THIS IS THE FIX ---
+      // *** RESTORED SECURITY ***
       // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
       match /locations/{boxId} {
-        allow get, list: if request.auth != null; // <--- ADDED "list" HERE
+        allow get, list: if request.auth != null; // <--- CHANGED BACK
         allow create, update, delete: if false;
       }
 
-      // --- TOTSREPORTS RULE (Unchanged) ---
+      // --- TOTSREPORTS RULE ---
+      // *** RESTORED SECURITY ***
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get, update: if isAuthorizedVolunteer();
+        allow list, get, update: if isAuthorizedVolunteer(); // <--- CHANGED BACK
         allow delete: if false;
       }
     }
 
-    // --- Private Data (Unchanged) ---
-    match /artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY {
+    // --- Private Data ---
+    match /artifacts/toysfortots-eae4d/private/01/data/01 {
 
       match /contacts/{contactId} {
         allow list, get: if request.auth.token.firebase.sign_in_provider == 'google.com';

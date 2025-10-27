@@ -28,7 +28,7 @@ const mapsClient = new Client( {} );
 
 // --- sendReportEmail (No changes) ---
 exports.sendReportEmail = onDocumentCreated(
-	'artifacts/toysfortots-eae4d/public/3USFkKsJe7T8ZYdW5YfE/data/EF1QWEKWPMuoLN7fC4Ri/totsReports/{reportId}',
+	'artifacts/toysfortots-eae4d/public/01/data/01/totsReports/{reportId}',
 	async( event ) =>
 	{
 		const mg = mailgun.client( {
@@ -92,10 +92,10 @@ Timestamp: ${ reportData.timestamp }
 
 
 // --- Paths for provisionBox ---
-const PRIVATE_PATH_PREFIX = 'artifacts/toysfortots-eae4d/private/aCckkx6FbV1oKOhffIfD/data/V8dC2I8Lte56NJU2GyyY';
+const PRIVATE_PATH_PREFIX = 'artifacts/toysfortots-eae4d/private/01/data/01';
 const CONFIG_PATH = `${ PRIVATE_PATH_PREFIX }/metadata/config`;
 const AUTH_VOLUNTEERS_PATH = `${ PRIVATE_PATH_PREFIX }/authorizedVolunteers`;
-const PUBLIC_DATA_PREFIX = 'artifacts/toysfortots-eae4d/public/3USFkKsJe7T8ZYdW5YfE/data/EF1QWEKWPMuoLN7fC4Ri'; // ---
+const PUBLIC_DATA_PREFIX = 'artifacts/toysfortots-eae4d/public/01/data/01'; // ---
 																												// NEW
 																												// ---
 const LOCATIONS_PATH = `${ PUBLIC_DATA_PREFIX }/locations`;

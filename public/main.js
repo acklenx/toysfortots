@@ -29,8 +29,8 @@ let db; // This will hold our database connection
 
 // --- 3. FIREBASE PATHS ---
 // These are from your project's configuration
-const publicDocumentId = '3USFkKsJe7T8ZYdW5YfE';
-const dataDocumentId = 'EF1QWEKWPMuoLN7fC4Ri';
+const publicDocumentId = '01';
+const dataDocumentId = '01';
 const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
 
 // --- 4. LEAFLET SETUP (from your original file) ---
@@ -140,36 +140,46 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	/**
 	 * Initializes Firebase and signs in anonymously.
 	 */
-	function initFirebase()
-	{
-		try
-		{
-			const app = initializeApp( firebaseConfig );
-			db = getFirestore( app ); // Set the global db variable
-			const auth = getAuth( app );
+	/**
+	 * Initializes Firebase and signs in anonymously.
+	 */
 
-			onAuthStateChanged( auth, ( user ) =>
-			{
-				if( user )
-				{
-					// User is signed in, load the data
-					console.log( 'Anonymous user signed in:', user.uid );
-					loadLocations();
-				}
-				else
-				{
+
+	/**
+	 * Initializes Firebase and signs in anonymously.
+	 */
+	function initFirebase() {
+		console.log("initFirebase: Starting...");
+		try {
+			const app = initializeApp(firebaseConfig);
+			db = getFirestore(app); // Set the global db variable
+			const auth = getAuth(app);
+			console.log("initFirebase: Firebase App Initialized.");
+
+			onAuthStateChanged(auth, (user) => {
+				if (user) {
+					// User is signed in (should be anonymous)
+					console.log("initFirebase: onAuthStateChanged - Anonymous user SIGNED IN:", user.uid);
+
+					// --- ADDED DELAY ---
+					// Wait 500ms before trying to load data to allow auth state to propagate
+					setTimeout(() => {
+						console.log("initFirebase: Delay complete, calling loadLocations()."); // <-- ADDED LOG
+						loadLocations();
+					}, 500); // 500 milliseconds = 0.5 seconds
+					// --- END DELAY ---
+
+				} else {
 					// User is not signed in, attempt to sign in
-					signInAnonymously( auth ).catch( ( error ) =>
-					{
-						console.error( 'Anonymous sign-in failed:', error );
+					console.log("initFirebase: onAuthStateChanged - No user found, attempting signInAnonymously...");
+					signInAnonymously(auth).catch((error) => {
+						console.error("initFirebase: Anonymous sign-in FAILED:", error);
 						locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not connect to database.</p>';
-					} );
+					});
 				}
-			} );
-		}
-		catch( error )
-		{
-			console.error( 'Firebase Init Error:', error );
+			});
+		} catch (error) {
+			console.error("initFirebase: Firebase Init FAILED:", error);
 			locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not initialize app.</p>';
 		}
 	}
