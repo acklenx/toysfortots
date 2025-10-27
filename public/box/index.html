@@ -102,10 +102,8 @@
 				const pickupBtn = document.getElementById('pickup-btn');
 				const problemBtn = document.getElementById('problem-btn');
 				const pickupBtnText = document.getElementById('pickup-btn-text');
-				const problemBtnText = document.getElementById('problem-btn-text');
 				const pickupConf = document.getElementById('pickup-confirmation');
 				const problemConf = document.getElementById('problem-confirmation');
-				const pickupDetailsSection = document.getElementById('pickup-details-section'); // Note: Still used by toggleSection
 				const problemDetailsSection = document.getElementById('problem-details-section');
 				const problemDetailsForm = document.getElementById('problem-details-form'); // Needed to get form data
 				const problemSubmitBtn = document.getElementById('problem-submit-btn'); // Get the button
@@ -184,7 +182,6 @@
 						toggleSection(
 								problemDetailsSection,
 								problemConf,
-								null, // Don't try to hide pickupDetailsSection as it might be null
 								pickupConf
 						);
 						// problemBtn.style.display = 'none'; // Optional: hide button after click
