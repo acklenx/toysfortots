@@ -286,7 +286,7 @@
 
 					// You'll need to add an 'id' field to your locations.json for this to work
 					// For now, let's just find by label as a fallback/example
-					const foundLocation = locations.find(loc => loc.id === locationId); // Ideal: Match by unique ID
+					let foundLocation = locations.find(loc => loc.id === locationId); // Ideal: Match by unique ID
 					// Fallback for demo if 'id' not added yet:
 					if (!foundLocation) {
 						const normalizedLocationId = locationId.toLowerCase().replace(/[^a-z0-9]/g, '');
