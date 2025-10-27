@@ -89,51 +89,43 @@
 			};
 
 			// --- 4. MAIN APP LOGIC ---
-			window.initApp = async( appId, dbInstance, authInstance ) =>
-			{
+
+
+			window.initApp = async (appId, dbInstance, authInstance) => {
 				appDB = dbInstance;
 				appAuth = authInstance;
 				appID = appId;
 
-				const listDiv = document.getElementById( 'location-display' );
-				const loadingMessage = document.getElementById( 'loading-message' );
+				// --- Get references to elements (make sure IDs match HTML) ---
+				const listDiv = document.getElementById('location-display');
+				const loadingMessage = document.getElementById('loading-message');
+				const pickupBtn = document.getElementById('pickup-btn');
+				const problemBtn = document.getElementById('problem-btn');
+				const pickupBtnText = document.getElementById('pickup-btn-text');
+				const problemBtnText = document.getElementById('problem-btn-text');
+				const pickupConf = document.getElementById('pickup-confirmation');
+				const problemConf = document.getElementById('problem-confirmation');
+				const pickupDetailsSection = document.getElementById('pickup-details-section'); // Note: Still used by toggleSection
+				const problemDetailsSection = document.getElementById('problem-details-section');
+				const problemDetailsForm = document.getElementById('problem-details-form'); // Needed to get form data
+				const problemSubmitBtn = document.getElementById('problem-submit-btn'); // Get the button
+				const problemDetailsSuccess = document.getElementById('problem-details-success');
 
-				const pickupBtn = document.getElementById( 'pickup-btn' );
-				const problemBtn = document.getElementById( 'problem-btn' );
-				const pickupBtnText = document.getElementById( 'pickup-btn-text' );
-				const problemBtnText = document.getElementById( 'problem-btn-text' );
+				const params = new URLSearchParams(window.location.search);
+				const boxId = params.get('id');
 
-				const pickupConf = document.getElementById( 'pickup-confirmation' );
-				const problemConf = document.getElementById( 'problem-confirmation' );
-
-				const pickupDetailsSection = document.getElementById( 'pickup-details-section' );
-				const problemDetailsSection = document.getElementById( 'problem-details-section' );
-
-				const pickupDetailsForm = document.getElementById( 'pickup-details-form' );
-				const problemDetailsForm = document.getElementById( 'problem-details-form' );
-
-				const pickupDetailsSuccess = document.getElementById( 'pickup-details-success' );
-				const problemDetailsSuccess = document.getElementById( 'problem-details-success' );
-
-				const params = new URLSearchParams( window.location.search );
-				const boxId = params.get( 'id' );
-
-				if( !boxId )
-				{
+				if (!boxId) {
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 					loadingMessage.textContent = 'Error: ID missing from the link. Cannot display info.';
 					return;
 				}
 
+				try {
+					const locRef = doc(appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId);
+					const locSnap = await getDoc(locRef);
 
-				try
-				{
-					const locRef = doc( appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId );
-					const locSnap = await getDoc( locRef );
-
-					if( !locSnap.exists() )
-					{
-						console.log( `Box ID ${ boxId } not found. Redirecting to setup page...` );
+					if (!locSnap.exists()) {
+						console.log(`Box ID ${ boxId } not found. Redirecting to setup page...`);
 						window.location.href = `/setup/?id=${ boxId }`;
 						return;
 					}
@@ -150,129 +142,92 @@
                    </div>
                `;
 
-					document.getElementById( 'pickup-box-id-detail' ).value = currentBoxInfo;
-					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;
+					// Remove reference to deleted element pickup-box-id-detail
+					// document.getElementById('pickup-box-id-detail').value = currentBoxInfo;
+					document.getElementById('problem-box-id-detail').value = currentBoxInfo;
 
 					pickupBtn.disabled = false;
 					problemBtn.disabled = false;
 
-					const getFormData = ( form ) =>
-					{
-						const formData = new FormData( form );
+					const getFormData = (form) => {
+						const formData = new FormData(form);
 						const data = {};
-						formData.forEach( ( value, key ) =>
-						{
-							data[ key ] = value;
-						} );
+						formData.forEach((value, key) => {
+							data[key] = value;
+						});
 						return data;
 					};
 
-					const toggleSection = ( sectionToShow, confToShow, sectionToHide, confToHide ) =>
-					{
-						sectionToShow.classList.add( 'open' );
-						confToShow.classList.remove( 'hidden' );
-						sectionToHide.classList.remove( 'open' );
-						confToHide.classList.add( 'hidden' );
+					const toggleSection = (sectionToShow, confToShow, sectionToHide, confToHide) => {
+						// Ensure elements exist before adding/removing classes
+						if (sectionToShow) sectionToShow.classList.add('open');
+						if (confToShow) confToShow.classList.remove('hidden');
+						if (sectionToHide) sectionToHide.classList.remove('open');
+						if (confToHide) confToHide.classList.add('hidden');
 					};
 
-					pickupBtn.addEventListener( 'click', () =>
-					{
-						toggleSection(
-								pickupDetailsSection,
-								pickupConf,
-								problemDetailsSection,
-								problemConf
-						);
-
-						const quickReport = {
-							reportType: 'pickup_alert',
-							description: 'Immediate pickup requested via button click.'
-						};
-						submitReportToFirestore( quickReport, boxId, location );
-
+					// --- Pickup Button Listener (Simplified) ---
+					pickupBtn.addEventListener('click', () => {
+						const quickReport = { reportType: 'pickup_alert', description: 'Immediate pickup requested via button click.' };
+						submitReportToFirestore(quickReport, boxId, location);
 						pickupBtnText.textContent = 'A volunteer has been notified!';
-						pickupBtn.classList.add( 'opacity-75' );
-					} );
+						pickupBtn.disabled = true;
+						pickupBtn.classList.add('opacity-50', 'cursor-not-allowed');
+						pickupConf.classList.remove('hidden');
+						pickupConf.textContent = '✅ Message Sent! A volunteer has been notified.';
+						if (problemDetailsSection) problemDetailsSection.classList.remove('open'); // Close problem section if open
+						if (problemConf) problemConf.classList.add('hidden');
+					});
 
-					problemBtn.addEventListener( 'click', () =>
-					{
+					// --- Problem Button Listener (Opens Form Only) ---
+					problemBtn.addEventListener('click', () => {
 						toggleSection(
 								problemDetailsSection,
 								problemConf,
-								pickupDetailsSection,
+								null, // Don't try to hide pickupDetailsSection as it might be null
 								pickupConf
 						);
+						// problemBtn.style.display = 'none'; // Optional: hide button after click
+					});
 
-						const quickReport = {
-							reportType: 'problem_alert',
-							description: 'Problem reported via button click.'
-						};
-						submitReportToFirestore( quickReport, boxId, location );
+					// --- Problem Form SUBMIT BUTTON Listener ---
+					// Make sure the button exists before adding listener
+					if (problemSubmitBtn) {
+						problemSubmitBtn.addEventListener('click', async (e) => {
+							const submitButton = e.target;
+							submitButton.disabled = true;
+							submitButton.textContent = 'Sending...';
 
-						problemBtnText.textContent = 'A Volunteer has been notified!';
-						problemBtn.style.display = 'none';
-					} );
+							const description = problemDetailsForm.querySelector('textarea[name="description"]').value;
+							if (!description || description.trim() === '') {
+								alert('Please fill out the problem description.');
+								submitButton.disabled = false;
+								submitButton.textContent = 'Send Full Problem Report';
+								return;
+							}
 
-					pickupDetailsForm.addEventListener( 'submit', async( e ) =>
-					{
-						e.preventDefault();
-						const submitButton = pickupDetailsForm.querySelector( 'button[type="submit"]' );
-						submitButton.disabled = true;
-						submitButton.textContent = 'Sending...';
+							const reportData = getFormData(problemDetailsForm);
+							const success = await submitReportToFirestore(reportData, boxId, location);
 
-						const reportData = getFormData( pickupDetailsForm );
-						const success = await submitReportToFirestore( reportData, boxId, location );
+							if (success) {
+								problemDetailsSuccess.classList.remove('hidden');
+								submitButton.textContent = 'Report Sent!';
+							} else {
+								alert('There was an error submitting your report. Please try again.');
+								submitButton.disabled = false;
+								submitButton.textContent = 'Send Full Problem Report';
+							}
+						});
+					} else {
+						console.error("Could not find the problem submit button (#problem-submit-btn)"); // Add error logging
+					}
 
-						if( success )
-						{
-							pickupDetailsSuccess.classList.remove( 'hidden' );
-							submitButton.textContent = 'Details Sent!';
-						}
-						else
-						{
-							alert( 'There was an error submitting your report. Please try again.' );
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Detail Report';
-						}
-					} );
-
-					problemDetailsForm.addEventListener( 'submit', async( e ) =>
-					{
-						e.preventDefault();
-						const submitButton = problemDetailsForm.querySelector( 'button[type="submit"]' );
-						submitButton.disabled = true;
-						submitButton.textContent = 'Sending...';
-
-						const description = problemDetailsForm.querySelector( 'textarea[name="description"]' ).value;
-						if( !description || description.trim() === '' )
-						{
-							alert( 'Please fill out the problem description.' );
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Full Problem Report';
-							return;
-						}
-
-						const reportData = getFormData( problemDetailsForm );
-						const success = await submitReportToFirestore( reportData, boxId, location );
-
-						if( success )
-						{
-							problemDetailsSuccess.classList.remove( 'hidden' );
-							submitButton.textContent = 'Report Sent!';
-						}
-						else
-						{
-							alert( 'There was an error submitting your report. Please try again.' );
-							submitButton.disabled = false;
-							submitButton.textContent = 'Send Full Problem Report';
-						}
-					} );
-				}
-				catch( error )
-				{
-					console.error( 'Error fetching location:', error );
-					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = `Error loading location data: ${ error.message }`;
+				} catch (error) {
+					console.error('Error fetching location:', error);
+					if (loadingMessage) { // Check if loadingMessage still exists
+						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
+						loadingMessage.textContent = `Error loading location data: ${ error.message }`;
+					}
 				}
 			};
 
@@ -406,33 +361,6 @@
 					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
 						✅ Message Sent! Would you like to send any additional details?
 					</div>
-					<div id="pickup-details-section" class="collapsible-content bg-tots-light rounded-lg border border-tots-red/30">
-						<p class="text-sm font-semibold text-tots-red mb-3 text-center">
-							<span class="font-extrabold">OPTIONAL:</span> Add more details below.
-						</p>
-						<form id="pickup-details-form" class="space-y-3">
-							<input type="hidden" id="pickup-box-id-detail" name="boxInfo">
-							<input type="hidden" name="reportType" value="pickup_details">
-
-							<label class="block text-sm font-medium text-gray-700">Detailed Notes:
-								<textarea name="notes" rows="3" placeholder="Example: The boxes are full and located behind the counter." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red"></textarea>
-							</label>
-
-							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1"><label for="contactEmail">Follow-up</label> <label for="contactName">Contact</label> (Optional):
-								</legend>
-								<input type="text" id="contactName" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" id="contactEmail" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-							</fieldset>
-
-							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
-								Send Detail Report
-							</button>
-						</form>
-						<div id="pickup-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-							Thanks! Your detailed notes have been recorded instantly!
-						</div>
-					</div>
 
 					<div class="h-px bg-gray-200"></div>
 
@@ -460,7 +388,7 @@
 								<input type="email" id="problemContactEmail"  name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
 
-							<button type="submit" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
+							<button type="button" id="problem-submit-btn" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
 								Send Full Problem Report
 							</button>
 						</form>
