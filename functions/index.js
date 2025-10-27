@@ -1,7 +1,6 @@
 // Import all the necessary modules
 const { onCall, HttpsError } = require( 'firebase-functions/v2/https' );
 const { getFirestore } = require( 'firebase-admin/firestore' );
-const functions = require( 'firebase-functions/v2' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { initializeApp } = require( 'firebase-admin/app' );
 const admin = require( 'firebase-admin' );
