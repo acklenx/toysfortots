@@ -159,6 +159,20 @@
 					<label for="boxes">Number of Boxes</label>
 					<input type="number" id="boxes" name="boxes" value="1" min="1">
 				</div>
+				<div class="form-group">
+					<label for="contactName">Location Contact Name</label>
+					<input type="text" id="contactName" name="contactName" required>
+				</div>
+
+				<div class="form-group">
+					<label for="contactEmail">Contact Email</label>
+					<input type="email" id="contactEmail" name="contactEmail" required>
+				</div>
+
+				<div class="form-group">
+					<label for="contactPhone">Contact Phone</label>
+					<input type="tel" id="contactPhone" name="contactPhone">
+				</div>
 
 
 				<div class="form-group">
@@ -271,7 +285,10 @@
 					city: formData.get('city'),
 					state: formData.get('state'),
 					boxes: parseInt(formData.get('boxes'), 10),
-					passcode: formData.get('passcode') // This will be blank if hidden
+					passcode: formData.get('passcode'), // This will be blank if hidden
+					contactName: formData.get('contactName'),
+					contactEmail: formData.get('contactEmail'),
+					contactPhone: formData.get('contactPhone')
 				};
 
 				try {

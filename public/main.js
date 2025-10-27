@@ -69,26 +69,35 @@ document.addEventListener('DOMContentLoaded', () => {
 			locationList.innerHTML = ''; // Clear "Loading..."
 
 			// 3. Loop through the results (they are already sorted!)
+
 			querySnapshot.forEach((doc) => {
 				const location = doc.data();
-				const boxId = doc.id; // Get the boxId just in case
+				const boxId = doc.id;
 
-				// This is your exact logic from before
 				if (location.lat && location.lon) {
 					const marker = L.marker([location.lat, location.lon], { icon: customIcon }).addTo(map);
 
+					// --- UPDATED POPUP CONTENT ---
 					let popupContent = `<b>${location.label}</b><br>${location.address}`;
-					if (location.contact) {
-						popupContent += `<br><small>Contact: ${location.contact}</small>`;
+					if (location.contactName) {
+						popupContent += `<br><small>Contact: ${location.contactName}</small>`;
+					}
+					if (location.contactPhone) {
+						popupContent += `<br><small>Phone: ${location.contactPhone}</small>`;
 					}
 					marker.bindPopup(popupContent);
+					// --- END UPDATE ---
 
 					const listItem = document.createElement('div');
 					listItem.className = 'location-item';
+
+					// --- UPDATED LIST ITEM ---
 					listItem.innerHTML = `
                             <h4>${location.label}</h4>
                             <p>${location.address}</p>
+                            ${location.contactName ? `<p class="contact-info">Contact: ${location.contactName}</p>` : ''}
                         `;
+					// --- END UPDATE ---
 
 					listItem.addEventListener('click', () => {
 						map.setView([location.lat, location.lon], 14);
@@ -98,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					locationList.appendChild(listItem);
 				}
 			});
+
 
 		} catch (error) {
 			console.error('Error fetching location data:', error);

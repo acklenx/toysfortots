@@ -165,7 +165,10 @@ exports.provisionBox = onCall(async (request) => {
 		created: new Date().toISOString(),
 		provisionedBy: uid,
 		lat: geocodedLat,
-		lon: geocodedLon
+		lon: geocodedLon,
+		contactName: data.contactName,
+		contactEmail: data.contactEmail,
+		contactPhone: data.contactPhone
 	};
 
 	// 7. Save everything in a batch

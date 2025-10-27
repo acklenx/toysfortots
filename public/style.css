@@ -115,6 +115,12 @@ header {
     transition: background-color 0.2s;
 }
 
+.location-item p.contact-info {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 4px;
+}
+
 .location-item:hover {
     background-color: #eef5ff;
 }
