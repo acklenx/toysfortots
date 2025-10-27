@@ -1,0 +1,24 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "totsReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "boxId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    }
+  ],
+  "fieldOverrides": []
+}
