@@ -4,12 +4,12 @@ const { getFirestore } = require( 'firebase-admin/firestore' );
 const functions = require( 'firebase-functions/v2' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { initializeApp } = require( 'firebase-admin/app' );
-const admin = require( 'firebase-admin' ); // --- ADD THIS IF IT'S MISSING ---
+const admin = require( 'firebase-admin' );
 const { defineString } = require( 'firebase-functions/params' );
 const FormData = require( 'form-data' );
 
 // --- NEW: Import Google Maps Client ---
-const { Client } = require( '@googlemaps/google-maps-services-js' ); // --- ADDED ---
+const { Client } = require( '@googlemaps/google-maps-services-js' );
 
 const Mailgun = require( 'mailgun.js' );
 const mailgun = new Mailgun( FormData );
@@ -20,12 +20,12 @@ const ADMIN_EMAIL = 'toysfortots@qlamail.com';
 const MAILGUN_KEY = defineString( 'MAILGUN_KEY' );
 const MAILGUN_DOMAIN = defineString( 'MAILGUN_DOMAIN' );
 // --- NEW: Define the Geocoding API Key Secret ---
-const GEOCODING_API_KEY = defineString( 'GEOCODING_API_KEY' ); // --- ADDED ---
+const GEOCODING_API_KEY = defineString( 'GEOCODING_API_KEY' );
 
 initializeApp();
 
 // --- NEW: Instantiate the Maps Client ---
-const mapsClient = new Client( {} ); // --- ADDED ---
+const mapsClient = new Client( {} );
 
 // --- sendReportEmail (No changes) ---
 exports.sendReportEmail = onDocumentCreated(
@@ -110,151 +110,127 @@ exports.provisionBox = onCall( async( request ) =>
 		throw new HttpsError( 'unauthenticated', 'You must be signed in with Google to perform this action.' );
 	}
 
-	// --- Get user details from their token ---
 	const uid = request.auth.uid;
 	const userEmail = request.auth.token.email;
-	const userName = request.auth.token.name; // This is the displayName!
+	const userName = request.auth.token.name;
 
 	const data = request.data;
 	const db = getFirestore();
 
-	// 2. Check if the user is already authorized
+	// 2. Check authorization status
 	let isAlreadyAuthorized = false;
 	const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
-	try
-	{
+	try {
 		const authSnap = await authVolRef.get();
-		if( authSnap.exists )
-		{
-			isAlreadyAuthorized = true;
-		}
-	}
-	catch( error )
-	{
-		console.error( 'Auth check failed:', error );
+		isAlreadyAuthorized = authSnap.exists;
+	} catch( error ) {
 		throw new HttpsError( 'internal', 'Could not check authorization.' );
 	}
 
-	// 3. Validate Passcode ONLY IF they are not already authorized
-	if( !isAlreadyAuthorized )
-	{
+	// 3. Validate Passcode if needed
+	if( !isAlreadyAuthorized ) {
 		let secretPasscode;
-		try
-		{
+		try {
 			const configDoc = await db.doc( CONFIG_PATH ).get();
-			if( !configDoc.exists )
-			{
+			if( !configDoc.exists ) {
 				throw new HttpsError( 'internal', 'Server configuration is missing. Cannot verify passcode.' );
 			}
 			secretPasscode = configDoc.data().sharedPasscode;
-		}
-		catch( error )
-		{
-			console.error( 'Error reading secret passcode:', error );
+			if ( !data.passcode || data.passcode !== secretPasscode ) {
+				throw new HttpsError( 'permission-denied', 'Incorrect passcode. New volunteers must provide the correct password.' );
+			}
+		} catch( error ) {
+			if (error instanceof HttpsError) throw error; // Re-throw HttpsError
 			throw new HttpsError( 'internal', 'Could not read server configuration.' );
-		}
-
-		if( !data.passcode || data.passcode !== secretPasscode )
-		{
-			throw new HttpsError( 'permission-denied', 'Incorrect passcode. New volunteers must provide the correct password.' );
 		}
 	}
 
-	// 4. Check data
-	if( !data.boxId || !data.address || !data.city || !data.state )
-	{
+	// 4. Check input data
+	if( !data.boxId || !data.address || !data.city || !data.state ) {
 		throw new HttpsError( 'invalid-argument', 'Box ID, address, city, and state are required.' );
 	}
 
-	// 5. Geocode address (unchanged)
+	// 5. Geocode address
 	let geocodedLat = null;
 	let geocodedLon = null;
 	const fullAddress = `${ data.address }, ${ data.city }, ${ data.state }`;
 
-	try
-	{
-		const geoResponse = await mapsClient.geocode( { /* ... */ } );
-		if( geoResponse.data.status === 'OK' )
-		{ /* ... */ }
-	}
-	catch( error )
-	{ /* ... */ }
+	const apiKey = GEOCODING_API_KEY.value(); // <-- GET KEY VALUE
 
-	// 6. Build the new location object (using userName for volunteer)
+	if (!apiKey) {
+		console.error("GEOCODING_API_KEY secret is missing or could not be accessed!"); // <-- ADDED LOG
+		// Continue without geocoding, but log the error clearly
+	} else {
+		try {
+			const geoResponse = await mapsClient.geocode( {
+				params: {
+					address: fullAddress,
+					key: apiKey // Use the loaded key
+				}
+			} );
+
+			// --- Log the ENTIRE response for debugging ---
+			if( geoResponse.data.status === 'OK' ) {
+				const geometry = geoResponse.data.results[ 0 ].geometry;
+				geocodedLat = geometry.location.lat;
+				geocodedLon = geometry.location.lng;
+				console.log( `Geocoding successful: ${geocodedLat}, ${geocodedLon}` ); // <-- UPDATED LOG
+			} else {
+				console.warn( `Geocoding failed: Status=${geoResponse.data.status}, ErrorMessage=${geoResponse.data.error_message || 'N/A'}` ); // <-- UPDATED LOG
+			}
+		} catch( error ) {
+			console.error( "Geocoding API error during request:", error.response ? JSON.stringify(error.response.data) : error.message ); // <-- UPDATED LOG
+		}
+	}
+
+	// 6. Build the new location object
 	const newLocation = {
-		label: data.label,
-		address: data.address,
-		city: data.city,
-		state: data.state,
-		boxes: data.boxes,
-		volunteer: userName, // --- MODIFIED ---
-		status: 'active',
-		created: new Date().toISOString(),
-		provisionedBy: uid,
-		lat: geocodedLat,
-		lon: geocodedLon,
-		contactName: data.contactName,
-		contactEmail: data.contactEmail,
-		contactPhone: data.contactPhone
+		label: data.label, address: data.address, city: data.city, state: data.state,
+		boxes: data.boxes, volunteer: userName, status: 'active',
+		created: new Date().toISOString(), provisionedBy: uid,
+		lat: geocodedLat, lon: geocodedLon, // Will be null if geocoding failed
+		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone
 	};
 
 	// 7. Save everything in a batch
-	try
-	{
+	try {
 		const newLocationRef = db.doc( `${ LOCATIONS_PATH }/${ data.boxId }` );
 		const docSnap = await newLocationRef.get();
 
-		if( docSnap.exists )
-		{
+		if( docSnap.exists ) {
+			console.warn(`Attempted to provision existing Box ID: ${data.boxId}`); // <-- ADDED LOG
 			throw new HttpsError( 'already-exists', `Box ID ${ data.boxId } has already been set up.` );
 		}
 
 		const batch = db.batch();
-
-		// Task 1: Create the new location
 		batch.set( newLocationRef, newLocation );
 
-		// Task 2: Authorize the volunteer IF they aren't already
-		if( !isAlreadyAuthorized )
-		{
+		if( !isAlreadyAuthorized ) {
 			batch.set( authVolRef, {
-				email: userEmail,
-				displayName: userName,
+				email: userEmail, displayName: userName,
 				authorizedAt: admin.firestore.FieldValue.serverTimestamp()
 			}, { merge: true } );
 		}
 
-		// Task 3: Create the initial "Box Registered" report
 		const initialReportRef = db.collection( REPORTS_PATH ).doc();
 		batch.set( initialReportRef, {
-			...newLocation,
-			boxId: data.boxId,
-			reportType: 'box_registered',
-			description: `Box registered by ${ userName }.`, // --- MODIFIED ---
-			timestamp: newLocation.created,
-			status: 'cleared',
-			reporterId: uid
+			...newLocation, boxId: data.boxId, reportType: 'box_registered',
+			description: `Box registered by ${ userName }.`,
+			timestamp: newLocation.created, status: 'cleared', reporterId: uid
 		} );
 
 		await batch.commit();
+		return { success: true, boxId: data.boxId, message: 'Location saved, user authorized, and initial report created.' };
 
-		return {
-			success: true,
-			boxId: data.boxId,
-			message: 'Location saved, user authorized, and initial report created.'
-		};
-
-	}
-	catch( error )
-	{
-		if( error.code === 'already-exists' )
-		{
+	} catch( error ) {
+		if( error.code === 'already-exists' ) {
 			throw error;
 		}
-		console.error( 'Error writing to Firestore:', error );
 		throw new HttpsError( 'internal', 'Failed to save location data.' );
 	}
 } );
+
+
 exports.isAuthorizedVolunteer = onCall( async( request ) =>
 {
 	// 1. Check for authentication
