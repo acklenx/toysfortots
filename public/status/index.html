@@ -98,6 +98,17 @@
 				const statusColor = report.status === 'new' ? 'text-tots-red' : 'text-tots-green';
 				const statusText = report.status === 'new' ? 'New' : 'Cleared';
 
+				let reporterInfoHtml = '';
+				if (report.reporterName || report.reporterEmail) { // <-- Check new fields
+					reporterInfoHtml = `
+					<div class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+						<p><strong>Reported by:</strong></p>
+						${ report.reporterName ? `<p>Name: ${ report.reporterName }</p>` : '' }
+						${ report.reporterEmail ? `<p>Email: ${ report.reporterEmail }</p>` : '' }
+					</div>
+				`;
+				}
+
 				return `
                 <li class="${ bgColor } p-4 rounded-lg border ${ borderColor } shadow-sm">
                     <div class="flex justify-between items-center mb-2">
@@ -107,11 +118,10 @@
                     <p class="text-sm text-gray-600 mb-2">
                         ${ report.description || report.notes || 'No details provided.' }
                     </p>
-                    <div class="text-xs text-gray-500 flex justify-between">
-                        <span>${ formatDate( report.timestamp ) }</span>
-                        <span>${ report.contactName ? 'Name: ' : '' } ${ report.contactName || '' }</span>
-                        <span>${ report.contactEmail ? 'Email: ' : '' } ${ report.contactEmail || '' }</span>
-                    </div>
+                    <p class="text-xs text-gray-400">
+                       Report Time: ${ formatDate( report.timestamp ) }
+                    </p>
+                    ${reporterInfoHtml}
                 </li>
             `;
 			};
@@ -156,7 +166,14 @@
                             <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
                             <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
                             <p class="text-sm font-semibold">Assigned Volunteer: ${ location.volunteer }</p>
-                        </div>
+
+                            <div class="mt-4 pt-3 border-t border-tots-red/30">
+                                <h3 class="text-md font-semibold text-gray-800 mb-1">Location Contact:</h3>
+                                <p class="text-sm text-gray-600"><strong>Name:</strong> ${ location.contactName || 'N/A' }</p>
+                                <p class="text-sm text-gray-600"><strong>Email:</strong> ${ location.contactEmail || 'N/A' }</p>
+                                <p class="text-sm text-gray-600"><strong>Phone:</strong> ${ location.contactPhone || 'N/A' }</p>
+                            </div>
+                            </div>
                     `;
 					}
 					else

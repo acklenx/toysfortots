@@ -289,14 +289,30 @@
 					const userId = appAuth.currentUser.uid;
 					const timestamp = new Date().toISOString();
 					const reportCollectionRef = collection( appDB, 'artifacts', appID, 'public', publicDocumentId, 'data', dataDocumentId, 'totsReports' );
+					// --- CORRECTED LOGIC ---
+					// --- NEW LOGIC with distinct reporter fields ---
+					// 1. Get reporter info from the form data
+					const reporterNameFromForm = reportData.contactName;
+					const reporterEmailFromForm = reportData.contactEmail;
+
+					// 2. Remove the generic contact fields from reportData before merging
+					//    so they don't conflict with location data
+					delete reportData.contactName;
+					delete reportData.contactEmail;
+
+					// 3. Build the final report
 					const fullReport = {
-						...reportData,
-						...location,
+						...reportData,          // Includes reporter's notes/description etc.
+						...location,          // Includes location's contactName/Email/Phone, label, etc.
 						boxId: boxId,
 						timestamp: timestamp,
 						reporterId: userId,
-						status: 'new'
+						status: 'new',
+						// Add the distinct reporter fields
+						reporterName: reporterNameFromForm || null,
+						reporterEmail: reporterEmailFromForm || null
 					};
+					// --- END NEW LOGIC ---
 
 					await addDoc( reportCollectionRef, fullReport );
 					return true;
