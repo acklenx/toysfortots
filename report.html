@@ -28,7 +28,7 @@
 				padding: 30px;
 				background: white;
 				border-radius: 8px;
-				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 			}
 
 			h1, h2, h3, h4 {
@@ -45,11 +45,13 @@
 				border-radius: 5px;
 				text-align: center;
 			}
+
 			.location-info h2 {
 				margin-top: 0;
 				margin-bottom: 5px;
 				color: var(--marine-blue);
 			}
+
 			.location-info p {
 				margin: 0;
 				color: var(--dark-gray-text);
@@ -150,8 +152,12 @@
 			}
 
 			@keyframes spin {
-				0% { transform: rotate(0deg); }
-				100% { transform: rotate(360deg); }
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
 			}
 		</style>
 	</head>
@@ -191,7 +197,8 @@
 							<input type="text" id="volunteer-name-pickup" name="volunteerNamePickup" placeholder="Your Name" required>
 						</div>
 						<div class="form-group">
-							<label for="notes-pickup">Notes (e.g., "Box was half full", "Collected 3 large bags")</label>
+							<label for="notes-pickup">Notes (e.g., "Box was half full", "Collected 3 large bags")
+							</label>
 							<textarea id="notes-pickup" name="notesPickup" placeholder="Optional notes..."></textarea>
 						</div>
 					</div>
@@ -234,141 +241,160 @@
 						<button type="submit">Submit Report</button>
 					</div>
 				</form>
-			</div> </div> <footer>
-		<a href="https://northatlanta.toysfortots.org/local-coordinator-sites/lco-sites/default.aspx?nPageID=0&nPreviewInd=0&nRedirectInd=3" target="_blank" rel="noopener noreferrer">
-			Official North Atlanta T4T Site
-		</a>
-		<span class="link-divider">|</span>
-		<a href="https://mcl1311.com/t4t" target="_blank" rel="noopener noreferrer">
-			MCL Detachment 1311 T4T Info
-		</a>
-	</footer>
+			</div>
+		</div>
+		<footer>
+			<a href="https://northatlanta.toysfortots.org/local-coordinator-sites/lco-sites/default.aspx?nPageID=0&nPreviewInd=0&nRedirectInd=3" target="_blank" rel="noopener noreferrer">
+				Official North Atlanta T4T Site
+			</a>
+			<span class="link-divider">|</span>
+			<a href="https://mcl1311.com/t4t" target="_blank" rel="noopener noreferrer">
+				MCL Detachment 1311 T4T Info
+			</a>
+		</footer>
 
 		<script>
-			document.addEventListener('DOMContentLoaded', async () => {
-				const params = new URLSearchParams(window.location.search);
-				const locationId = params.get('loc'); // Get the 'loc' parameter from the URL
+			document.addEventListener( 'DOMContentLoaded', async() =>
+			{
+				const params = new URLSearchParams( window.location.search );
+				const locationId = params.get( 'loc' ); // Get the 'loc' parameter from the URL
 
-				const loader = document.getElementById('loader');
-				const reportContent = document.getElementById('report-content');
-				const locationNameSpan = document.getElementById('location-name');
-				const locationAddressP = document.getElementById('location-address');
-				const locationCityStateP = document.getElementById('location-city-state');
-				const hiddenLocationId = document.getElementById('hidden-location-id');
-				const hiddenLocationLabel = document.getElementById('hidden-location-label');
-				const hiddenLocationFullAddress = document.getElementById('hidden-location-full-address');
+				const loader = document.getElementById( 'loader' );
+				const reportContent = document.getElementById( 'report-content' );
+				const locationNameSpan = document.getElementById( 'location-name' );
+				const locationAddressP = document.getElementById( 'location-address' );
+				const locationCityStateP = document.getElementById( 'location-city-state' );
+				const hiddenLocationId = document.getElementById( 'hidden-location-id' );
+				const hiddenLocationLabel = document.getElementById( 'hidden-location-label' );
+				const hiddenLocationFullAddress = document.getElementById( 'hidden-location-full-address' );
 
-				const pickupRadio = document.getElementById('pickup');
-				const problemRadio = document.getElementById('problem');
-				const pickupFields = document.getElementById('pickup-fields');
-				const problemFields = document.getElementById('problem-fields');
+				const pickupRadio = document.getElementById( 'pickup' );
+				const problemRadio = document.getElementById( 'problem' );
+				const pickupFields = document.getElementById( 'pickup-fields' );
+				const problemFields = document.getElementById( 'problem-fields' );
 
-				const form = document.querySelector('form[name="box-report"]');
-				const volunteerNamePickup = document.getElementById('volunteer-name-pickup');
-				const volunteerNameProblem = document.getElementById('volunteer-name-problem');
-				const issueCheckboxes = document.querySelectorAll('#problem-fields input[type="checkbox"]');
-				const notesProblem = document.getElementById('notes-problem');
+				const form = document.querySelector( 'form[name="box-report"]' );
+				const volunteerNamePickup = document.getElementById( 'volunteer-name-pickup' );
+				const volunteerNameProblem = document.getElementById( 'volunteer-name-problem' );
+				const issueCheckboxes = document.querySelectorAll( '#problem-fields input[type="checkbox"]' );
+				const notesProblem = document.getElementById( 'notes-problem' );
 
 				// Show loader while fetching data
 				loader.style.display = 'block';
 
-				if (!locationId) {
-					locationNameSpan.textContent = "Error: Location ID Missing";
-					locationAddressP.textContent = "Please scan a valid QR code.";
-					reportContent.classList.remove('hidden');
+				if( !locationId )
+				{
+					locationNameSpan.textContent = 'Error: Location ID Missing';
+					locationAddressP.textContent = 'Please scan a valid QR code.';
+					reportContent.classList.remove( 'hidden' );
 					loader.style.display = 'none';
 					return;
 				}
 
-				try {
-					const response = await fetch('locations.json');
+				try
+				{
+					const response = await fetch( 'locations.json' );
 					const locations = await response.json();
 
 					// You'll need to add an 'id' field to your locations.json for this to work
 					// For now, let's just find by label as a fallback/example
-					let foundLocation = locations.find(loc => loc.id === locationId); // Ideal: Match by unique ID
+					let foundLocation = locations.find( loc => loc.id === locationId ); // Ideal: Match by unique ID
 					// Fallback for demo if 'id' not added yet:
-					if (!foundLocation) {
-						const normalizedLocationId = locationId.toLowerCase().replace(/[^a-z0-9]/g, '');
-						const fallbackLocation = locations.find(loc =>
-								loc.label.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedLocationId
+					if( !foundLocation )
+					{
+						const normalizedLocationId = locationId.toLowerCase().replace( /[^a-z0-9]/g, '' );
+						const fallbackLocation = locations.find( loc =>
+								loc.label.toLowerCase().replace( /[^a-z0-9]/g, '' ) === normalizedLocationId
 						);
-						if (fallbackLocation) {
-							console.warn("Location found by label fallback. Please add unique 'id' fields to locations.json for better performance.");
+						if( fallbackLocation )
+						{
+							console.warn( 'Location found by label fallback. Please add unique \'id\' fields to locations.json for better performance.' );
 							foundLocation = fallbackLocation;
 						}
 					}
 
-					if (foundLocation) {
+					if( foundLocation )
+					{
 						locationNameSpan.textContent = foundLocation.label;
 						locationAddressP.textContent = foundLocation.address;
-						locationCityStateP.textContent = `${foundLocation.city}, ${foundLocation.state}`;
+						locationCityStateP.textContent = `${ foundLocation.city }, ${ foundLocation.state }`;
 
 						// Set hidden form fields
 						hiddenLocationId.value = locationId;
 						hiddenLocationLabel.value = foundLocation.label;
-						hiddenLocationFullAddress.value = `${foundLocation.address}, ${foundLocation.city}, ${foundLocation.state}`;
+						hiddenLocationFullAddress.value = `${ foundLocation.address }, ${ foundLocation.city }, ${ foundLocation.state }`;
 
-					} else {
-						locationNameSpan.textContent = "Error: Location Not Found";
-						locationAddressP.textContent = "The location ID in the QR code is invalid.";
 					}
-				} catch (error) {
-					console.error("Error fetching locations:", error);
-					locationNameSpan.textContent = "Error Loading Locations";
-					locationAddressP.textContent = "Please try again later.";
-				} finally {
+					else
+					{
+						locationNameSpan.textContent = 'Error: Location Not Found';
+						locationAddressP.textContent = 'The location ID in the QR code is invalid.';
+					}
+				}
+				catch( error )
+				{
+					console.error( 'Error fetching locations:', error );
+					locationNameSpan.textContent = 'Error Loading Locations';
+					locationAddressP.textContent = 'Please try again later.';
+				}
+				finally
+				{
 					loader.style.display = 'none';
-					reportContent.classList.remove('hidden');
+					reportContent.classList.remove( 'hidden' );
 				}
 
 				// --- Event Listeners for Conditional Fields ---
-				const toggleFields = () => {
+				const toggleFields = () =>
+				{
 					const isPickup = pickupRadio.checked;
 					const isProblem = problemRadio.checked;
 
-					pickupFields.classList.toggle('hidden', !isPickup);
-					problemFields.classList.toggle('hidden', !isProblem);
+					pickupFields.classList.toggle( 'hidden', !isPickup );
+					problemFields.classList.toggle( 'hidden', !isProblem );
 
 					// Set required attribute based on visibility
 					volunteerNamePickup.required = isPickup;
-					notesProblem.required = isProblem && (Array.from(issueCheckboxes).every(cb => !cb.checked)); // Require notes if no checkboxes are selected
+					notesProblem.required = isProblem && ( Array.from( issueCheckboxes ).every( cb => !cb.checked ) ); // Require notes if no checkboxes are selected
 
 					// Clear inputs if fields are hidden
-					if (!isPickup) {
+					if( !isPickup )
+					{
 						volunteerNamePickup.value = '';
-						document.getElementById('notes-pickup').value = '';
+						document.getElementById( 'notes-pickup' ).value = '';
 					}
-					if (!isProblem) {
-						Array.from(issueCheckboxes).forEach(cb => cb.checked = false);
+					if( !isProblem )
+					{
+						Array.from( issueCheckboxes ).forEach( cb => cb.checked = false );
 						notesProblem.value = '';
 						volunteerNameProblem.value = '';
 					}
 				};
 
-				pickupRadio.addEventListener('change', toggleFields);
-				problemRadio.addEventListener('change', toggleFields);
+				pickupRadio.addEventListener( 'change', toggleFields );
+				problemRadio.addEventListener( 'change', toggleFields );
 
 				// Add listener for problem checkboxes to conditionally require notes
-				issueCheckboxes.forEach(cb => {
-					cb.addEventListener('change', () => {
-						const anyChecked = Array.from(issueCheckboxes).some(cb => cb.checked);
+				issueCheckboxes.forEach( cb =>
+				{
+					cb.addEventListener( 'change', () =>
+					{
+						const anyChecked = Array.from( issueCheckboxes ).some( cb => cb.checked );
 						notesProblem.required = !anyChecked;
-					});
-				});
+					} );
+				} );
 
 				// Initial toggle based on page load (nothing selected by default)
 				toggleFields();
 
 				// Set Netlify honeypot field (important for spam protection)
-				const honeypot = document.createElement('input');
+				const honeypot = document.createElement( 'input' );
 				honeypot.type = 'hidden';
 				honeypot.name = 'bot-field';
-				form.appendChild(honeypot);
+				form.appendChild( honeypot );
 
 				// Add Netlify form processing attribute
-				form.setAttribute('netlify', true);
-			});
+				form.setAttribute( 'netlify', true );
+			} );
 		</script>
 	</body>
 </html>

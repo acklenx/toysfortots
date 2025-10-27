@@ -12,6 +12,7 @@
 				--t4t-red: #cc0000;
 				--marine-blue: #003366;
 			}
+
 			.form-container {
 				max-width: 600px;
 				/* Removed margin: 30px auto; to let header/footer sit normally */
@@ -19,21 +20,25 @@
 				padding: 30px;
 				background: white;
 				border-radius: 8px;
-				box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 			}
+
 			/* Added wrapper for spacing */
 			.form-wrapper {
 				padding: 20px 0;
 			}
+
 			.form-group {
 				margin-bottom: 20px;
 			}
+
 			.form-group label {
 				display: block;
 				margin-bottom: 5px;
 				font-weight: bold;
 				color: #333;
 			}
+
 			.form-group input,
 			.form-group select {
 				width: 100%;
@@ -42,6 +47,7 @@
 				border-radius: 4px;
 				box-sizing: border-box;
 			}
+
 			.form-group button {
 				width: 100%;
 				padding: 12px;
@@ -54,17 +60,21 @@
 				cursor: pointer;
 				transition: background-color 0.2s;
 			}
+
 			.form-group button:hover {
 				background-color: #a80000;
 			}
+
 			.form-group button:disabled {
 				background-color: #ccc;
 				cursor: not-allowed;
 			}
+
 			#auth-container {
 				text-align: center;
 				padding: 40px;
 			}
+
 			.message {
 				text-align: center;
 				padding: 15px;
@@ -72,14 +82,17 @@
 				margin-top: 20px;
 				font-weight: 500;
 			}
+
 			.message.success {
 				background-color: #d4edda;
 				color: #155724;
 			}
+
 			.message.error {
 				background-color: #f8d7da;
 				color: #721c24;
 			}
+
 			#box-id-display {
 				background-color: #f4f4f4;
 				border: 1px solid #ddd;
@@ -91,6 +104,7 @@
 				font-weight: bold;
 				color: var(--marine-blue);
 			}
+
 			/* Added to prevent style conflicts */
 			header h1 a:hover, header h2 a:hover {
 				text-decoration: underline;
@@ -117,7 +131,9 @@
 					</h2>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
-				<a href="/dashboard"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+				<a href="/dashboard">
+					<img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+				</a>
 			</div>
 		</header>
 
@@ -125,303 +141,329 @@
 			<div class="form-container">
 				<h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Set Up New Box Location</h1>
 
-			<div id="auth-container">
-				<p class="mb-4">You must be signed in to set up a new location.</p>
-				<button id="sign-in-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-					Sign In with Google
-				</button>
+				<div id="auth-container">
+					<p class="mb-4">You must be signed in to set up a new location.</p>
+					<button id="sign-in-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+						Sign In with Google
+					</button>
+				</div>
+
+				<form id="new-location-form" class="hidden">
+
+					<div class="form-group">
+						<label>Box ID to Set Up</label>
+						<div id="box-id-display">Loading...</div>
+					</div>
+
+					<div class="form-group">
+						<label for="label">Business Name (Label)</label>
+						<input type="text" id="label" name="label" required>
+					</div>
+					<div class="form-group">
+						<label for="address">Full Street Address</label>
+						<input type="text" id="address" name="address" required>
+					</div>
+					<div class="form-group">
+						<label for="city">City</label>
+						<input type="text" id="city" name="city" required>
+					</div>
+					<div class="form-group">
+						<label for="state">State</label>
+						<input type="text" id="state" name="state" value="GA" required>
+					</div>
+					<div class="form-group">
+						<label for="boxes">Number of Boxes</label>
+						<input type="number" id="boxes" name="boxes" value="1" min="1">
+					</div>
+					<div class="form-group">
+						<label for="contactName">Location Contact Name</label>
+						<input type="text" id="contactName" name="contactName" required>
+					</div>
+
+					<div class="form-group">
+						<label for="contactEmail">Contact Email</label>
+						<input type="email" id="contactEmail" name="contactEmail" required>
+					</div>
+
+					<div class="form-group">
+						<label for="contactPhone">Contact Phone</label>
+						<input type="tel" id="contactPhone" name="contactPhone">
+					</div>
+
+					<div class="form-group">
+						<label for="passcode">Password</label>
+						<input type="password" id="passcode" name="passcode" required>
+					</div>
+
+					<div class="form-group">
+						<button id="submit-btn" type="submit">Submit Location</button>
+					</div>
+
+					<div id="message-container"></div>
+
+					<div class="text-center">
+						<button id="sign-out-btn" type="button" class="mt-4 text-sm text-gray-600 hover:text-gray-900">
+							Sign Out
+						</button>
+					</div>
+				</form>
 			</div>
 
-			<form id="new-location-form" class="hidden">
+			<footer>
+				<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they
+					are official representatives of this Toys for Tots campaign.</p>
+				<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
+			</footer>
 
-				<div class="form-group">
-					<label>Box ID to Set Up</label>
-					<div id="box-id-display">Loading...</div>
-				</div>
-
-				<div class="form-group">
-					<label for="label">Business Name (Label)</label>
-					<input type="text" id="label" name="label" required>
-				</div>
-				<div class="form-group">
-					<label for="address">Full Street Address</label>
-					<input type="text" id="address" name="address" required>
-				</div>
-				<div class="form-group">
-					<label for="city">City</label>
-					<input type="text" id="city" name="city" required>
-				</div>
-				<div class="form-group">
-					<label for="state">State</label>
-					<input type="text" id="state" name="state" value="GA" required>
-				</div>
-				<div class="form-group">
-					<label for="boxes">Number of Boxes</label>
-					<input type="number" id="boxes" name="boxes" value="1" min="1">
-				</div>
-				<div class="form-group">
-					<label for="contactName">Location Contact Name</label>
-					<input type="text" id="contactName" name="contactName" required>
-				</div>
-
-				<div class="form-group">
-					<label for="contactEmail">Contact Email</label>
-					<input type="email" id="contactEmail" name="contactEmail" required>
-				</div>
-
-				<div class="form-group">
-					<label for="contactPhone">Contact Phone</label>
-					<input type="tel" id="contactPhone" name="contactPhone">
-				</div>
+			<script type="module">
+				// --- 1. IMPORTS ---
+				import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+				import {
+					getAuth,
+					onAuthStateChanged,
+					GoogleAuthProvider,
+					signInWithPopup,
+					signOut
+				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+				import {
+					getFirestore,
+					collection,
+					getDocs,
+					doc,
+					getDoc
+				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+				// --- NEW: Import Functions ---
+				import {
+					getFunctions,
+					httpsCallable
+				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 
-				<div class="form-group">
-					<label for="passcode">Password</label>
-					<input type="password" id="passcode" name="passcode" required>
-				</div>
-
-				<div class="form-group">
-					<button id="submit-btn" type="submit">Submit Location</button>
-				</div>
-
-				<div id="message-container"></div>
-
-				<div class="text-center">
-					<button id="sign-out-btn" type="button" class="mt-4 text-sm text-gray-600 hover:text-gray-900">Sign Out</button>
-				</div>
-			</form>
-		</div>
-
-		<footer>
-			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
-			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
-		</footer>
-
-		<script type="module">
-			// --- 1. IMPORTS ---
-			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import {
-				getAuth,
-				onAuthStateChanged,
-				GoogleAuthProvider,
-				signInWithPopup,
-				signOut
-			} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import {
-				getFirestore,
-				collection,
-				getDocs,
-				doc,
-				getDoc
-			} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-			// --- NEW: Import Functions ---
-			import {
-				getFunctions,
-				httpsCallable
-			} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
-
-
-			// --- 2. CONFIG & TOP-LEVEL VARS ---
-			const firebaseConfig = {
-				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
-				authDomain: "toysfortots-eae4d.firebaseapp.com",
-				projectId: "toysfortots-eae4d",
-				storageBucket: "toysfortots-eae4d.firebasestorage.app",
-				messagingSenderId: "505039956655",
-				appId: "1:505039956655:web:c750c66b28f7facd82025a"
-			};
-
-			const appId = firebaseConfig.projectId;
-			let scannedBoxId = null;
-			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
-			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
-			const locationsCollectionPath = `artifacts/${appId}/public/${publicDocumentId}/data/${dataDocumentId}/locations`;
-
-			// Firebase instances
-			let app, auth, db, functions, provisionBox, isAuthorizedVolunteer; // Added functions
-
-			// DOM Elements
-			const authContainer = document.getElementById('auth-container');
-			const signInBtn = document.getElementById('sign-in-btn');
-			const signOutBtn = document.getElementById('sign-out-btn');
-			const form = document.getElementById('new-location-form');
-			const volunteersDatalist = document.getElementById('volunteers-list');
-			const messageContainer = document.getElementById('message-container');
-			const submitBtn = document.getElementById('submit-btn');
-			const boxIdDisplay = document.getElementById('box-id-display');
-
-			// --- 3. HELPER FUNCTIONS ---
-			function showMessage(type, text) {
-				messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
-			}
-
-			// --- 4. CORE APP LOGIC ---
-
-
-
-			/**
-			 * Handles the form submission by calling a Cloud Function
-			 */
-			async function handleFormSubmit(e) {
-				e.preventDefault();
-
-				if (!scannedBoxId) {
-					showMessage('error', 'No Box ID found. Cannot submit.');
-					return;
-				}
-
-				submitBtn.disabled = true;
-				submitBtn.textContent = 'Submitting...';
-				showMessage('', '');
-
-				// Get data from the form
-				const formData = new FormData(form);
-
-				// Build the payload (NO 'volunteer' field)
-				const payload = {
-					boxId: scannedBoxId,
-					label: formData.get('label'),
-					address: formData.get('address'),
-					city: formData.get('city'),
-					state: formData.get('state'),
-					boxes: parseInt(formData.get('boxes'), 10),
-					passcode: formData.get('passcode'), // This will be blank if hidden
-					contactName: formData.get('contactName'),
-					contactEmail: formData.get('contactEmail'),
-					contactPhone: formData.get('contactPhone')
+				// --- 2. CONFIG & TOP-LEVEL VARS ---
+				const firebaseConfig = {
+					apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
+					authDomain: 'toysfortots-eae4d.firebaseapp.com',
+					projectId: 'toysfortots-eae4d',
+					storageBucket: 'toysfortots-eae4d.firebasestorage.app',
+					messagingSenderId: '505039956655',
+					appId: '1:505039956655:web:c750c66b28f7facd82025a'
 				};
 
-				try {
-					// --- Call the Cloud Function ---
-					const result = await provisionBox(payload);
+				const appId = firebaseConfig.projectId;
+				let scannedBoxId = null;
+				const publicDocumentId = '3USFkKsJe7T8ZYdW5YfE';
+				const dataDocumentId = 'EF1QWEKWPMuoLN7fC4Ri';
+				const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
 
-					// --- SUCCESS BLOCK ---
-					const newBoxId = result.data.boxId;
-					showMessage('success', `Success! Box ID: <strong>${newBoxId}</strong> saved. Redirecting in 2 seconds...`);
+				// Firebase instances
+				let app, auth, db, functions, provisionBox, isAuthorizedVolunteer; // Added functions
 
-					form.reset();
-					boxIdDisplay.textContent = scannedBoxId;
+				// DOM Elements
+				const authContainer = document.getElementById( 'auth-container' );
+				const signInBtn = document.getElementById( 'sign-in-btn' );
+				const signOutBtn = document.getElementById( 'sign-out-btn' );
+				const form = document.getElementById( 'new-location-form' );
+				const volunteersDatalist = document.getElementById( 'volunteers-list' );
+				const messageContainer = document.getElementById( 'message-container' );
+				const submitBtn = document.getElementById( 'submit-btn' );
+				const boxIdDisplay = document.getElementById( 'box-id-display' );
 
-					setTimeout(() => {
-						window.location.href = `/status/?id=${newBoxId}`;
-					}, 2000);
-
-				} catch (error) {
-					console.error("Error submitting location:", error);
-					showMessage('error', `Submission failed: ${error.message}`);
-					submitBtn.disabled = false;
-					submitBtn.textContent = 'Submit Location';
-				}
-			}
-
-			/**
-			 * Initializes Firebase and sets up auth listener
-			 */
-			function init() {
-				const params = new URLSearchParams(window.location.search);
-				scannedBoxId = params.get('id');
-
-				if (!scannedBoxId) {
-					boxIdDisplay.textContent = "ID NOT FOUND";
-					showMessage('error', 'No Box ID found in URL. Please scan a valid QR code.');
-					submitBtn.disabled = true;
-				} else {
-					boxIdDisplay.textContent = scannedBoxId;
+				// --- 3. HELPER FUNCTIONS ---
+				function showMessage( type, text )
+				{
+					messageContainer.innerHTML = `<div class="message ${ type }">${ text }</div>`;
 				}
 
-				app = initializeApp(firebaseConfig);
-				auth = getAuth(app);
-				db = getFirestore(app);
-				// --- NEW: Initialize Functions ---
-				functions = getFunctions(app);
-				provisionBox = httpsCallable(functions, 'provisionBox');
-				isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteer');
+				// --- 4. CORE APP LOGIC ---
 
-				const provider = new GoogleAuthProvider();
 
-				signInBtn.onclick = () => signInWithPopup(auth, provider);
-				signOutBtn.onclick = () => signOut(auth);
-				form.onsubmit = handleFormSubmit;
+				/**
+				 * Handles the form submission by calling a Cloud Function
+				 */
+				async function handleFormSubmit( e )
+				{
+					e.preventDefault();
 
-				onAuthStateChanged(auth, async (user) => {
-					if (user && !user.isAnonymous) {
-						// User is signed in with Google.
-
-						// --- NEW: Check if box is already set up ---
-						if (!scannedBoxId) {
-							// No ID, just show the form (or an error)
-							authContainer.classList.add('hidden');
-							form.classList.add('hidden'); // Keep form hidden
-							showMessage('error', 'No Box ID found in URL. Cannot check status.');
-							return;
-						}
-
-						try {
-							// 1. Check the 'locations' collection for this ID
-							const locRef = doc(db, locationsCollectionPath, scannedBoxId);
-							const locSnap = await getDoc(locRef);
-
-							if (locSnap.exists()) {
-								// --- IT EXISTS! Redirect to status page ---
-								authContainer.classList.add('hidden');
-								form.classList.add('hidden');
-								showMessage('success', 'This box is already set up. Redirecting to status page...');
-
-								// Immediate redirect
-								window.location.href = `/status/?id=${scannedBoxId}`;
-								return; // Stop processing
-							}
-
-							// --- Box does NOT exist, proceed with setup logic ---
-
-							authContainer.classList.add('hidden');
-							form.classList.remove('hidden');
-
-							const passcodeGroup = document.getElementById('passcode').parentElement;
-							const passcode = document.getElementById('passcode');
-							const passcodeLabel = passcodeGroup.querySelector('label');
-
-							// 2. Check if user is already an authorized volunteer
-							passcodeLabel.textContent = "Verifying authorization...";
-							const result = await isAuthorizedVolunteer();
-
-							if (result.data.isAuthorized) {
-								// YES, user is authorized. Hide password.
-								passcodeGroup.classList.add('hidden');
-								passcode.required = false;
-								passcode.value = '';
-								passcodeLabel.textContent = "Password (Authorized)";
-							} else {
-								// NO, user is new. Show password.
-								passcodeGroup.classList.remove('hidden');
-								passcode.required = true;
-								passcodeLabel.textContent = "Password (New Volunteer)";
-							}
-
-						} catch (error) {
-							console.error("Setup page check failed:", error);
-							authContainer.classList.add('hidden');
-							form.classList.add('hidden');
-							showMessage('error', `An error occurred: ${error.message}`);
-						}
-
-					} else {
-						// User is signed out
-						authContainer.classList.remove('hidden');
-						form.classList.add('hidden');
-
-						// Show password field and make it required by default when logged out
-						document.getElementById('passcode').parentElement.classList.remove('hidden');
-						document.getElementById('passcode').required = true;
-
-						if (user && user.isAnonymous) {
-							signOut(auth);
-						}
+					if( !scannedBoxId )
+					{
+						showMessage( 'error', 'No Box ID found. Cannot submit.' );
+						return;
 					}
-				});
-			}
-			init();
-		</script>
+
+					submitBtn.disabled = true;
+					submitBtn.textContent = 'Submitting...';
+					showMessage( '', '' );
+
+					// Get data from the form
+					const formData = new FormData( form );
+
+					// Build the payload (NO 'volunteer' field)
+					const payload = {
+						boxId: scannedBoxId,
+						label: formData.get( 'label' ),
+						address: formData.get( 'address' ),
+						city: formData.get( 'city' ),
+						state: formData.get( 'state' ),
+						boxes: parseInt( formData.get( 'boxes' ), 10 ),
+						passcode: formData.get( 'passcode' ), // This will be blank if hidden
+						contactName: formData.get( 'contactName' ),
+						contactEmail: formData.get( 'contactEmail' ),
+						contactPhone: formData.get( 'contactPhone' )
+					};
+
+					try
+					{
+						// --- Call the Cloud Function ---
+						const result = await provisionBox( payload );
+
+						// --- SUCCESS BLOCK ---
+						const newBoxId = result.data.boxId;
+						showMessage( 'success', `Success! Box ID: <strong>${ newBoxId }</strong> saved. Redirecting in 2 seconds...` );
+
+						form.reset();
+						boxIdDisplay.textContent = scannedBoxId;
+
+						setTimeout( () =>
+						{
+							window.location.href = `/status/?id=${ newBoxId }`;
+						}, 2000 );
+
+					}
+					catch( error )
+					{
+						console.error( 'Error submitting location:', error );
+						showMessage( 'error', `Submission failed: ${ error.message }` );
+						submitBtn.disabled = false;
+						submitBtn.textContent = 'Submit Location';
+					}
+				}
+
+				/**
+				 * Initializes Firebase and sets up auth listener
+				 */
+				function init()
+				{
+					const params = new URLSearchParams( window.location.search );
+					scannedBoxId = params.get( 'id' );
+
+					if( !scannedBoxId )
+					{
+						boxIdDisplay.textContent = 'ID NOT FOUND';
+						showMessage( 'error', 'No Box ID found in URL. Please scan a valid QR code.' );
+						submitBtn.disabled = true;
+					}
+					else
+					{
+						boxIdDisplay.textContent = scannedBoxId;
+					}
+
+					app = initializeApp( firebaseConfig );
+					auth = getAuth( app );
+					db = getFirestore( app );
+					// --- NEW: Initialize Functions ---
+					functions = getFunctions( app );
+					provisionBox = httpsCallable( functions, 'provisionBox' );
+					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteer' );
+
+					const provider = new GoogleAuthProvider();
+
+					signInBtn.onclick = () => signInWithPopup( auth, provider );
+					signOutBtn.onclick = () => signOut( auth );
+					form.onsubmit = handleFormSubmit;
+
+					onAuthStateChanged( auth, async( user ) =>
+					{
+						if( user && !user.isAnonymous )
+						{
+							// User is signed in with Google.
+
+							// --- NEW: Check if box is already set up ---
+							if( !scannedBoxId )
+							{
+								// No ID, just show the form (or an error)
+								authContainer.classList.add( 'hidden' );
+								form.classList.add( 'hidden' ); // Keep form hidden
+								showMessage( 'error', 'No Box ID found in URL. Cannot check status.' );
+								return;
+							}
+
+							try
+							{
+								// 1. Check the 'locations' collection for this ID
+								const locRef = doc( db, locationsCollectionPath, scannedBoxId );
+								const locSnap = await getDoc( locRef );
+
+								if( locSnap.exists() )
+								{
+									// --- IT EXISTS! Redirect to status page ---
+									authContainer.classList.add( 'hidden' );
+									form.classList.add( 'hidden' );
+									showMessage( 'success', 'This box is already set up. Redirecting to status page...' );
+
+									// Immediate redirect
+									window.location.href = `/status/?id=${ scannedBoxId }`;
+									return; // Stop processing
+								}
+
+								// --- Box does NOT exist, proceed with setup logic ---
+
+								authContainer.classList.add( 'hidden' );
+								form.classList.remove( 'hidden' );
+
+								const passcodeGroup = document.getElementById( 'passcode' ).parentElement;
+								const passcode = document.getElementById( 'passcode' );
+								const passcodeLabel = passcodeGroup.querySelector( 'label' );
+
+								// 2. Check if user is already an authorized volunteer
+								passcodeLabel.textContent = 'Verifying authorization...';
+								const result = await isAuthorizedVolunteer();
+
+								if( result.data.isAuthorized )
+								{
+									// YES, user is authorized. Hide password.
+									passcodeGroup.classList.add( 'hidden' );
+									passcode.required = false;
+									passcode.value = '';
+									passcodeLabel.textContent = 'Password (Authorized)';
+								}
+								else
+								{
+									// NO, user is new. Show password.
+									passcodeGroup.classList.remove( 'hidden' );
+									passcode.required = true;
+									passcodeLabel.textContent = 'Password (New Volunteer)';
+								}
+
+							}
+							catch( error )
+							{
+								console.error( 'Setup page check failed:', error );
+								authContainer.classList.add( 'hidden' );
+								form.classList.add( 'hidden' );
+								showMessage( 'error', `An error occurred: ${ error.message }` );
+							}
+
+						}
+						else
+						{
+							// User is signed out
+							authContainer.classList.remove( 'hidden' );
+							form.classList.add( 'hidden' );
+
+							// Show password field and make it required by default when logged out
+							document.getElementById( 'passcode' ).parentElement.classList.remove( 'hidden' );
+							document.getElementById( 'passcode' ).required = true;
+
+							if( user && user.isAnonymous )
+							{
+								signOut( auth );
+							}
+						}
+					} );
+				}
+
+				init();
+			</script>
 		</div>
 	</body>
 </html>

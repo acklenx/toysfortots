@@ -9,160 +9,198 @@
 
 		<script type="module">
 			// --- 1. IMPORTS (Added getDocs, query, where, orderBy) ---
-			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import { getFirestore, doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+			import {
+				getAuth,
+				signInAnonymously,
+				onAuthStateChanged
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import {
+				getFirestore,
+				doc,
+				getDoc,
+				collection,
+				getDocs,
+				query,
+				where,
+				orderBy
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			const firebaseConfig = {
-				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
-				authDomain: "toysfortots-eae4d.firebaseapp.com",
-				projectId: "toysfortots-eae4d",
-				storageBucket: "toysfortots-eae4d.firebasestorage.app",
-				messagingSenderId: "505039956655",
-				appId: "1:505039956655:web:c750c66b28f7facd82025a",
-				measurementId: "G-XKQYPK0GLC"
+				apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
+				authDomain: 'toysfortots-eae4d.firebaseapp.com',
+				projectId: 'toysfortots-eae4d',
+				storageBucket: 'toysfortots-eae4d.firebasestorage.app',
+				messagingSenderId: '505039956655',
+				appId: '1:505039956655:web:c750c66b28f7facd82025a',
+				measurementId: 'G-XKQYPK0GLC'
 			};
 			const appId = firebaseConfig.projectId;
 			let db, auth;
 			let appDB, appAuth, appID;
 
 			// --- 3. FIREBASE SETUP ---
-			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
-			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+			const publicDocumentId = '3USFkKsJe7T8ZYdW5YfE';
+			const dataDocumentId = 'EF1QWEKWPMuoLN7fC4Ri';
 			let reportsCollectionRef;
 
-			const setupFirebase = () => {
-				try {
-					const app = initializeApp(firebaseConfig);
-					auth = getAuth(app);
-					db = getFirestore(app);
+			const setupFirebase = () =>
+			{
+				try
+				{
+					const app = initializeApp( firebaseConfig );
+					auth = getAuth( app );
+					db = getFirestore( app );
 
 					let appInitialized = false;
-					onAuthStateChanged(auth, (user) => {
-						if (user && !appInitialized) {
+					onAuthStateChanged( auth, ( user ) =>
+					{
+						if( user && !appInitialized )
+						{
 							appInitialized = true;
-							window.initApp(appId, db, auth);
-						} else if (!user) {
-							signInAnonymously(auth).catch((err) => {
-								console.error("Anonymous sign-in failed:", err);
-							});
+							window.initApp( appId, db, auth );
 						}
-					});
-				} catch (error) {
-					console.error("Firebase Initialization Error:", error);
+						else if( !user )
+						{
+							signInAnonymously( auth ).catch( ( err ) =>
+							{
+								console.error( 'Anonymous sign-in failed:', err );
+							} );
+						}
+					} );
+				}
+				catch( error )
+				{
+					console.error( 'Firebase Initialization Error:', error );
 				}
 			};
 
 			// --- 4. HELPER FUNCTIONS ---
-			const formatDate = (isoString) => {
-				if (!isoString) return 'No date';
+			const formatDate = ( isoString ) =>
+			{
+				if( !isoString )
+				{
+					return 'No date';
+				}
 				const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-				return new Date(isoString).toLocaleString(undefined, options);
+				return new Date( isoString ).toLocaleString( undefined, options );
 			};
 
 			// This is your last working render function
-			const renderReportItem = (report) => {
-				const reportTypeName = report.reportType || report['report-type'] || 'unknown_report';
+			const renderReportItem = ( report ) =>
+			{
+				const reportTypeName = report.reportType || report[ 'report-type' ] || 'unknown_report';
 
-				const isProblem = reportTypeName.includes('problem');
+				const isProblem = reportTypeName.includes( 'problem' );
 				const bgColor = isProblem ? 'bg-red-50' : 'bg-white';
 				const borderColor = isProblem ? 'border-tots-red/50' : 'border-gray-200';
 				const statusColor = report.status === 'new' ? 'text-tots-red' : 'text-tots-green';
 				const statusText = report.status === 'new' ? 'New' : 'Cleared';
 
 				return `
-                <li class="${bgColor} p-4 rounded-lg border ${borderColor} shadow-sm">
+                <li class="${ bgColor } p-4 rounded-lg border ${ borderColor } shadow-sm">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-gray-800">${reportTypeName.replace(/_/g, ' ').toUpperCase()}</span>
-                        <span class="text-sm font-semibold ${statusColor}">${statusText}</span>
+                        <span class="font-bold text-gray-800">${ reportTypeName.replace( /_/g, ' ' ).toUpperCase() }</span>
+                        <span class="text-sm font-semibold ${ statusColor }">${ statusText }</span>
                     </div>
                     <p class="text-sm text-gray-600 mb-2">
-                        ${report.description || report.notes || 'No details provided.'}
+                        ${ report.description || report.notes || 'No details provided.' }
                     </p>
                     <div class="text-xs text-gray-500 flex justify-between">
-                        <span>${formatDate(report.timestamp)}</span>
-                        <span>${report.contactName? 'Name: ' : ''} ${report.contactName || ''}</span>
-                        <span>${report.contactEmail? 'Email: ' : ''} ${report.contactEmail || ''}</span>
+                        <span>${ formatDate( report.timestamp ) }</span>
+                        <span>${ report.contactName ? 'Name: ' : '' } ${ report.contactName || '' }</span>
+                        <span>${ report.contactEmail ? 'Email: ' : '' } ${ report.contactEmail || '' }</span>
                     </div>
                 </li>
             `;
 			};
 
 			// --- 5. MAIN APP LOGIC ---
-			window.initApp = async (appId, dbInstance, authInstance) => {
+			window.initApp = async( appId, dbInstance, authInstance ) =>
+			{
 				appDB = dbInstance;
 				appAuth = authInstance;
 				appID = appId;
 
-				const listDiv = document.getElementById('location-display');
-				const loadingMessage = document.getElementById('loading-message');
-				const historyContainer = document.getElementById('history-container');
-				const historyLoading = document.getElementById('history-loading');
+				const listDiv = document.getElementById( 'location-display' );
+				const loadingMessage = document.getElementById( 'loading-message' );
+				const historyContainer = document.getElementById( 'history-container' );
+				const historyLoading = document.getElementById( 'history-loading' );
 
-				const params = new URLSearchParams(window.location.search);
-				const boxId = params.get('id');
+				const params = new URLSearchParams( window.location.search );
+				const boxId = params.get( 'id' );
 
-				if (!boxId) {
+				if( !boxId )
+				{
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = "Error: Box ID missing from the link.";
+					loadingMessage.textContent = 'Error: Box ID missing from the link.';
 					return;
 				}
 
-				reportsCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
+				reportsCollectionRef = collection( appDB, 'artifacts', appID, 'public', publicDocumentId, 'data', dataDocumentId, 'totsReports' );
 
-				try {
+				try
+				{
 					// --- Task 1: Get the Box's main info (Same as your page) ---
-					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
-					const locSnap = await getDoc(locRef);
+					const locRef = doc( appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId );
+					const locSnap = await getDoc( locRef );
 
-					if (locSnap.exists()) {
+					if( locSnap.exists() )
+					{
 						const location = locSnap.data();
 						loadingMessage.remove();
 						listDiv.innerHTML = `
                         <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
-                            <h2 class="text-xl font-bold text-tots-red">${location.label}</h2>
-                            <p class="text-sm text-gray-700 mt-1">${location.address}, ${location.city}, ${location.state}</p>
-                            <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${boxId}</span></p>
-                            <p class="text-sm font-semibold">Assigned Volunteer: ${location.volunteer}</p>
+                            <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
+                            <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
+                            <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
+                            <p class="text-sm font-semibold">Assigned Volunteer: ${ location.volunteer }</p>
                         </div>
                     `;
-					} else {
+					}
+					else
+					{
 						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 						loadingMessage.textContent = `Error: Box ID not found. Redirecting to setup page in 2 seconds...`;
 						historyLoading.remove();
 
 						// Wait 2 seconds then redirect
-						setTimeout(() => {
-							window.location.href = `/setup/?id=${boxId}`;
-						}, 2000); // 2000 milliseconds
+						setTimeout( () =>
+						{
+							window.location.href = `/setup/?id=${ boxId }`;
+						}, 2000 ); // 2000 milliseconds
 
 						return; // Stop further execution
 					}
 
 					// --- Task 2: Get all reports for this box ---
-					const q = query(reportsCollectionRef,
-							where("boxId", "==", boxId),
-							orderBy("timestamp", "desc")
+					const q = query( reportsCollectionRef,
+							where( 'boxId', '==', boxId ),
+							orderBy( 'timestamp', 'desc' )
 					);
 
-					const querySnapshot = await getDocs(q);
+					const querySnapshot = await getDocs( q );
 					historyLoading.remove();
 
-					if (querySnapshot.empty) {
+					if( querySnapshot.empty )
+					{
 						historyContainer.innerHTML = '<p class="text-gray-500 text-center">No reports found for this box.</p>';
 						return;
 					}
 
 					let historyHtml = '';
-					querySnapshot.forEach(docSnap => {
-						historyHtml += renderReportItem(docSnap.data());
-					});
+					querySnapshot.forEach( docSnap =>
+					{
+						historyHtml += renderReportItem( docSnap.data() );
+					} );
 					historyContainer.innerHTML = historyHtml;
 
-				} catch (error) {
-					console.error("Error loading data:", error);
-					loadingMessage.textContent = `Error: ${error.message}`;
+				}
+				catch( error )
+				{
+					console.error( 'Error loading data:', error );
+					loadingMessage.textContent = `Error: ${ error.message }`;
 				}
 			};
 
@@ -174,15 +212,15 @@
 			tailwind.config = {
 				theme: {
 					extend: {
-						fontFamily: { sans: ['Inter', 'sans-serif'] },
+						fontFamily: { sans: [ 'Inter', 'sans-serif' ] },
 						colors: {
 							'tots-red': '#cc0000',
 							'tots-green': '#008000',
-							'tots-light': '#fcebeb',
+							'tots-light': '#fcebeb'
 						}
 					}
 				}
-			}
+			};
 		</script>
 		<style>
 			header h1 a:hover, header h2 a:hover {
@@ -210,7 +248,9 @@
 					</h2>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
-				<a href="/dashboard"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+				<a href="/dashboard">
+					<img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+				</a>
 			</div>
 		</header>
 
@@ -236,7 +276,8 @@
 		</div>
 
 		<footer>
-			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
+				official representatives of this Toys for Tots campaign.</p>
 			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear">
 		</footer>
 

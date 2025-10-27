@@ -61,7 +61,6 @@
 				}
 
 				/* FIX: Apply cumulative negative margin for consistent row overlap across all rows */
-
 				/* Row 2 (Items 3, 4) - Pulls up by 1x the overlap value */
 				.sticker-card:nth-child(3), .sticker-card:nth-child(4) {
 					margin-top: var(--row-negative-margin);
@@ -85,6 +84,7 @@
 					page-break-inside: avoid;
 					box-shadow: none !important; /* REMOVE DROP SHADOW WHEN PRINTING */
 				}
+
 				.config-panel {
 					display: none !important; /* HIDE CONFIG PANEL WHEN PRINTING */
 				}
@@ -99,12 +99,14 @@
 					flex-direction: column;
 					align-items: center;
 				}
+
 				#sticker-grid-wrapper {
 					display: grid;
 					grid-template-columns: repeat(2, 1fr);
 					gap: 20px;
 					max-width: 850px;
 				}
+
 				.config-panel {
 					width: 100%;
 					max-width: 850px;
@@ -123,7 +125,8 @@
 			<h2 class="text-lg font-bold mb-3 text-gray-700">Print Sheet Configuration</h2>
 			<div class="flex flex-wrap gap-4 items-end">
 				<div>
-					<label for="startId" class="block text-sm font-medium text-gray-600">Starting Box ID (e.g., 1000)</label>
+					<label for="startId" class="block text-sm font-medium text-gray-600">Starting Box ID (e.g., 1000)
+					</label>
 					<input type="number" id="startId" value="1000" min="1" class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
 				</div>
 				<div>
@@ -131,19 +134,27 @@
 					<input type="number" id="idLength" value="4" min="3" class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
 				</div>
 				<div>
-					<label for="topPadding" class="block text-sm font-medium text-gray-600">Page Top Padding (e.g., 0.2in)</label>
+					<label for="topPadding" class="block text-sm font-medium text-gray-600">Page Top Padding (e.g.,
+						0.2in)
+					</label>
 					<input type="text" id="topPadding" value="0.5in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
 				</div>
 				<div>
-					<label for="rowGap" class="block text-sm font-medium text-gray-600">Row Overlap (e.g., -0.09in)</label>
+					<label for="rowGap" class="block text-sm font-medium text-gray-600">Row Overlap (e.g., -0.09in)
+					</label>
 					<input type="text" id="rowGap" value="-0.09in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
 				</div>
 				<div>
-					<label for="columnGap" class="block text-sm font-medium text-gray-600">Column Gap (e.g., 0.15in)</label>
+					<label for="columnGap" class="block text-sm font-medium text-gray-600">Column Gap (e.g., 0.15in)
+					</label>
 					<input type="text" id="columnGap" value="0.15in" class="mt-1 block w-28 rounded-md border-gray-300 shadow-sm sm:text-sm p-2">
 				</div>
-				<button onclick="renderStickers()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150">Generate Sheet</button>
-				<button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150">Print Sticker Sheet</button>
+				<button onclick="renderStickers()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-150">
+					Generate Sheet
+				</button>
+				<button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150">
+					Print Sticker Sheet
+				</button>
 			</div>
 		</div>
 
@@ -153,8 +164,10 @@
 			 * A vanilla JS class to obfuscate sequential integers into "random-looking"
 			 * deterministic, and collision-free strings.
 			 */
-			class IdObfuscator {
-				constructor() {
+			class IdObfuscator
+			{
+				constructor()
+				{
 					// For different-looking IDs, you can scramble this string.
 					this.ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 					this.BASE = this.ALPHABET.length;
@@ -172,50 +185,57 @@
 				 * @param {number} fixedLength - The exact length of the output string (e.g., 5).
 				 * @returns {string} The obfuscated ID string.
 				 */
-				encode(id, fixedLength = 5) {
-					if (typeof id !== 'number' || id < 0 || !Number.isInteger(id)) {
-						throw new Error("ID must be a non-negative integer.");
+				encode( id, fixedLength = 5 )
+				{
+					if( typeof id !== 'number' || id < 0 || !Number.isInteger( id ) )
+					{
+						throw new Error( 'ID must be a non-negative integer.' );
 					}
-					if (id > this.PRIME) {
-						console.warn(`Warning: ID ${id} is larger than PRIME ${this.PRIME}. Collisions may occur.`);
+					if( id > this.PRIME )
+					{
+						console.warn( `Warning: ID ${ id } is larger than PRIME ${ this.PRIME }. Collisions may occur.` );
 					}
 
 					// 1. Obfuscate: Map the ID to a new, unique number
-					const obfuscatedNum = (BigInt(id) * BigInt(this.MULTIPLIER)) % BigInt(this.PRIME);
+					const obfuscatedNum = ( BigInt( id ) * BigInt( this.MULTIPLIER ) ) % BigInt( this.PRIME );
 
 					// 2. Encode: Convert that new number to our custom Base62 alphabet
-					const encoded = this._toBase(Number(obfuscatedNum));
+					const encoded = this._toBase( Number( obfuscatedNum ) );
 
 					// 3. Pad: Add padding to meet the minimum length
-					const paddingChar = this.ALPHABET[0];
-					const padded = encoded.padStart(fixedLength, paddingChar);
+					const paddingChar = this.ALPHABET[ 0 ];
+					const padded = encoded.padStart( fixedLength, paddingChar );
 
 					// --- THIS IS THE FIX ---
 					// 4. Slice: Return only the last 'fixedLength' characters.
 					// This truncates the string if it's too long, ensuring a fixed length.
-					return padded.slice(-fixedLength);
+					return padded.slice( -fixedLength );
 				}
 
-				_toBase(num) {
-					if (num === 0) {
-						return this.ALPHABET[0];
+				_toBase( num )
+				{
+					if( num === 0 )
+					{
+						return this.ALPHABET[ 0 ];
 					}
 					let str = '';
 					let n = num;
-					while (n > 0) {
+					while( n > 0 )
+					{
 						const remainder = n % this.BASE;
-						str = this.ALPHABET[remainder] + str;
-						n = Math.floor(n / this.BASE);
+						str = this.ALPHABET[ remainder ] + str;
+						n = Math.floor( n / this.BASE );
 					}
 					return str;
 				}
 			}
+
 			// === END NEW CLASS ===
 
 
 			// --- Configuration Constants ---
 			// Hardcoded logo URLs using your Netlify locations
-			const MCL_LOGO = "https://toysfortots.netlify.app/images/mcl-logo.png";
+			const MCL_LOGO = 'https://toysfortots.netlify.app/images/mcl-logo.png';
 			const BASE_URL = 'http://toysfortots.mcl1311.com/box';
 			const DEFAULT_STICKER_HEIGHT = '2.6in';
 
@@ -224,64 +244,70 @@
 
 			// --- Generate Box IDs for the current sheet ---
 			// === THIS FUNCTION IS NOW UPDATED ===
-			function generateBoxIds(startId, count, idLength) {
+			function generateBoxIds( startId, count, idLength )
+			{
 				const ids = [];
-				for (let i = 0; i < count; i++) {
+				for( let i = 0; i < count; i++ )
+				{
 					const sequentialId = startId + i;
 					// Use the obfuscator to encode the sequential ID
-					ids.push(idGen.encode(sequentialId, idLength));
+					ids.push( idGen.encode( sequentialId, idLength ) );
 				}
 				return ids;
 			}
 
 			// --- QR Code Image Generation Function ---
-			function generateQrCodeImage(id) {
+			function generateQrCodeImage( id )
+			{
 				// The 'id' here is now the obfuscated string (e.g., "ZqLia")
-				const qrText = `${BASE_URL}?id=${id}`;
-				const quickChartUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&size=300&light=FFFFFF&dark=000000`;
-				return `<img src="${quickChartUrl}" alt="QR Code Box ID ${id}" class="qr-svg mx-auto w-[180px] h-[180px] max-w-full">`;
+				const qrText = `${ BASE_URL }?id=${ id }`;
+				const quickChartUrl = `https://quickchart.io/qr?text=${ encodeURIComponent( qrText ) }&size=300&light=FFFFFF&dark=000000`;
+				return `<img src="${ quickChartUrl }" alt="QR Code Box ID ${ id }" class="qr-svg mx-auto w-[180px] h-[180px] max-w-full">`;
 			}
 
 			// --- Render Stickers ---
-			function renderStickers() {
+			function renderStickers()
+			{
 				// 1. Get values from the UI inputs
 				// === UPDATED TO GET NEW idLength VALUE ===
-				const startIdValue = parseInt(document.getElementById('startId').value, 10) || 1;
-				const idLengthValue = parseInt(document.getElementById('idLength').value, 10) || 5;
-				const topPaddingValue = document.getElementById('topPadding').value || '0.5in';
-				const rowOverlapValue = document.getElementById('rowGap').value || '-0.09in';
-				const columnGapValue = document.getElementById('columnGap').value || '0.15in';
+				const startIdValue = parseInt( document.getElementById( 'startId' ).value, 10 ) || 1;
+				const idLengthValue = parseInt( document.getElementById( 'idLength' ).value, 10 ) || 5;
+				const topPaddingValue = document.getElementById( 'topPadding' ).value || '0.5in';
+				const rowOverlapValue = document.getElementById( 'rowGap' ).value || '-0.09in';
+				const columnGapValue = document.getElementById( 'columnGap' ).value || '0.15in';
 
 				// 2. Set CSS Variables dynamically
-				document.documentElement.style.setProperty('--page-top-padding', topPaddingValue);
-				document.documentElement.style.setProperty('--row-negative-margin', rowOverlapValue);
-				document.documentElement.style.setProperty('--column-gap', columnGapValue);
-				document.documentElement.style.setProperty('--sticker-height', DEFAULT_STICKER_HEIGHT);
+				document.documentElement.style.setProperty( '--page-top-padding', topPaddingValue );
+				document.documentElement.style.setProperty( '--row-negative-margin', rowOverlapValue );
+				document.documentElement.style.setProperty( '--column-gap', columnGapValue );
+				document.documentElement.style.setProperty( '--sticker-height', DEFAULT_STICKER_HEIGHT );
 
 				// 3. Generate IDs
 				// === UPDATED TO PASS idLengthValue ===
-				const boxIds = generateBoxIds(startIdValue, 8, idLengthValue);
+				const boxIds = generateBoxIds( startIdValue, 8, idLengthValue );
 
 				// 4. Clear old stickers and prepare wrapper
 				const body = document.body;
-				let wrapper = document.getElementById('sticker-grid-wrapper');
+				let wrapper = document.getElementById( 'sticker-grid-wrapper' );
 
 				// Remove existing wrapper if it exists (for re-rendering)
-				if (wrapper) {
+				if( wrapper )
+				{
 					wrapper.remove();
 				}
 
 				// Create and append new wrapper
-				wrapper = document.createElement('div');
+				wrapper = document.createElement( 'div' );
 				wrapper.id = 'sticker-grid-wrapper';
-				body.appendChild(wrapper);
+				body.appendChild( wrapper );
 
 				// 5. Populate wrapper with stickers
-				boxIds.forEach(id => {
-					const sticker = document.createElement('a');
+				boxIds.forEach( id =>
+				{
+					const sticker = document.createElement( 'a' );
 					// === UPDATED URL PARAM TO ?id= ===
-					sticker.href = `${BASE_URL}?id=${id}`;
-					sticker.classList.add('sticker-card', 'flex', 'flex-col');
+					sticker.href = `${ BASE_URL }?id=${ id }`;
+					sticker.classList.add( 'sticker-card', 'flex', 'flex-col' );
 
 					sticker.innerHTML = `
                     <div class="text-center bg-[#CC0000] text-white py-0.5 mb-0.5 rounded-sm">
@@ -293,9 +319,9 @@
                     <div class="flex flex-row flex-grow w-full items-start justify-between">
 
                         <div class="flex-shrink-0 w-1/2 flex flex-col items-center py-0.5 pt-0 px-1">
-                            ${generateQrCodeImage(id)}
+                            ${ generateQrCodeImage( id ) }
                             <div class="text-xs text-center font-mono font-bold text-[#003366] mt-1">
-                                BOX ID: ${id}
+                                BOX ID: ${ id }
                             </div>
                         </div>
 
@@ -308,14 +334,14 @@
                             </ul>
 
                             <div class="flex flex-col items-center mt-0 pt-1 pb-0" style="position:relative;">
-                                <img src="${MCL_LOGO}" style="position:relative;top: 10px;left:-7px;" onerror="this.onerror=null; this.src='https://placehold.co/100x40/003366/ffffff?text=MCL+Error';" alt="Marine Corps League Logo" class="h-24 w-auto">
+                                <img src="${ MCL_LOGO }" style="position:relative;top: 10px;left:-7px;" onerror="this.onerror=null; this.src='https://placehold.co/100x40/003366/ffffff?text=MCL+Error';" alt="Marine Corps League Logo" class="h-24 w-auto">
                             </div>
 
                         </div>
                     </div>
                 `;
-					wrapper.appendChild(sticker);
-				});
+					wrapper.appendChild( sticker );
+				} );
 			}
 
 			// Initial render on load

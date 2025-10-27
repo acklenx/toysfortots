@@ -9,19 +9,29 @@
 
 		<script type="module">
 			// --- 1. IMPORTS ---
-			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+			import {
+				getAuth,
+				signInAnonymously,
+				onAuthStateChanged
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import {
+				getFirestore,
+				doc,
+				getDoc,
+				addDoc,
+				collection
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			const firebaseConfig = {
-				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
-				authDomain: "toysfortots-eae4d.firebaseapp.com",
-				projectId: "toysfortots-eae4d",
-				storageBucket: "toysfortots-eae4d.firebasestorage.app",
-				messagingSenderId: "505039956655",
-				appId: "1:505039956655:web:c750c66b28f7facd82025a",
-				measurementId: "G-XKQYPK0GLC"
+				apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
+				authDomain: 'toysfortots-eae4d.firebaseapp.com',
+				projectId: 'toysfortots-eae4d',
+				storageBucket: 'toysfortots-eae4d.firebasestorage.app',
+				messagingSenderId: '505039956655',
+				appId: '1:505039956655:web:c750c66b28f7facd82025a',
+				measurementId: 'G-XKQYPK0GLC'
 			};
 			const appId = firebaseConfig.projectId;
 
@@ -29,126 +39,144 @@
 			let appDB, appAuth, appID, currentBoxInfo; // For your app logic
 
 			// --- 3. FIREBASE SETUP ---
-			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
-			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
+			const publicDocumentId = '3USFkKsJe7T8ZYdW5YfE';
+			const dataDocumentId = 'EF1QWEKWPMuoLN7fC4Ri';
 
-			const setupFirebase = () => {
-				console.log("Setting up Firebase...");
-				if (!firebaseConfig.apiKey) {
-					console.error("Firebase configuration is missing.");
-					document.getElementById('loading-message').textContent = "ERROR: Firebase Config Missing.";
+			const setupFirebase = () =>
+			{
+				console.log( 'Setting up Firebase...' );
+				if( !firebaseConfig.apiKey )
+				{
+					console.error( 'Firebase configuration is missing.' );
+					document.getElementById( 'loading-message' ).textContent = 'ERROR: Firebase Config Missing.';
 					return;
 				}
 
-				try {
-					const app = initializeApp(firebaseConfig);
-					auth = getAuth(app);
-					db = getFirestore(app);
+				try
+				{
+					const app = initializeApp( firebaseConfig );
+					auth = getAuth( app );
+					db = getFirestore( app );
 
 					let appInitialized = false;
 
-					onAuthStateChanged(auth, (user) => {
-						console.log("Auth state changed. User:", user ? user.uid : "null");
+					onAuthStateChanged( auth, ( user ) =>
+					{
+						console.log( 'Auth state changed. User:', user ? user.uid : 'null' );
 
-						if (user && !appInitialized) {
+						if( user && !appInitialized )
+						{
 							appInitialized = true;
-							console.log("User is authenticated. Initializing main app...");
-							window.initApp(appId, db, auth);
-						} else if (!user) {
-							console.log("No user found. Attempting anonymous sign-in...");
-							signInAnonymously(auth).catch((err) => {
-								console.error("Anonymous sign-in failed:", err);
-								document.getElementById('loading-message').textContent = `ERROR: Sign-in failed. ${err.message}`;
-							});
+							console.log( 'User is authenticated. Initializing main app...' );
+							window.initApp( appId, db, auth );
 						}
-					});
-				} catch (error) {
-					console.error("Firebase Initialization Error:", error);
-					document.getElementById('loading-message').textContent = `ERROR: Firebase setup failed. ${error.message}`;
+						else if( !user )
+						{
+							console.log( 'No user found. Attempting anonymous sign-in...' );
+							signInAnonymously( auth ).catch( ( err ) =>
+							{
+								console.error( 'Anonymous sign-in failed:', err );
+								document.getElementById( 'loading-message' ).textContent = `ERROR: Sign-in failed. ${ err.message }`;
+							} );
+						}
+					} );
+				}
+				catch( error )
+				{
+					console.error( 'Firebase Initialization Error:', error );
+					document.getElementById( 'loading-message' ).textContent = `ERROR: Firebase setup failed. ${ error.message }`;
 				}
 			};
 
 			// --- 4. MAIN APP LOGIC ---
-			window.initApp = async (appId, dbInstance, authInstance) => {
+			window.initApp = async( appId, dbInstance, authInstance ) =>
+			{
 				appDB = dbInstance;
 				appAuth = authInstance;
 				appID = appId;
 
-				const listDiv = document.getElementById('location-display');
-				const loadingMessage = document.getElementById('loading-message');
+				const listDiv = document.getElementById( 'location-display' );
+				const loadingMessage = document.getElementById( 'loading-message' );
 
-				const pickupBtn = document.getElementById('pickup-btn');
-				const problemBtn = document.getElementById('problem-btn');
-				const pickupBtnText = document.getElementById('pickup-btn-text');
-				const problemBtnText = document.getElementById('problem-btn-text');
+				const pickupBtn = document.getElementById( 'pickup-btn' );
+				const problemBtn = document.getElementById( 'problem-btn' );
+				const pickupBtnText = document.getElementById( 'pickup-btn-text' );
+				const problemBtnText = document.getElementById( 'problem-btn-text' );
 
-				const pickupConf = document.getElementById('pickup-confirmation');
-				const problemConf = document.getElementById('problem-confirmation');
+				const pickupConf = document.getElementById( 'pickup-confirmation' );
+				const problemConf = document.getElementById( 'problem-confirmation' );
 
-				const pickupDetailsSection = document.getElementById('pickup-details-section');
-				const problemDetailsSection = document.getElementById('problem-details-section');
+				const pickupDetailsSection = document.getElementById( 'pickup-details-section' );
+				const problemDetailsSection = document.getElementById( 'problem-details-section' );
 
-				const pickupDetailsForm = document.getElementById('pickup-details-form');
-				const problemDetailsForm = document.getElementById('problem-details-form');
+				const pickupDetailsForm = document.getElementById( 'pickup-details-form' );
+				const problemDetailsForm = document.getElementById( 'problem-details-form' );
 
-				const pickupDetailsSuccess = document.getElementById('pickup-details-success');
-				const problemDetailsSuccess = document.getElementById('problem-details-success');
+				const pickupDetailsSuccess = document.getElementById( 'pickup-details-success' );
+				const problemDetailsSuccess = document.getElementById( 'problem-details-success' );
 
-				const params = new URLSearchParams(window.location.search);
-				const boxId = params.get('id');
+				const params = new URLSearchParams( window.location.search );
+				const boxId = params.get( 'id' );
 
-				if (!boxId) {
+				if( !boxId )
+				{
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = "Error: ID missing from the link. Cannot display info.";
+					loadingMessage.textContent = 'Error: ID missing from the link. Cannot display info.';
 					return;
 				}
 
 
-				try {
-					const locRef = doc(appDB, "artifacts", appId, "public", publicDocumentId, "data", dataDocumentId, "locations", boxId);
-					const locSnap = await getDoc(locRef);
+				try
+				{
+					const locRef = doc( appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId );
+					const locSnap = await getDoc( locRef );
 
-					if (!locSnap.exists()) {
-						console.log(`Box ID ${boxId} not found. Redirecting to setup page...`);
-						window.location.href = `/setup/?id=${boxId}`;
+					if( !locSnap.exists() )
+					{
+						console.log( `Box ID ${ boxId } not found. Redirecting to setup page...` );
+						window.location.href = `/setup/?id=${ boxId }`;
 						return;
 					}
 
 					const location = locSnap.data();
-					currentBoxInfo = `${location.label} (ID: ${boxId}) @ ${location.address}`;
+					currentBoxInfo = `${ location.label } (ID: ${ boxId }) @ ${ location.address }`;
 					loadingMessage.remove();
 					listDiv.innerHTML = `
                    <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
-                       <h2 class="text-xl font-bold text-tots-red">${location.label}</h2>
-                       <p class="text-sm text-gray-700 mt-1">${location.address}, ${location.city}, ${location.state}</p>
-                       <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${boxId}</span></p>
-                       <p class="text-sm font-semibold">Assigned Volunteer: ${location.volunteer}</p>
+                       <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
+                       <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
+                       <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
+                       <p class="text-sm font-semibold">Assigned Volunteer: ${ location.volunteer }</p>
                    </div>
                `;
 
-					document.getElementById('pickup-box-id-detail').value = currentBoxInfo;
-					document.getElementById('problem-box-id-detail').value = currentBoxInfo;
+					document.getElementById( 'pickup-box-id-detail' ).value = currentBoxInfo;
+					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;
 
 					pickupBtn.disabled = false;
 					problemBtn.disabled = false;
 
-					const getFormData = (form) => {
-						const formData = new FormData(form);
+					const getFormData = ( form ) =>
+					{
+						const formData = new FormData( form );
 						const data = {};
-						formData.forEach((value, key) => {
-							data[key] = value;
-						});
+						formData.forEach( ( value, key ) =>
+						{
+							data[ key ] = value;
+						} );
 						return data;
 					};
 
-					const toggleSection = (sectionToShow, confToShow, sectionToHide, confToHide) => {
-						sectionToShow.classList.add('open');
-						confToShow.classList.remove('hidden');
-						sectionToHide.classList.remove('open');
-						confToHide.classList.add('hidden');
+					const toggleSection = ( sectionToShow, confToShow, sectionToHide, confToHide ) =>
+					{
+						sectionToShow.classList.add( 'open' );
+						confToShow.classList.remove( 'hidden' );
+						sectionToHide.classList.remove( 'open' );
+						confToHide.classList.add( 'hidden' );
 					};
 
-					pickupBtn.addEventListener('click', () => {
+					pickupBtn.addEventListener( 'click', () =>
+					{
 						toggleSection(
 								pickupDetailsSection,
 								pickupConf,
@@ -160,13 +188,14 @@
 							reportType: 'pickup_alert',
 							description: 'Immediate pickup requested via button click.'
 						};
-						submitReportToFirestore(quickReport, boxId, location);
+						submitReportToFirestore( quickReport, boxId, location );
 
 						pickupBtnText.textContent = 'A volunteer has been notified!';
-						pickupBtn.classList.add('opacity-75');
-					});
+						pickupBtn.classList.add( 'opacity-75' );
+					} );
 
-					problemBtn.addEventListener('click', () => {
+					problemBtn.addEventListener( 'click', () =>
+					{
 						toggleSection(
 								problemDetailsSection,
 								problemConf,
@@ -178,74 +207,88 @@
 							reportType: 'problem_alert',
 							description: 'Problem reported via button click.'
 						};
-						submitReportToFirestore(quickReport, boxId, location);
+						submitReportToFirestore( quickReport, boxId, location );
 
 						problemBtnText.textContent = 'A Volunteer has been notified!';
 						problemBtn.style.display = 'none';
-					});
+					} );
 
-					pickupDetailsForm.addEventListener('submit', async (e) => {
+					pickupDetailsForm.addEventListener( 'submit', async( e ) =>
+					{
 						e.preventDefault();
-						const submitButton = pickupDetailsForm.querySelector('button[type="submit"]');
+						const submitButton = pickupDetailsForm.querySelector( 'button[type="submit"]' );
 						submitButton.disabled = true;
 						submitButton.textContent = 'Sending...';
 
-						const reportData = getFormData(pickupDetailsForm);
-						const success = await submitReportToFirestore(reportData, boxId, location);
+						const reportData = getFormData( pickupDetailsForm );
+						const success = await submitReportToFirestore( reportData, boxId, location );
 
-						if (success) {
-							pickupDetailsSuccess.classList.remove('hidden');
+						if( success )
+						{
+							pickupDetailsSuccess.classList.remove( 'hidden' );
 							submitButton.textContent = 'Details Sent!';
-						} else {
-							alert('There was an error submitting your report. Please try again.');
+						}
+						else
+						{
+							alert( 'There was an error submitting your report. Please try again.' );
 							submitButton.disabled = false;
 							submitButton.textContent = 'Send Detail Report';
 						}
-					});
+					} );
 
-					problemDetailsForm.addEventListener('submit', async (e) => {
+					problemDetailsForm.addEventListener( 'submit', async( e ) =>
+					{
 						e.preventDefault();
-						const submitButton = problemDetailsForm.querySelector('button[type="submit"]');
+						const submitButton = problemDetailsForm.querySelector( 'button[type="submit"]' );
 						submitButton.disabled = true;
 						submitButton.textContent = 'Sending...';
 
-						const description = problemDetailsForm.querySelector('textarea[name="description"]').value;
-						if (!description || description.trim() === '') {
-							alert('Please fill out the problem description.');
+						const description = problemDetailsForm.querySelector( 'textarea[name="description"]' ).value;
+						if( !description || description.trim() === '' )
+						{
+							alert( 'Please fill out the problem description.' );
 							submitButton.disabled = false;
 							submitButton.textContent = 'Send Full Problem Report';
 							return;
 						}
 
-						const reportData = getFormData(problemDetailsForm);
-						const success = await submitReportToFirestore(reportData, boxId, location);
+						const reportData = getFormData( problemDetailsForm );
+						const success = await submitReportToFirestore( reportData, boxId, location );
 
-						if (success) {
-							problemDetailsSuccess.classList.remove('hidden');
+						if( success )
+						{
+							problemDetailsSuccess.classList.remove( 'hidden' );
 							submitButton.textContent = 'Report Sent!';
-						} else {
-							alert('There was an error submitting your report. Please try again.');
+						}
+						else
+						{
+							alert( 'There was an error submitting your report. Please try again.' );
 							submitButton.disabled = false;
 							submitButton.textContent = 'Send Full Problem Report';
 						}
-					});
-				} catch (error) {
-					console.error("Error fetching location:", error);
+					} );
+				}
+				catch( error )
+				{
+					console.error( 'Error fetching location:', error );
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
-					loadingMessage.textContent = `Error loading location data: ${error.message}`;
+					loadingMessage.textContent = `Error loading location data: ${ error.message }`;
 				}
 			};
 
 			// --- 5. FIRESTORE UTILITY ---
-			const submitReportToFirestore = async (reportData, boxId, location) => {
-				if (!appDB || !appAuth.currentUser) {
-					console.error("Firestore not initialized or user not authenticated.");
+			const submitReportToFirestore = async( reportData, boxId, location ) =>
+			{
+				if( !appDB || !appAuth.currentUser )
+				{
+					console.error( 'Firestore not initialized or user not authenticated.' );
 					return false;
 				}
-				try {
+				try
+				{
 					const userId = appAuth.currentUser.uid;
 					const timestamp = new Date().toISOString();
-					const reportCollectionRef = collection(appDB, 'artifacts', appID, "public", publicDocumentId, "data", dataDocumentId, 'totsReports');
+					const reportCollectionRef = collection( appDB, 'artifacts', appID, 'public', publicDocumentId, 'data', dataDocumentId, 'totsReports' );
 					const fullReport = {
 						...reportData,
 						...location,
@@ -255,11 +298,13 @@
 						status: 'new'
 					};
 
-					await addDoc(reportCollectionRef, fullReport);
+					await addDoc( reportCollectionRef, fullReport );
 					return true;
 
-				} catch (error) {
-					console.error("Firestore submission failed:", error);
+				}
+				catch( error )
+				{
+					console.error( 'Firestore submission failed:', error );
 					return false;
 				}
 			};
@@ -276,11 +321,13 @@
 				transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
 				padding: 0 1rem;
 			}
+
 			.collapsible-content.open {
 				max-height: 1000px;
 				padding-top: 1rem;
 				padding-bottom: 1rem;
 			}
+
 			/* Added to prevent Tailwind from overwriting header link styles */
 			header h1 a:hover,
 			header h2 a:hover {
@@ -292,16 +339,16 @@
 				theme: {
 					extend: {
 						fontFamily: {
-							sans: ['Inter', 'sans-serif'],
+							sans: [ 'Inter', 'sans-serif' ]
 						},
 						colors: {
 							'tots-red': '#cc0000',
 							'tots-green': '#008000',
-							'tots-light': '#fcebeb',
+							'tots-light': '#fcebeb'
 						}
 					}
 				}
-			}
+			};
 		</script>
 	</head>
 	<body onload="setupFirebase()">
@@ -319,12 +366,14 @@
 					</h1>
 					<h2>
 						<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red);">
-						North Fulton & Cherokee County, GA
+							North Fulton & Cherokee County, GA
 						</a>
 					</h2>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
-				<a href="/dashboard"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+				<a href="/dashboard">
+					<img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+				</a>
 			</div>
 		</header>
 
@@ -358,7 +407,8 @@
 							</label>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):
+								</legend>
 								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
@@ -387,11 +437,13 @@
 							<input type="hidden" id="problem-box-id-detail" name="boxInfo">
 							<input type="hidden" name="reportType" value="problem_report">
 
-							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the problem? <span class="text-tots-red">*</span></label>
+							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the
+								problem? <span class="text-tots-red">*</span></label>
 							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
 
 							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):</legend>
+								<legend class="text-sm font-medium text-gray-700 px-1">Follow-up Contact (Optional):
+								</legend>
 								<input type="text" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 								<input type="email" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
@@ -410,7 +462,8 @@
 		</div>
 
 		<footer>
-			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are official representatives of this Toys for Tots campaign.</p>
+			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
+				official representatives of this Toys for Tots campaign.</p>
 			<img src="../images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" align="center">
 		</footer>
 

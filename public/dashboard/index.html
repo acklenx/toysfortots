@@ -8,120 +8,158 @@
 
 		<script type="module">
 			// --- 1. IMPORTS ---
-			import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-			import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-			import { getFirestore, collection, getDocs, query, where, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-			import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+			import {
+				getAuth,
+				onAuthStateChanged,
+				GoogleAuthProvider,
+				signInWithRedirect,
+				getRedirectResult
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import {
+				getFirestore,
+				collection,
+				getDocs,
+				query,
+				where,
+				orderBy,
+				doc,
+				updateDoc
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+			import {
+				getFunctions,
+				httpsCallable
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			const firebaseConfig = {
-				apiKey: "AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w",
-				authDomain: "toysfortots-eae4d.firebaseapp.com",
-				projectId: "toysfortots-eae4d",
-				storageBucket: "toysfortots-eae4d.firebasestorage.app",
-				messagingSenderId: "505039956655",
-				appId: "1:505039956655:web:c750c66b28f7facd82025a",
-				measurementId: "G-XKQYPK0GLC"
+				apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
+				authDomain: 'toysfortots-eae4d.firebaseapp.com',
+				projectId: 'toysfortots-eae4d',
+				storageBucket: 'toysfortots-eae4d.firebasestorage.app',
+				messagingSenderId: '505039956655',
+				appId: '1:505039956655:web:c750c66b28f7facd82025a',
+				measurementId: 'G-XKQYPK0GLC'
 			};
 			const appId = firebaseConfig.projectId;
 			let db, auth, functions;
 			let appDB, appAuth, appID;
 
 			// --- 3. FIREBASE PATHS ---
-			const publicDocumentId = "3USFkKsJe7T8ZYdW5YfE";
-			const dataDocumentId = "EF1QWEKWPMuoLN7fC4Ri";
-			const reportsCollectionPath = `artifacts/${appId}/public/${publicDocumentId}/data/${dataDocumentId}/totsReports`;
+			const publicDocumentId = '3USFkKsJe7T8ZYdW5YfE';
+			const dataDocumentId = 'EF1QWEKWPMuoLN7fC4Ri';
+			const reportsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/totsReports`;
 
 			// --- 4. FIREBASE SETUP (Google Auth + Auth Check) ---
 
-			const setupFirebase = () => {
-				try {
-					const app = initializeApp(firebaseConfig);
-					auth = getAuth(app);
-					db = getFirestore(app);
-					functions = getFunctions(app);
+			const setupFirebase = () =>
+			{
+				try
+				{
+					const app = initializeApp( firebaseConfig );
+					auth = getAuth( app );
+					db = getFirestore( app );
+					functions = getFunctions( app );
 
-					const isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteer');
+					const isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteer' );
 
-					onAuthStateChanged(auth, async (user) => {
-						if (user && user.providerData.some(p => p.providerId === 'google.com')) {
+					onAuthStateChanged( auth, async( user ) =>
+					{
+						if( user && user.providerData.some( p => p.providerId === 'google.com' ) )
+						{
 
-							try {
+							try
+							{
 								const result = await isAuthorizedVolunteer();
 
-								if (result.data.isAuthorized) {
+								if( result.data.isAuthorized )
+								{
 									// --- THIS IS THE CHANGE ---
 									// Get the displayName and pass it to initApp
 									const displayName = result.data.displayName || user.displayName;
 									// --- END CHANGE ---
 
-									document.getElementById('auth-container').style.display = 'none';
-									document.getElementById('main-content').style.display = 'block';
-									document.getElementById('volunteer-name').textContent = displayName;
+									document.getElementById( 'auth-container' ).style.display = 'none';
+									document.getElementById( 'main-content' ).style.display = 'block';
+									document.getElementById( 'volunteer-name' ).textContent = displayName;
 
 									// --- PASS DISPLAYNAME HERE ---
-									window.initApp(appId, db, auth, user, displayName);
+									window.initApp( appId, db, auth, user, displayName );
 
-								} else {
-									// --- Not Authorized ---
-									document.getElementById('main-content').style.display = 'none';
-									document.getElementById('auth-container').style.display = 'block';
-									document.getElementById('auth-message').textContent = "You are not an authorized volunteer. Please contact an administrator.";
-									document.getElementById('google-login-btn').style.display = 'none';
 								}
-							} catch (err) {
-								console.error("Authorization check failed:", err);
-								document.getElementById('auth-message').textContent = `An error occurred: ${err.message}`;
+								else
+								{
+									// --- Not Authorized ---
+									document.getElementById( 'main-content' ).style.display = 'none';
+									document.getElementById( 'auth-container' ).style.display = 'block';
+									document.getElementById( 'auth-message' ).textContent = 'You are not an authorized volunteer. Please contact an administrator.';
+									document.getElementById( 'google-login-btn' ).style.display = 'none';
+								}
+							}
+							catch( err )
+							{
+								console.error( 'Authorization check failed:', err );
+								document.getElementById( 'auth-message' ).textContent = `An error occurred: ${ err.message }`;
 							}
 
-						} else {
-							// No Google user. Show login button.
-							document.getElementById('main-content').style.display = 'none';
-							document.getElementById('auth-container').style.display = 'block';
 						}
-					});
+						else
+						{
+							// No Google user. Show login button.
+							document.getElementById( 'main-content' ).style.display = 'none';
+							document.getElementById( 'auth-container' ).style.display = 'block';
+						}
+					} );
 
 					// Handle the redirect result
-					getRedirectResult(auth).catch((error) => {
-						console.error("Redirect login failed:", error);
-						document.getElementById('auth-message').textContent = `Login failed: ${error.message}`;
-					});
+					getRedirectResult( auth ).catch( ( error ) =>
+					{
+						console.error( 'Redirect login failed:', error );
+						document.getElementById( 'auth-message' ).textContent = `Login failed: ${ error.message }`;
+					} );
 
 					// Add listener for the login button
-					document.getElementById('google-login-btn').addEventListener('click', () => {
+					document.getElementById( 'google-login-btn' ).addEventListener( 'click', () =>
+					{
 						const provider = new GoogleAuthProvider();
-						signInWithRedirect(auth, provider);
-					});
+						signInWithRedirect( auth, provider );
+					} );
 
-				} catch (error) {
-					console.error("Firebase Initialization Error:", error);
+				}
+				catch( error )
+				{
+					console.error( 'Firebase Initialization Error:', error );
 				}
 			};
 
 			// --- 5. HELPER FUNCTIONS ---
 
 
-			const renderBoxCard = (box) => {
+			const renderBoxCard = ( box ) =>
+			{
 				let statusHtml = '';
 
-				if (box.latestPendingReport) {
+				if( box.latestPendingReport )
+				{
 					// There is an active, uncleared status
 					const report = box.latestPendingReport;
-					const isProblem = report.reportType.includes('problem');
+					const isProblem = report.reportType.includes( 'problem' );
 					statusHtml = `
                     <div class="p-3 bg-red-50 border border-red-200 rounded-md">
-                        <p class="font-semibold ${isProblem ? 'text-tots-red' : 'text-yellow-700'}">
-                            Status: ${report.reportType.replace(/_/g, ' ')}
+                        <p class="font-semibold ${ isProblem ? 'text-tots-red' : 'text-yellow-700' }">
+                            Status: ${ report.reportType.replace( /_/g, ' ' ) }
                         </p>
-                        <p class="text-sm text-gray-600">${report.description}</p>
+                        <p class="text-sm text-gray-600">${ report.description }</p>
                         <button
                             class="clear-status-btn mt-3 w-full py-2 px-3 bg-tots-green hover:bg-green-700 text-white text-sm font-semibold rounded-md transition duration-200"
-                            data-report-id="${report.id}">
+                            data-report-id="${ report.id }">
                             Mark as Cleared
                         </button>
                     </div>
                 `;
-				} else {
+				}
+				else
+				{
 					// All statuses are cleared
 					statusHtml = `
                     <div class="p-3 bg-green-50 border border-green-200 rounded-md">
@@ -134,14 +172,14 @@
 				return `
                 <div class="box-card bg-white p-4 rounded-lg border border-gray-200 shadow-md">
                     <div>
-                        <h3 class="text-lg font-bold text-tots-red">${box.label}</h3>
-                        <p class="text-sm text-gray-600">${box.address}, ${box.city}</p>
-                        <p class="text-xs text-gray-500 mt-1">ID: ${box.boxId}</p>
+                        <h3 class="text-lg font-bold text-tots-red">${ box.label }</h3>
+                        <p class="text-sm text-gray-600">${ box.address }, ${ box.city }</p>
+                        <p class="text-xs text-gray-500 mt-1">ID: ${ box.boxId }</p>
                     </div>
                     <div class="mt-4">
-                        ${statusHtml}
+                        ${ statusHtml }
                     </div>
-                    <a href="/status/?id=${box.boxId}" class="block text-center w-full mt-3 py-2 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-md transition duration-200">
+                    <a href="/status/?id=${ box.boxId }" class="block text-center w-full mt-3 py-2 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-md transition duration-200">
                         View Full History
                     </a>
                 </div>
@@ -162,68 +200,79 @@
 			 */
 
 
-			const renderDashboard = (filterKey) => {
-				const boxesContainer = document.getElementById('boxes-container');
-				const boxesTitle = document.getElementById('boxes-title');
+			const renderDashboard = ( filterKey ) =>
+			{
+				const boxesContainer = document.getElementById( 'boxes-container' );
+				const boxesTitle = document.getElementById( 'boxes-title' );
 				boxesContainer.innerHTML = ''; // Clear previous content
 
 				let boxesToRender = [];
 
-				if (filterKey === "all_boxes") {
+				if( filterKey === 'all_boxes' )
+				{
 					// --- Show All Boxes ---
-					boxesToRender = Array.from(allBoxesMap.values());
-					boxesTitle.textContent = "All Box Statuses";
+					boxesToRender = Array.from( allBoxesMap.values() );
+					boxesTitle.textContent = 'All Box Statuses';
 
-				} else {
+				}
+				else
+				{
 					// --- Show by Volunteer Name ---
 					// This will now catch "Quincy Acklen" on first load
 					// and any other name selected from the dropdown.
-					boxesTitle.textContent = `Boxes Assigned to ${filterKey}`;
-					allBoxesMap.forEach(box => {
-						if (box.volunteer === filterKey) {
-							boxesToRender.push(box);
+					boxesTitle.textContent = `Boxes Assigned to ${ filterKey }`;
+					allBoxesMap.forEach( box =>
+					{
+						if( box.volunteer === filterKey )
+						{
+							boxesToRender.push( box );
 						}
-					});
+					} );
 				}
 
 				// --- Render the filtered list ---
-				if (boxesToRender.length === 0) {
+				if( boxesToRender.length === 0 )
+				{
 					boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No boxes found for this filter.</p>';
 					return;
 				}
 
 				let html = '';
-				boxesToRender.sort((a, b) => a.label.localeCompare(b.label));
+				boxesToRender.sort( ( a, b ) => a.label.localeCompare( b.label ) );
 
-				boxesToRender.forEach(box => {
-					html += renderBoxCard(box);
-				});
+				boxesToRender.forEach( box =>
+				{
+					html += renderBoxCard( box );
+				} );
 				boxesContainer.innerHTML = html;
 			};
 
 
-			window.initApp = async (appId, dbInstance, authInstance, user, displayName) => {
+			window.initApp = async( appId, dbInstance, authInstance, user, displayName ) =>
+			{
 				appDB = dbInstance;
 				appAuth = authInstance;
 				appID = appId;
 				currentUserId = user.uid;
 				const currentUserDisplayName = displayName; // Store the user's name
 
-				const boxesContainer = document.getElementById('boxes-container');
-				const loadingMessage = document.getElementById('loading-message');
-				const filterSelect = document.getElementById('view-filter');
+				const boxesContainer = document.getElementById( 'boxes-container' );
+				const loadingMessage = document.getElementById( 'loading-message' );
+				const filterSelect = document.getElementById( 'view-filter' );
 
-				try {
+				try
+				{
 					// 1. Query ALL reports, sorted by OLDEST first (this is correct)
-					const reportsRef = collection(appDB, reportsCollectionPath);
-					const q = query(reportsRef,
-							orderBy("timestamp", "asc") // Sort oldest to newest
+					const reportsRef = collection( appDB, reportsCollectionPath );
+					const q = query( reportsRef,
+							orderBy( 'timestamp', 'asc' ) // Sort oldest to newest
 					);
 
-					const querySnapshot = await getDocs(q);
+					const querySnapshot = await getDocs( q );
 					loadingMessage.remove();
 
-					if (querySnapshot.empty) {
+					if( querySnapshot.empty )
+					{
 						boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No reports have been filed for any boxes yet.</p>';
 						return;
 					}
@@ -232,16 +281,19 @@
 					const volunteerNames = new Set();
 					allBoxesMap.clear();
 
-					querySnapshot.forEach(doc => {
+					querySnapshot.forEach( doc =>
+					{
 						const report = { id: doc.id, ...doc.data() };
 						const boxId = report.boxId;
 
-						if (report.volunteer) {
-							volunteerNames.add(report.volunteer);
+						if( report.volunteer )
+						{
+							volunteerNames.add( report.volunteer );
 						}
 
-						if (!allBoxesMap.has(boxId)) {
-							allBoxesMap.set(boxId, {
+						if( !allBoxesMap.has( boxId ) )
+						{
+							allBoxesMap.set( boxId, {
 								boxId: boxId,
 								label: report.label,
 								address: report.address,
@@ -249,76 +301,85 @@
 								latestPendingReport: null,
 								provisionedBy: report.provisionedBy,
 								volunteer: report.volunteer
-							});
+							} );
 						}
 
-						const box = allBoxesMap.get(boxId);
-						if (report.status === 'new') {
+						const box = allBoxesMap.get( boxId );
+						if( report.status === 'new' )
+						{
 							box.latestPendingReport = report;
 						}
-					});
+					} );
 
 					// 3. Populate the filter dropdown (using your new logic)
 					filterSelect.innerHTML = `
-                    <option value="${currentUserDisplayName}">My Boxes</option>
+                    <option value="${ currentUserDisplayName }">My Boxes</option>
                     <option value="all_boxes">All Boxes</option>
                     <option value="" disabled>--- Filter by Volunteer ---</option>
                 `;
 
-					const sortedNames = Array.from(volunteerNames).sort();
-					sortedNames.forEach(name => {
+					const sortedNames = Array.from( volunteerNames ).sort();
+					sortedNames.forEach( name =>
+					{
 						// Don't add the current user's name twice
-						if (true || name !== currentUserDisplayName) {
-							const option = document.createElement('option');
+						if( true || name !== currentUserDisplayName )
+						{
+							const option = document.createElement( 'option' );
 							option.value = name;
 							option.textContent = name;
-							filterSelect.appendChild(option);
+							filterSelect.appendChild( option );
 						}
-					});
+					} );
 
 					// 4. Add event listener for the filter
-					filterSelect.addEventListener('change', (e) => {
-						renderDashboard(e.target.value);
-					});
+					filterSelect.addEventListener( 'change', ( e ) =>
+					{
+						renderDashboard( e.target.value );
+					} );
 
 					// 5. Render the default view using the user's name
-					renderDashboard(currentUserDisplayName);
+					renderDashboard( currentUserDisplayName );
 
-				} catch (error) {
-					console.error("Error fetching reports:", error);
-					loadingMessage.innerHTML = `<p class="text-center text-tots-red font-bold p-4">Error loading reports: ${error.message}</p>`;
+				}
+				catch( error )
+				{
+					console.error( 'Error fetching reports:', error );
+					loadingMessage.innerHTML = `<p class="text-center text-tots-red font-bold p-4">Error loading reports: ${ error.message }</p>`;
 				}
 			};
 
 
-
-
 			// 4. Add event listener for "Clear Status" buttons
-			document.getElementById('main-content').addEventListener('click', async (e) => {
-				if (e.target && e.target.classList.contains('clear-status-btn')) {
+			document.getElementById( 'main-content' ).addEventListener( 'click', async( e ) =>
+			{
+				if( e.target && e.target.classList.contains( 'clear-status-btn' ) )
+				{
 					const button = e.target;
 					const reportId = button.dataset.reportId;
 
 					button.disabled = true;
 					button.textContent = 'Clearing...';
 
-					try {
-						const reportRef = doc(db, reportsCollectionPath, reportId);
-						await updateDoc(reportRef, {
-							status: "cleared"
-						});
+					try
+					{
+						const reportRef = doc( db, reportsCollectionPath, reportId );
+						await updateDoc( reportRef, {
+							status: 'cleared'
+						} );
 
 						// Reload the page to show the next status (if any)
 						location.reload();
 
-					} catch (err) {
-						console.error("Error clearing status: ", err);
-						alert("Error clearing status. Please try again.");
+					}
+					catch( err )
+					{
+						console.error( 'Error clearing status: ', err );
+						alert( 'Error clearing status. Please try again.' );
 						button.disabled = false;
 						button.textContent = 'Clear Status';
 					}
 				}
-			});
+			} );
 
 			// --- 7. EXPOSE SETUP FUNCTION ---
 			window.setupFirebase = setupFirebase;
@@ -328,15 +389,15 @@
 			tailwind.config = {
 				theme: {
 					extend: {
-						fontFamily: { sans: ['Inter', 'sans-serif'] },
+						fontFamily: { sans: [ 'Inter', 'sans-serif' ] },
 						colors: {
 							'tots-red': '#cc0000',
 							'tots-green': '#008000',
-							'tots-light': '#fcebeb',
+							'tots-light': '#fcebeb'
 						}
 					}
 				}
-			}
+			};
 		</script>
 	</head>
 	<body class="bg-gray-100" onload="setupFirebase()">
@@ -345,7 +406,8 @@
 			<header class="bg-tots-red p-6 -m-8 mb-8 rounded-t-xl">
 				<h1 class="text-3xl font-extrabold text-white text-center">Volunteer Access</h1>
 			</header>
-			<p id="auth-message" class="text-gray-700 mb-6">Please sign in with your Google account to access the dashboard.</p>
+			<p id="auth-message" class="text-gray-700 mb-6">Please sign in with your Google account to access the
+				dashboard.</p>
 			<button id="google-login-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200">
 				Sign In with Google
 			</button>
@@ -367,7 +429,9 @@
 						<h2>North Fulton & Cherokee County, GA</h2>
 						<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 					</div>
-					<a href="/"><img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo"></a>
+					<a href="/">
+						<img src="../images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+					</a>
 				</div>
 			</header>
 
@@ -375,7 +439,8 @@
 				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
-						<p class="text-lg text-gray-600 mb-4 sm:mb-0">Welcome, <span id="volunteer-name" class="font-semibold">...</span></p>
+						<p class="text-lg text-gray-600 mb-4 sm:mb-0">Welcome,
+							<span id="volunteer-name" class="font-semibold">...</span></p>
 					</div>
 					<div class="w-full sm:w-auto">
 						<label for="view-filter" class="block text-sm font-medium text-gray-700">Show boxes:</label>
@@ -394,5 +459,6 @@
 				</section>
 			</div>
 
-		</div> </body>
+		</div>
+	</body>
 </html>
