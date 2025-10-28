@@ -173,8 +173,6 @@
 
 						<input type="password" id="auth-password-retype" placeholder="Retype Password" class="w-full p-2 mb-3 border rounded">
 
-
-
 						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition hidden">
 							Sign In
 						</button>
@@ -197,13 +195,19 @@
 						<div id="box-id-display">Loading...</div>
 					</div>
 
-
-
 					<div class="form-group">
-						<button id="gps-btn" type="button" class="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md transition duration-200">
-							Use My Current Location (GPS)
+						<label for="passcode">Setup Code</label>
+						<input type="password" id="passcode" name="passcode" required>
+					</div>
+
+					<div class="my-6 h-1 bg-gray-300"></div>
+
+					<div class="mb-5">
+						<button id="gps-btn" type="button" class="w-3/4 block mx-auto py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition duration-200">
+							Use My GPS Location
 						</button>
 					</div>
+
 					<input type="hidden" id="lat" name="lat">
 					<input type="hidden" id="lon" name="lon">
 					<div class="form-group">
@@ -218,18 +222,22 @@
 						<label for="state">State</label>
 						<input type="text" id="state" name="state" value="GA" required>
 					</div>
-					<div class="form-group">
+
+					<div class="form-group" style="display: none;">
 						<label for="boxes">Number of Boxes</label>
 						<input type="number" id="boxes" name="boxes" value="1" min="1">
 					</div>
-					<div class="form-group">
-						<label for="contactName">Location Contact Name</label>
-						<input type="text" id="contactName" name="contactName" required>
-					</div>
+
+					<div class="my-6 h-1 bg-gray-300"></div>
 
 					<div class="form-group">
 						<label for="label">Location Name (Label)</label>
 						<input type="text" id="label" name="label" required>
+					</div>
+
+					<div class="form-group">
+						<label for="contactName">Location Contact Name</label>
+						<input type="text" id="contactName" name="contactName" required>
 					</div>
 
 					<div class="form-group">
@@ -242,10 +250,7 @@
 						<input type="tel" id="contactPhone" name="contactPhone">
 					</div>
 
-					<div class="form-group">
-						<label for="passcode">Setup Code</label>
-						<input type="password" id="passcode" name="passcode" required>
-					</div>
+
 
 					<div class="form-group">
 						<button id="submit-btn" type="submit">Submit Location</button>
@@ -429,31 +434,54 @@
 				}
 
 				// --- 4. NEW EMAIL/PASSWORD HANDLERS ---
+
+				// --- 4. NEW EMAIL/PASSWORD HANDLERS ---
 				async function handleEmailSignIn() {
 					clearAuthMessage();
-					const email = authEmail.value;
+					const username = authEmail.value; // Get username
 					const password = authPassword.value;
-					if (!email || !password) {
-						showAuthMessage('error', 'Please enter both email and password.');
+					if (!username || !password) {
+						showAuthMessage('error', 'Please enter both username and password.');
 						return;
 					}
+
+					// Add validation to prevent users from entering an email
+					if (username.includes('@')) {
+						showAuthMessage('error', 'Username cannot contain "@" symbol. Just enter the username.');
+						return;
+					}
+
+					// Construct the full email
+					const email = `${username}@toysfortots.mcl1311.com`;
+
 					try {
 						await signInWithEmailAndPassword(auth, email, password);
 						// onAuthStateChanged will handle the rest
 					} catch (error) {
 						console.error('Email Sign In Error:', error);
-						showAuthMessage('error', `Sign in failed: ${error.message}`);
+						// Provide a user-friendly error
+						if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+							showAuthMessage('error', 'Sign in failed: Invalid username or password.');
+						} else {
+							showAuthMessage('error', `Sign in failed: ${error.message}`);
+						}
 					}
 				}
 
 				async function handleEmailSignUp() {
 					clearAuthMessage();
-					const email = authEmail.value;
+					const username = authEmail.value; // Get username
 					const password = authPassword.value;
 					const retypePassword = authPasswordRetype.value; // Get retype value
 
-					if (!email || !password || !retypePassword) {
+					if (!username || !password || !retypePassword) {
 						showAuthMessage('error', 'Please fill out all fields.');
+						return;
+					}
+
+					// Add validation to prevent users from entering an email
+					if (username.includes('@')) {
+						showAuthMessage('error', 'Username cannot contain "@" symbol.');
 						return;
 					}
 
@@ -462,18 +490,25 @@
 						return;
 					}
 
-					// New Validation
 					if (password !== retypePassword) {
 						showAuthMessage('error', 'Passwords do not match.');
 						return;
 					}
+
+					// Construct the full email
+					const email = `${username}@toysfortots.mcl1311.com`;
 
 					try {
 						await createUserWithEmailAndPassword(auth, email, password);
 						// onAuthStateChanged will handle the rest
 					} catch (error) {
 						console.error('Email Sign Up Error:', error);
-						showAuthMessage('error', `Sign up failed: ${error.message}`);
+						// Provide a user-friendly error
+						if (error.code === 'auth/email-already-in-use') {
+							showAuthMessage('error', 'Sign up failed: This username is already taken.');
+						} else {
+							showAuthMessage('error', `Sign up failed: ${error.message}`);
+						}
 					}
 				}
 
@@ -488,7 +523,7 @@
 
 					if (isSignUpMode) {
 						// Switch to Sign In
-						emailAuthTitle.textContent = 'Sign In with Email';
+						emailAuthTitle.textContent = 'Sign In with Username'; // Changed
 						emailSignInBtn.classList.remove('hidden');
 						emailSignUpBtn.classList.add('hidden');
 						authPasswordRetype.classList.add('hidden'); // Hide retype
@@ -496,7 +531,7 @@
 						toggleSignUpBtn.textContent = 'New user? Create an account';
 					} else {
 						// Switch to Sign Up
-						emailAuthTitle.textContent = 'Create Account with Email';
+						emailAuthTitle.textContent = 'Create Account with Username'; // Changed
 						emailSignInBtn.classList.add('hidden');
 						emailSignUpBtn.classList.remove('hidden');
 						authPasswordRetype.classList.remove('hidden'); // Show retype
@@ -504,6 +539,9 @@
 						toggleSignUpBtn.textContent = 'Already have an account? Sign In';
 					}
 				}
+				// --- END NEW EMAIL/PASSWORD HANDLERS ---
+
+
 
 				// New handler to show the email section
 				function showEmailSetup() {
@@ -709,7 +747,7 @@
 								{
 									passcodeGroup.classList.remove( 'hidden' );
 									passcode.required = true;
-									passcodeLabel.textContent = 'Password (New Volunteer)';
+									passcodeLabel.textContent = 'One time setup code';
 								}
 
 							}
