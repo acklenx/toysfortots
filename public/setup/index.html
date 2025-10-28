@@ -8,14 +8,12 @@
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
 		<style>
 			:root {
-				/* These will be overridden by style.css, but are good fallbacks */
 				--t4t-red: #cc0000;
 				--marine-blue: #003366;
 			}
 
 			.form-container {
 				max-width: 600px;
-				/* Removed margin: 30px auto; to let header/footer sit normally */
 				margin: 0 auto;
 				padding: 30px;
 				background: white;
@@ -23,51 +21,50 @@
 				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 			}
 
-			/* Added wrapper for spacing */
 			.form-wrapper {
 				padding: 20px 0;
 			}
 
 			.form-group {
 				margin-bottom: 20px;
-			}
 
-			.form-group label {
-				display: block;
-				margin-bottom: 5px;
-				font-weight: bold;
-				color: #333;
-			}
+				label {
+					display: block;
+					margin-bottom: 5px;
+					font-weight: bold;
+					color: #333;
+				}
 
-			.form-group input,
-			.form-group select {
-				width: 100%;
-				padding: 10px;
-				border: 1px solid #ccc;
-				border-radius: 4px;
-				box-sizing: border-box;
-			}
+				input,
+				select {
+					width: 100%;
+					padding: 10px;
+					border: 1px solid #ccc;
+					border-radius: 4px;
+					box-sizing: border-box;
+				}
 
-			.form-group button {
-				width: 100%;
-				padding: 12px;
-				background-color: var(--t4t-red);
-				color: white;
-				border: none;
-				border-radius: 4px;
-				font-size: 1rem;
-				font-weight: bold;
-				cursor: pointer;
-				transition: background-color 0.2s;
-			}
+				button {
+					width: 100%;
+					padding: 12px;
+					background-color: var(--t4t-red);
+					color: white;
+					border: none;
+					border-radius: 4px;
+					font-size: 1rem;
+					font-weight: bold;
+					cursor: pointer;
+					transition: background-color 0.2s;
 
-			.form-group button:hover {
-				background-color: #a80000;
-			}
+					&:hover {
+						background-color: #a80000;
+					}
 
-			.form-group button:disabled {
-				background-color: #ccc;
-				cursor: not-allowed;
+					&:disabled {
+						background-color: #ccc;
+						cursor: not-allowed;
+					}
+				}
 			}
 
 			#auth-container {
@@ -81,16 +78,16 @@
 				border-radius: 4px;
 				margin-top: 20px;
 				font-weight: 500;
-			}
 
-			.message.success {
-				background-color: #d4edda;
-				color: #155724;
-			}
+				&.success {
+					background-color: #d4edda;
+					color: #155724;
+				}
 
-			.message.error {
-				background-color: #f8d7da;
-				color: #721c24;
+				&.error {
+					background-color: #f8d7da;
+					color: #721c24;
+				}
 			}
 
 			#box-id-display {
@@ -105,12 +102,19 @@
 				color: var(--marine-blue);
 			}
 
-			/* Added to prevent style conflicts */
-			header h1 a:hover, header h2 a:hover {
-				text-decoration: underline;
+			header {
+				h1 {
+					a:hover {
+						text-decoration: underline;
+					}
+				}
+				h2 {
+					a:hover {
+						text-decoration: underline;
+					}
+				}
 			}
 
-			/* Added for marine-blue button */
 			.bg-marine-blue {
 				background-color: var(--marine-blue);
 			}
@@ -145,30 +149,46 @@
 				<div id="auth-container">
 					<p class="mb-4">You must be signed in to set up a new location.</p>
 
-					<div id="email-auth-section" class="mt-8 p-4 border rounded-lg bg-gray-50">
-						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title"><label for="auth-password">Sign In</label> with <label for="auth-email">Email</label></h2>
-						<input type="email" id="auth-email" placeholder="Email Address" class="w-full p-2 mb-3 border rounded">
-						<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-4 border rounded">
+					<button id="sign-in-btn" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+						Sign In with Google
+					</button>
 
-						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition">
+					<button id="show-email-setup-btn" class="text-sm text-gray-600 hover:text-gray-900 mt-3">
+						... or click <span class="text-blue-600 underline">here</span> to setup without Google
+					</button>
+
+					<div id="or-divider" class="my-4 text-gray-500 font-semibold hidden">-- OR --</div>
+
+					<div id="email-auth-section" class="mt-4 p-4 border rounded-lg bg-gray-50 hidden">
+
+						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create Account with Username</h2>
+
+						<input type="text" id="auth-email" placeholder="Username" class="w-full p-2 mb-2 border rounded">
+
+						<p id="password-hint" class="text-xs text-gray-500 mb-4">
+							Please pick a new password.
+						</p>
+
+						<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-3 border rounded">
+
+						<input type="password" id="auth-password-retype" placeholder="Retype Password" class="w-full p-2 mb-3 border rounded">
+
+
+
+						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition hidden">
 							Sign In
 						</button>
-						<button id="email-sign-up-btn" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition hidden">
+						<button id="email-sign-up-btn" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
 							Create Account
 						</button>
 
 						<p class="text-sm mt-3">
-							<button id="toggle-sign-up-btn" class="text-marine-blue hover:text-red-700 font-medium">
-								New user? Create an account
+							<button id="toggle-sign-up-btn" class="text-marine-blue hover:underline font-medium">
+								Already have an account? Sign In
 							</button>
 						</p>
 					</div>
 
-					<div class="my-4 text-gray-500 font-semibold">-- OR --</div>
-
-					<button id="sign-in-btn" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-						Sign In with Google
-					</button>
 				</div>
 				<form id="new-location-form" class="hidden">
 
@@ -177,14 +197,8 @@
 						<div id="box-id-display">Loading...</div>
 					</div>
 
-					<div class="form-group">
-						<label for="label">Business Name (Label)</label>
-						<input type="text" id="label" name="label" required>
-					</div>
-					<div class="form-group">
-						<label for="address">Full Street Address</label>
-						<input type="text" id="address" name="address" required>
-					</div>
+
+
 					<div class="form-group">
 						<button id="gps-btn" type="button" class="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md transition duration-200">
 							Use My Current Location (GPS)
@@ -192,6 +206,10 @@
 					</div>
 					<input type="hidden" id="lat" name="lat">
 					<input type="hidden" id="lon" name="lon">
+					<div class="form-group">
+						<label for="address">Full Street Address</label>
+						<input type="text" id="address" name="address" required>
+					</div>
 					<div class="form-group">
 						<label for="city">City</label>
 						<input type="text" id="city" name="city" required>
@@ -210,17 +228,22 @@
 					</div>
 
 					<div class="form-group">
-						<label for="contactEmail">Contact Email</label>
+						<label for="label">Location Name (Label)</label>
+						<input type="text" id="label" name="label" required>
+					</div>
+
+					<div class="form-group">
+						<label for="contactEmail">Location Contact Email</label>
 						<input type="email" id="contactEmail" name="contactEmail" required>
 					</div>
 
 					<div class="form-group">
-						<label for="contactPhone">Contact Phone</label>
+						<label for="contactPhone">Location Contact Phone</label>
 						<input type="tel" id="contactPhone" name="contactPhone">
 					</div>
 
 					<div class="form-group">
-						<label for="passcode">Password</label>
+						<label for="passcode">Setup Code</label>
 						<input type="password" id="passcode" name="passcode" required>
 					</div>
 
@@ -297,10 +320,15 @@
 				const cityInput = document.getElementById('city');
 				const stateInput = document.getElementById('state');
 
-				// NEW EMAIL/PASSWORD DOM ELEMENTS
+				// --- NEW/MODIFIED EMAIL DOM ELEMENTS ---
+				const showEmailSetupBtn = document.getElementById('show-email-setup-btn');
+				const orDivider = document.getElementById('or-divider');
+				const emailAuthSection = document.getElementById('email-auth-section');
 				const emailAuthTitle = document.getElementById('email-auth-title');
 				const authEmail = document.getElementById('auth-email');
 				const authPassword = document.getElementById('auth-password');
+				const authPasswordRetype = document.getElementById('auth-password-retype'); // New
+				const passwordHint = document.getElementById('password-hint'); // New
 				const emailSignInBtn = document.getElementById('email-sign-in-btn');
 				const emailSignUpBtn = document.getElementById('email-sign-up-btn');
 				const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
@@ -387,7 +415,8 @@
 					if (!msgDiv) {
 						msgDiv = document.createElement('div');
 						msgDiv.id = 'auth-msg';
-						emailAuthSection.insertBefore(msgDiv, emailSignInBtn);
+						// Insert before the email input
+						emailAuthSection.insertBefore(msgDiv, authEmail);
 					}
 					msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
 				}
@@ -421,10 +450,24 @@
 					clearAuthMessage();
 					const email = authEmail.value;
 					const password = authPassword.value;
-					if (!email || !password || password.length < 6) {
-						showAuthMessage('error', 'Please enter a valid email and a password of at least 6 characters.');
+					const retypePassword = authPasswordRetype.value; // Get retype value
+
+					if (!email || !password || !retypePassword) {
+						showAuthMessage('error', 'Please fill out all fields.');
 						return;
 					}
+
+					if (password.length < 6) {
+						showAuthMessage('error', 'Password must be at least 6 characters.');
+						return;
+					}
+
+					// New Validation
+					if (password !== retypePassword) {
+						showAuthMessage('error', 'Passwords do not match.');
+						return;
+					}
+
 					try {
 						await createUserWithEmailAndPassword(auth, email, password);
 						// onAuthStateChanged will handle the rest
@@ -436,20 +479,37 @@
 
 				function toggleEmailAuthMode() {
 					clearAuthMessage();
-					const isSignInMode = emailSignInBtn.classList.contains('hidden');
-					if (isSignInMode) {
+					// Clear passwords when toggling
+					authPassword.value = '';
+					authPasswordRetype.value = '';
+
+					// Check if currently in Sign Up mode (Sign In button is hidden)
+					const isSignUpMode = emailSignInBtn.classList.contains('hidden');
+
+					if (isSignUpMode) {
 						// Switch to Sign In
 						emailAuthTitle.textContent = 'Sign In with Email';
 						emailSignInBtn.classList.remove('hidden');
 						emailSignUpBtn.classList.add('hidden');
+						authPasswordRetype.classList.add('hidden'); // Hide retype
+						passwordHint.classList.add('hidden'); // Hide hint
 						toggleSignUpBtn.textContent = 'New user? Create an account';
 					} else {
 						// Switch to Sign Up
 						emailAuthTitle.textContent = 'Create Account with Email';
 						emailSignInBtn.classList.add('hidden');
 						emailSignUpBtn.classList.remove('hidden');
+						authPasswordRetype.classList.remove('hidden'); // Show retype
+						passwordHint.classList.remove('hidden'); // Show hint
 						toggleSignUpBtn.textContent = 'Already have an account? Sign In';
 					}
+				}
+
+				// New handler to show the email section
+				function showEmailSetup() {
+					emailAuthSection.classList.remove('hidden');
+					orDivider.classList.remove('hidden');
+					showEmailSetupBtn.classList.add('hidden'); // Hide the button after clicking
 				}
 				// --- END NEW EMAIL/PASSWORD HANDLERS ---
 
@@ -586,7 +646,8 @@
 
 					const provider = new GoogleAuthProvider();
 
-					// ADDED EVENT LISTENERS FOR EMAIL/PASSWORD
+					// --- ADDED/MODIFIED EVENT LISTENERS ---
+					showEmailSetupBtn.onclick = showEmailSetup; // New
 					emailSignInBtn.onclick = handleEmailSignIn;
 					emailSignUpBtn.onclick = handleEmailSignUp;
 					toggleSignUpBtn.onclick = toggleEmailAuthMode;
@@ -628,6 +689,7 @@
 
 								authContainer.classList.add( 'hidden' );
 								form.classList.remove( 'hidden' );
+								showEmailSetupBtn.classList.remove('hidden'); // Ensure this is visible on auth -> form transition
 
 								const passcodeGroup = document.getElementById( 'passcode' ).parentElement;
 								const passcode = document.getElementById( 'passcode' );
@@ -667,9 +729,17 @@
 							form.classList.add( 'hidden' );
 							clearAuthMessage();
 
-							// Reset email auth form to sign in mode
-							if (emailSignInBtn.classList.contains('hidden')) {
-								toggleEmailAuthMode();
+							// Make sure email setup button is visible again
+							showEmailSetupBtn.classList.remove('hidden');
+							// And email section is hidden
+							emailAuthSection.classList.add('hidden');
+							orDivider.classList.add('hidden');
+
+
+							// Reset email auth form to default "Sign Up" mode
+							// Check if it's currently in "Sign In" mode (Sign In button is VISIBLE)
+							if (!emailSignInBtn.classList.contains('hidden')) {
+								toggleEmailAuthMode(); // Toggle it back to Sign Up
 							}
 
 							document.getElementById( 'passcode' ).parentElement.classList.remove( 'hidden' );
@@ -689,7 +759,7 @@
 		<footer>
 			<p>When our certified volunteers in Marine Corps League attire arrive to service a drop-off box, they are
 				official representatives of this Toys for Tots campaign.</p>
-			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location+='/print/';} else {document.location='/box/?id=007';}">
+			<img src="/images/gunny-bear.png" height="100" alt="Marine Bear Mascot" class="footer-bear" onclick="if(event.shiftKey){document.location='/print/';} else {document.location='/box/?id=007';}">
 		</footer>
 	</body>
 </html>
