@@ -13,6 +13,11 @@ body {
     color: var(--dark-text);
 }
 
+header  h1:hover,
+header  h2:hover {
+    text-decoration: underline !important;
+}
+
 header {
     background-color: white;
     padding: 15px 20px;
@@ -36,21 +41,15 @@ header {
             margin: 0;
             font-weight: bold;
             font-size: 1.8rem;
+            &:hover {
+                text-decoration: underline;
+            }
         }
 
         h2 {
             color: var(--t4t-red);
             margin: 5px 0;
             font-weight: 500;
-        }
-
-
-        h1 a,
-        h2 a {
-            text-decoration: none;
-            color: inherit;
-
-
             &:hover {
                 text-decoration: underline;
             }
