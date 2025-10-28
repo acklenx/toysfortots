@@ -161,7 +161,7 @@
 
 					<div id="email-auth-section" class="mt-4 p-4 border rounded-lg bg-gray-50 hidden">
 
-						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create Account with Username</h2>
+						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create <label for="auth-email">Account</label> with <label for="auth-password">Username</label></h2>
 
 						<input type="text" id="auth-email" placeholder="Username" class="w-full p-2 mb-2 border rounded">
 
@@ -171,8 +171,9 @@
 
 						<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-3 border rounded">
 
-						<input type="password" id="auth-password-retype" placeholder="Retype Password" class="w-full p-2 mb-3 border rounded">
-
+						<span id="toggle-password" class="block text-right text-sm text-blue-600 hover:underline cursor-pointer -mt-2 mb-3" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer; margin-top: -0.5rem; margin-bottom: 0.75rem;">
+    show password
+</span>
 						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition hidden">
 							Sign In
 						</button>
@@ -198,6 +199,10 @@
 					<div class="form-group">
 						<label for="passcode">Setup Code</label>
 						<input type="password" id="passcode" name="passcode" required>
+
+						<span id="toggle-passcode" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer;  margin-bottom: 0.75rem;">
+       show code
+   </span>
 					</div>
 
 					<div class="my-6 h-1 bg-gray-300"></div>
@@ -330,11 +335,11 @@
 				const lonInput = document.getElementById('lon');
 				const gpsBtn = document.getElementById('gps-btn');
 				const addressInput = document.getElementById('address'); // Assuming 'address' is already defined, but good to ensure
-				const cityInput = document.getElementById('city');
-				const stateInput = document.getElementById('state');
 				const showAddressBtn = document.getElementById('show-address-btn');
 				const manualAddressFields = document.getElementById('manual-address-fields');
 				const gpsErrorMsg = document.getElementById('gps-error-msg');
+				const passcode = document.getElementById('passcode');
+				const togglePasscode = document.getElementById('toggle-passcode');
 				// --- NEW/MODIFIED EMAIL DOM ELEMENTS ---
 				const showEmailSetupBtn = document.getElementById('show-email-setup-btn');
 				const orDivider = document.getElementById('or-divider');
@@ -342,7 +347,7 @@
 				const emailAuthTitle = document.getElementById('email-auth-title');
 				const authEmail = document.getElementById('auth-email');
 				const authPassword = document.getElementById('auth-password');
-				const authPasswordRetype = document.getElementById('auth-password-retype'); // New
+				const togglePassword = document.getElementById('toggle-password');
 				const passwordHint = document.getElementById('password-hint'); // New
 				const emailSignInBtn = document.getElementById('email-sign-in-btn');
 				const emailSignUpBtn = document.getElementById('email-sign-up-btn');
@@ -494,7 +499,6 @@
 
 					try {
 						await signInWithEmailAndPassword(auth, email, password);
-						// onAuthStateChanged will handle the rest
 					} catch (error) {
 						console.error('Email Sign In Error:', error);
 						// Provide a user-friendly error
@@ -510,9 +514,9 @@
 					clearAuthMessage();
 					const username = authEmail.value; // Get username
 					const password = authPassword.value;
-					const retypePassword = authPasswordRetype.value; // Get retype value
+					// const retypePassword = authPasswordRetype.value; // <-- REMOVED
 
-					if (!username || !password || !retypePassword) {
+					if (!username || !password) { // <-- MODIFIED (removed retypePassword)
 						showAuthMessage('error', 'Please fill out all fields.');
 						return;
 					}
@@ -528,17 +532,10 @@
 						return;
 					}
 
-					if (password !== retypePassword) {
-						showAuthMessage('error', 'Passwords do not match.');
-						return;
-					}
-
-					// Construct the full email
 					const email = `${username}@toysfortots.mcl1311.com`;
 
 					try {
 						await createUserWithEmailAndPassword(auth, email, password);
-						// onAuthStateChanged will handle the rest
 					} catch (error) {
 						console.error('Email Sign Up Error:', error);
 						// Provide a user-friendly error
@@ -554,31 +551,23 @@
 					clearAuthMessage();
 					// Clear passwords when toggling
 					authPassword.value = '';
-					authPasswordRetype.value = '';
-
-					// Check if currently in Sign Up mode (Sign In button is hidden)
 					const isSignUpMode = emailSignInBtn.classList.contains('hidden');
 
 					if (isSignUpMode) {
 						// Switch to Sign In
-						emailAuthTitle.textContent = 'Sign In with Username'; // Changed
+						emailAuthTitle.textContent = 'Sign In with Username';
 						emailSignInBtn.classList.remove('hidden');
 						emailSignUpBtn.classList.add('hidden');
-						authPasswordRetype.classList.add('hidden'); // Hide retype
 						passwordHint.classList.add('hidden'); // Hide hint
 						toggleSignUpBtn.textContent = 'New user? Create an account';
 					} else {
-						// Switch to Sign Up
-						emailAuthTitle.textContent = 'Create Account with Username'; // Changed
+						emailAuthTitle.textContent = 'Create Account with Username';
 						emailSignInBtn.classList.add('hidden');
 						emailSignUpBtn.classList.remove('hidden');
-						authPasswordRetype.classList.remove('hidden'); // Show retype
-						passwordHint.classList.remove('hidden'); // Show hint
+						passwordHint.classList.remove('hidden');
 						toggleSignUpBtn.textContent = 'Already have an account? Sign In';
 					}
 				}
-				// --- END NEW EMAIL/PASSWORD HANDLERS ---
-
 
 
 				// New handler to show the email section
@@ -722,12 +711,23 @@
 
 					const provider = new GoogleAuthProvider();
 
-					// --- ADDED/MODIFIED EVENT LISTENERS ---
 					showEmailSetupBtn.onclick = showEmailSetup;
 					emailSignInBtn.onclick = handleEmailSignIn;
 					emailSignUpBtn.onclick = handleEmailSignUp;
 					toggleSignUpBtn.onclick = toggleEmailAuthMode;
 					gpsBtn.onclick = getGeoLocation;
+
+					togglePassword.onclick = function() {
+						const type = authPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+						authPassword.setAttribute('type', type);
+						this.textContent = (type === 'password') ? 'show password' : 'hide password';
+					};
+
+					togglePasscode.onclick = function() {
+						const type = passcode.getAttribute('type') === 'password' ? 'text' : 'password';
+						passcode.setAttribute('type', type);
+						this.textContent = (type === 'password') ? 'show code' : 'hide code';
+					};
 
 					showAddressBtn.onclick = () => {
 						gpsErrorMsg.textContent = '';
@@ -773,8 +773,7 @@
 								form.classList.remove( 'hidden' );
 								showEmailSetupBtn.classList.remove('hidden'); // Ensure this is visible on auth -> form transition
 
-								const passcodeGroup = document.getElementById( 'passcode' ).parentElement;
-								const passcode = document.getElementById( 'passcode' );
+								const passcodeGroup = passcode.parentElement;
 								const passcodeLabel = passcodeGroup.querySelector( 'label' );
 
 								passcodeLabel.textContent = 'Verifying authorization...';
