@@ -2,27 +2,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- HELPER FUNCTION FOR AUTHORIZATION ---
+    // --- HELPER FUNCTION FOR AUTHORIZATION (NOW PROVIDER-AGNOSTIC) ---
+    // Authorization is granted ONLY if the user's UID is found in the
+    // private authorizedVolunteers collection.
     function isAuthorizedVolunteer() {
-      return request.auth.token.firebase.sign_in_provider == 'google.com'
-             && exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid));
+      return exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid));
     }
 
     // --- Public Data ---
     match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
-      // *** RESTORED SECURITY ***
       // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
       match /locations/{boxId} {
-        allow get, list: if request.auth != null; // <--- CHANGED BACK
+        allow get, list: if request.auth != null;
         allow create, update, delete: if false;
       }
 
       // --- TOTSREPORTS RULE ---
-      // *** RESTORED SECURITY ***
+      // Authorized volunteers (any provider) can list, get, and update (e.g., clear status).
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get, update: if isAuthorizedVolunteer(); // <--- CHANGED BACK
+        allow list, get, update: if isAuthorizedVolunteer(); // Uses the new provider-agnostic function
         allow delete: if false;
       }
     }
@@ -31,7 +31,8 @@ service cloud.firestore {
     match /artifacts/toysfortots-eae4d/private/01/data/01 {
 
       match /contacts/{contactId} {
-        allow list, get: if request.auth.token.firebase.sign_in_provider == 'google.com';
+        // REMOVED GOOGLE.COM CHECK: Allow any authenticated user to list/get contacts
+        allow list, get: if request.auth != null;
         allow write: if false;
       }
 
@@ -39,7 +40,10 @@ service cloud.firestore {
          allow read, write: if false;
       }
 
+      // This is the collection checked by the isAuthorizedVolunteer function.
       match /authorizedVolunteers/{userId} {
+        // This rule is currently restricted to 'if false' preventing client-side access,
+        // which is what you had before.
         allow read, write: if false;
       }
     }

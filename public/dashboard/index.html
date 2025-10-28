@@ -14,7 +14,11 @@
 				onAuthStateChanged,
 				GoogleAuthProvider,
 				signInWithRedirect,
-				getRedirectResult
+				getRedirectResult,
+				signOut, // Added signOut
+				signInWithPopup, // Added signInWithPopup for non-redirect methods
+				createUserWithEmailAndPassword, // Added Email/Password functions
+				signInWithEmailAndPassword
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
 				getFirestore,
@@ -41,7 +45,7 @@
 				measurementId: 'G-XKQYPK0GLC'
 			};
 			const appId = firebaseConfig.projectId;
-			let db, auth, functions;
+			let db, auth, functions, isAuthorizedVolunteer; // isAuthorizedVolunteer is now global
 			let appDB, appAuth, appID;
 
 			// --- 3. FIREBASE PATHS ---
@@ -49,7 +53,90 @@
 			const dataDocumentId = '01';
 			const reportsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/totsReports`;
 
-			// --- 4. FIREBASE SETUP (Google Auth + Auth Check) ---
+			// --- NEW DOM ELEMENTS ---
+			const emailAuthTitle = document.getElementById('email-auth-title');
+			const authEmail = document.getElementById('auth-email');
+			const authPassword = document.getElementById('auth-password');
+			const emailSignInBtn = document.getElementById('email-sign-in-btn');
+			const emailSignUpBtn = document.getElementById('email-sign-up-btn');
+			const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
+			const authMessage = document.getElementById( 'auth-message' );
+
+
+			// --- 4. FIREBASE SETUP (Multi-Auth + Auth Check) ---
+
+			// --- NEW: Helper for Email Auth Messages ---
+			function showAuthMessage(type, text) {
+				const emailAuthSection = document.getElementById('email-auth-section');
+				let msgDiv = document.getElementById('auth-msg');
+				if (!msgDiv) {
+					msgDiv = document.createElement('div');
+					msgDiv.id = 'auth-msg';
+					emailAuthSection.insertBefore(msgDiv, emailSignInBtn);
+				}
+				msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
+			}
+
+			function clearAuthMessage() {
+				const msgDiv = document.getElementById('auth-msg');
+				if (msgDiv) {
+					msgDiv.remove();
+				}
+			}
+
+			// --- NEW: Email/Password Handlers ---
+			async function handleEmailSignIn() {
+				clearAuthMessage();
+				const email = authEmail.value;
+				const password = authPassword.value;
+				if (!email || !password) {
+					showAuthMessage('error', 'Please enter both email and password.');
+					return;
+				}
+				try {
+					await signInWithEmailAndPassword(auth, email, password);
+					// onAuthStateChanged handles the rest
+				} catch (error) {
+					console.error('Email Sign In Error:', error);
+					showAuthMessage('error', `Sign in failed: ${error.message}`);
+				}
+			}
+
+			async function handleEmailSignUp() {
+				clearAuthMessage();
+				const email = authEmail.value;
+				const password = authPassword.value;
+				if (!email || !password || password.length < 6) {
+					showAuthMessage('error', 'Please enter a valid email and a password of at least 6 characters.');
+					return;
+				}
+				try {
+					await createUserWithEmailAndPassword(auth, email, password);
+					// onAuthStateChanged handles the rest
+				} catch (error) {
+					console.error('Email Sign Up Error:', error);
+					showAuthMessage('error', `Sign up failed: ${error.message}`);
+				}
+			}
+
+			function toggleEmailAuthMode() {
+				clearAuthMessage();
+				const isSignInMode = emailSignInBtn.classList.contains('hidden');
+				if (isSignInMode) {
+					// Switch to Sign In
+					emailAuthTitle.textContent = 'Sign In with Email';
+					emailSignInBtn.classList.remove('hidden');
+					emailSignUpBtn.classList.add('hidden');
+					toggleSignUpBtn.textContent = 'New user? Create an account';
+				} else {
+					// Switch to Sign Up
+					emailAuthTitle.textContent = 'Create Account with Email';
+					emailSignInBtn.classList.add('hidden');
+					emailSignUpBtn.classList.remove('hidden');
+					toggleSignUpBtn.textContent = 'Already have an account? Sign In';
+				}
+			}
+			// --- END NEW HANDLERS ---
 
 			const setupFirebase = () =>
 			{
@@ -57,72 +144,94 @@
 				{
 					const app = initializeApp( firebaseConfig );
 					auth = getAuth( app );
+					// CRITICAL FIX: Explicitly set the function region
+					functions = getFunctions( app, 'us-central1' );
 					db = getFirestore( app );
-					functions = getFunctions( app );
 
-					const isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteer' );
+					// IMPORTANT: Use V2 function names
+					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
 
 					onAuthStateChanged( auth, async( user ) =>
 					{
-						if( user && user.providerData.some( p => p.providerId === 'google.com' ) )
+						// Check for ANY signed in user, not just Google
+						if( user && !user.isAnonymous )
 						{
+							clearAuthMessage(); // Clear any pre-auth message
 
 							try
 							{
-								const result = await isAuthorizedVolunteer();
+								// Call V2 function
+								const result = await isAuthorizedVolunteer( { uid: user.uid } );
 
 								if( result.data.isAuthorized )
 								{
-									// --- THIS IS THE CHANGE ---
-									// Get the displayName and pass it to initApp
-									const displayName = result.data.displayName || user.displayName;
-									// --- END CHANGE ---
+									// --- User is Signed In AND Authorized ---
+									const displayName = result.data.displayName || user.email; // Use email as fallback
 
 									document.getElementById( 'auth-container' ).style.display = 'none';
 									document.getElementById( 'main-content' ).style.display = 'block';
 									document.getElementById( 'volunteer-name' ).textContent = displayName;
 
-									// --- PASS DISPLAYNAME HERE ---
+									// Add Sign Out button listener after content is shown
+									document.getElementById('sign-out-btn').onclick = () => signOut(auth);
+
+									// Pass display name to app logic
 									window.initApp( appId, db, auth, user, displayName );
 
 								}
 								else
 								{
-									// --- Not Authorized ---
+									// --- Signed In but Not Authorized ---
 									document.getElementById( 'main-content' ).style.display = 'none';
 									document.getElementById( 'auth-container' ).style.display = 'block';
-									document.getElementById( 'auth-message' ).textContent = 'You are not an authorized volunteer. Please contact an administrator.';
-									document.getElementById( 'google-login-btn' ).style.display = 'none';
+									authMessage.textContent = 'You are signed in but not authorized. Please complete the setup form or contact an administrator.';
+									document.getElementById( 'auth-buttons' ).style.display = 'none'; // Hide all sign-in buttons
 								}
 							}
 							catch( err )
 							{
 								console.error( 'Authorization check failed:', err );
-								document.getElementById( 'auth-message' ).textContent = `An error occurred: ${ err.message }`;
+								authMessage.textContent = `An error occurred during authorization check: ${ err.message }`;
+								document.getElementById( 'auth-buttons' ).style.display = 'none';
 							}
 
 						}
 						else
 						{
-							// No Google user. Show login button.
+							// No signed in user. Show full login container.
 							document.getElementById( 'main-content' ).style.display = 'none';
 							document.getElementById( 'auth-container' ).style.display = 'block';
+							document.getElementById( 'auth-buttons' ).style.display = 'block';
+							authMessage.textContent = 'Please sign in to access the dashboard.';
+
+							// Ensure email auth section is in sign-in mode
+							if (emailSignInBtn.classList.contains('hidden')) {
+								toggleEmailAuthMode();
+							}
 						}
 					} );
 
-					// Handle the redirect result
+					// Handle the redirect result (for Google sign-in)
 					getRedirectResult( auth ).catch( ( error ) =>
 					{
 						console.error( 'Redirect login failed:', error );
-						document.getElementById( 'auth-message' ).textContent = `Login failed: ${ error.message }`;
+						authMessage.textContent = `Login failed: ${ error.message }`;
 					} );
 
-					// Add listener for the login button
+					// Add listener for the Google login button (uses Popup now, not Redirect)
 					document.getElementById( 'google-login-btn' ).addEventListener( 'click', () =>
 					{
 						const provider = new GoogleAuthProvider();
-						signInWithRedirect( auth, provider );
+						// Changed to signInWithPopup for consistency across the app,
+						// but can use signInWithRedirect if preferred.
+						signInWithPopup( auth, provider );
 					} );
+
+					// Add listeners for new email auth buttons
+					emailSignInBtn.onclick = handleEmailSignIn;
+					emailSignUpBtn.onclick = handleEmailSignUp;
+					toggleSignUpBtn.onclick = toggleEmailAuthMode;
+
 
 				}
 				catch( error )
@@ -132,8 +241,7 @@
 			};
 
 			// --- 5. HELPER FUNCTIONS ---
-
-
+			// ... (renderBoxCard function unchanged) ...
 			const renderBoxCard = ( box ) =>
 			{
 				let statusHtml;
@@ -184,6 +292,7 @@
                 </div>
             `;
 			};
+
 
 			// --- 6. MAIN APP LOGIC ---
 			// --- 6. MAIN APP LOGIC ---
@@ -369,6 +478,7 @@
 					catch( err )
 					{
 						console.error( 'Error clearing status: ', err );
+						// NOTE: Use showMessage in the future, not alert()
 						alert( 'Error clearing status. Please try again.' );
 						button.disabled = false;
 						button.textContent = 'Clear Status';
@@ -388,7 +498,8 @@
 						colors: {
 							'tots-red': '#cc0000',
 							'tots-green': '#008000',
-							'tots-light': '#fcebeb'
+							'tots-light': '#fcebeb',
+							'marine-blue': '#003366' // Added marine-blue for consistency
 						}
 					}
 				}
@@ -410,21 +521,51 @@
 					</a>
 					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 				</div>
-				<a href="/">
-					<img src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+				<a href="/" id="mclLogoLink'">
+					<img id="" src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
 				</a>
 			</div>
 		</header>
-		<div id="auth-container" class="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-xl text-center" style="display: none;">
+
+		<!-- UPDATED AUTH CONTAINER -->
+		<div id="auth-container" class="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-xl text-center" style="display: none; margin-bottom:5rem;">
 			<header class="bg-tots-red p-6 -m-8 mb-8 rounded-t-xl">
 				<h1 class="text-3xl font-extrabold text-white text-center">Volunteer Access</h1>
 			</header>
-			<p id="auth-message" class="text-gray-700 mb-6">Please sign in with your Google account to access the
-				dashboard.</p>
-			<button id="google-login-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200">
-				Sign In with Google
-			</button>
+
+			<div id="auth-buttons">
+				<!-- Email/Password Section -->
+				<div id="email-auth-section" class="mt-8 p-4 border rounded-lg bg-gray-50">
+					<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Sign In with Email</h2>
+					<input type="email" id="auth-email" placeholder="Email Address" class="w-full p-2 mb-3 border rounded">
+					<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-4 border rounded">
+
+					<button id="email-sign-in-btn" class="w-full py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition">
+						Sign In
+					</button>
+					<button id="email-sign-up-btn" class="w-full py-3 bg-tots-green text-white rounded-lg font-semibold hover:bg-green-700 transition hidden">
+						Create Account
+					</button>
+
+					<p class="text-sm mt-3">
+						<button id="toggle-sign-up-btn" class="text-marine-blue hover:text-red-700 font-medium">
+							New user? Create an account
+						</button>
+					</p>
+				</div>
+
+				<div class="my-4 text-gray-500 font-semibold">-- OR --</div>
+
+				<p id="auth-message" class="text-gray-700 mb-6">Please sign in to access the dashboard.</p>
+
+				<!-- Google Sign-In Button -->
+				<button id="google-login-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200">
+					Sign In with Google
+				</button>
+			</div>
+
 		</div>
+		<!-- END UPDATED AUTH CONTAINER -->
 
 		<div id="main-content" style="display: none;">
 
@@ -435,10 +576,13 @@
 						<p class="text-lg text-gray-600 mb-4 sm:mb-0">Welcome,
 							<span id="volunteer-name" class="font-semibold">...</span></p>
 					</div>
-					<div class="w-full sm:w-auto">
-						<label for="view-filter" class="block text-sm font-medium text-gray-700">Show boxes:</label>
+					<div class="w-full sm:w-auto flex items-center justify-end space-x-4">
+						<label for="view-filter" class="block text-sm font-medium text-gray-700 whitespace-nowrap">Show boxes:</label>
 						<select id="view-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tots-red focus:border-tots-red sm:text-sm rounded-md shadow-sm">
 						</select>
+						<button id="sign-out-btn" class="py-2 px-4 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-semibold rounded-md transition duration-200 shadow-sm">
+							Sign Out
+						</button>
 					</div>
 				</div>
 

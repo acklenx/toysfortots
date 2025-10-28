@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width-width, initial-scale=1.0">
 		<title>Set Up New Location</title>
 		<script src="https://cdn.tailwindcss.com"></script>
 		<link rel="stylesheet" href="/style.css?v=1.0.1">
@@ -109,6 +109,11 @@
 			header h1 a:hover, header h2 a:hover {
 				text-decoration: underline;
 			}
+
+			/* Added for marine-blue button */
+			.bg-marine-blue {
+				background-color: var(--marine-blue);
+			}
 		</style>
 	</head>
 	<body class="bg-gray-100">
@@ -139,11 +144,32 @@
 
 				<div id="auth-container">
 					<p class="mb-4">You must be signed in to set up a new location.</p>
-					<button id="sign-in-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+
+					<div id="email-auth-section" class="mt-8 p-4 border rounded-lg bg-gray-50">
+						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Sign In with Email</h2>
+						<input type="email" id="auth-email" placeholder="Email Address" class="w-full p-2 mb-3 border rounded">
+						<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-4 border rounded">
+
+						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition">
+							Sign In
+						</button>
+						<button id="email-sign-up-btn" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition hidden">
+							Create Account
+						</button>
+
+						<p class="text-sm mt-3">
+							<button id="toggle-sign-up-btn" class="text-marine-blue hover:text-red-700 font-medium">
+								New user? Create an account
+							</button>
+						</p>
+					</div>
+
+					<div class="my-4 text-gray-500 font-semibold">-- OR --</div>
+
+					<button id="sign-in-btn" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
 						Sign In with Google
 					</button>
 				</div>
-
 				<form id="new-location-form" class="hidden">
 
 					<div class="form-group">
@@ -206,21 +232,24 @@
 			</div>
 
 			<script type="module">
-				// --- 1. IMPORTS ---
+				// --- 1. IMPORTS (No change needed here, we use the same auth import) ---
 				import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
 				import {
 					getAuth,
 					onAuthStateChanged,
 					GoogleAuthProvider,
 					signInWithPopup,
-					signOut
+					signOut,
+					// NEW IMPORTS:
+					createUserWithEmailAndPassword,
+					signInWithEmailAndPassword
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 				import {
 					getFirestore,
 					doc,
 					getDoc
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-				// --- NEW: Import Functions ---
+				// --- Import Functions ---
 				import {
 					getFunctions,
 					httpsCallable
@@ -244,17 +273,25 @@
 				const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
 
 				// Firebase instances
-				let app, auth, db, functions, provisionBox, isAuthorizedVolunteer; // Added functions
+				let app, auth, db, functions, provisionBox, isAuthorizedVolunteer;
 
-				// DOM Elements
+				// DOM Elements (UPDATED)
 				const authContainer = document.getElementById( 'auth-container' );
-				const signInBtn = document.getElementById( 'sign-in-btn' );
+				const signInBtn = document.getElementById( 'sign-in-btn' ); // Google Sign In
 				const signOutBtn = document.getElementById( 'sign-out-btn' );
 				const form = document.getElementById( 'new-location-form' );
-				const volunteersDatalist = document.getElementById( 'volunteers-list' );
 				const messageContainer = document.getElementById( 'message-container' );
 				const submitBtn = document.getElementById( 'submit-btn' );
 				const boxIdDisplay = document.getElementById( 'box-id-display' );
+
+				// NEW EMAIL/PASSWORD DOM ELEMENTS
+				const emailAuthTitle = document.getElementById('email-auth-title');
+				const authEmail = document.getElementById('auth-email');
+				const authPassword = document.getElementById('auth-password');
+				const emailSignInBtn = document.getElementById('email-sign-in-btn');
+				const emailSignUpBtn = document.getElementById('email-sign-up-btn');
+				const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
+
 
 				// --- 3. HELPER FUNCTIONS ---
 				function showMessage( type, text )
@@ -262,8 +299,84 @@
 					messageContainer.innerHTML = `<div class="message ${ type }">${ text }</div>`;
 				}
 
-				// --- 4. CORE APP LOGIC ---
+				function showAuthMessage(type, text) {
+					const emailAuthSection = document.getElementById('email-auth-section');
+					let msgDiv = document.getElementById('auth-msg');
+					if (!msgDiv) {
+						msgDiv = document.createElement('div');
+						msgDiv.id = 'auth-msg';
+						emailAuthSection.insertBefore(msgDiv, emailSignInBtn);
+					}
+					msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
+				}
 
+				function clearAuthMessage() {
+					const msgDiv = document.getElementById('auth-msg');
+					if (msgDiv) {
+						msgDiv.remove();
+					}
+				}
+
+				// --- 4. NEW EMAIL/PASSWORD HANDLERS ---
+				async function handleEmailSignIn() {
+					clearAuthMessage();
+					const email = authEmail.value;
+					const password = authPassword.value;
+					if (!email || !password) {
+						showAuthMessage('error', 'Please enter both email and password.');
+						return;
+					}
+					try {
+						await signInWithEmailAndPassword(auth, email, password);
+						// onAuthStateChanged will handle the rest
+					} catch (error) {
+						console.error('Email Sign In Error:', error);
+						showAuthMessage('error', `Sign in failed: ${error.message}`);
+					}
+				}
+
+				async function handleEmailSignUp() {
+					clearAuthMessage();
+					const email = authEmail.value;
+					const password = authPassword.value;
+					if (!email || !password || password.length < 6) {
+						showAuthMessage('error', 'Please enter a valid email and a password of at least 6 characters.');
+						return;
+					}
+					try {
+						await createUserWithEmailAndPassword(auth, email, password);
+						// onAuthStateChanged will handle the rest
+					} catch (error) {
+						console.error('Email Sign Up Error:', error);
+						showAuthMessage('error', `Sign up failed: ${error.message}`);
+					}
+				}
+
+				function toggleEmailAuthMode() {
+					clearAuthMessage();
+					const isSignInMode = emailSignInBtn.classList.contains('hidden');
+					if (isSignInMode) {
+						// Switch to Sign In
+						emailAuthTitle.textContent = 'Sign In with Email';
+						emailSignInBtn.classList.remove('hidden');
+						emailSignUpBtn.classList.add('hidden');
+						toggleSignUpBtn.textContent = 'New user? Create an account';
+					} else {
+						// Switch to Sign Up
+						emailAuthTitle.textContent = 'Create Account with Email';
+						emailSignInBtn.classList.add('hidden');
+						emailSignUpBtn.classList.remove('hidden');
+						toggleSignUpBtn.textContent = 'Already have an account? Sign In';
+					}
+				}
+				// --- END NEW EMAIL/PASSWORD HANDLERS ---
+
+
+				/**
+				 * Handles the form submission by calling a Cloud Function
+				 */
+
+				// --- 4. CORE APP LOGIC ---
 
 				/**
 				 * Handles the form submission by calling a Cloud Function
@@ -271,6 +384,12 @@
 				async function handleFormSubmit( e )
 				{
 					e.preventDefault();
+
+					if( !auth.currentUser || auth.currentUser.isAnonymous ) {
+						showMessage( 'error', 'You must be signed in to submit this form.' );
+						console.error('Client Error: Submission attempted while user is logged out or anonymous.');
+						return;
+					}
 
 					if( !scannedBoxId )
 					{
@@ -285,7 +404,7 @@
 					// Get data from the form
 					const formData = new FormData( form );
 
-					// Build the payload (NO 'volunteer' field)
+					// Build the payload
 					const payload = {
 						boxId: scannedBoxId,
 						label: formData.get( 'label' ),
@@ -302,7 +421,9 @@
 					try
 					{
 						// --- Call the Cloud Function ---
+						console.log('Client: Attempting to call provisionBox with payload:', payload);
 						const result = await provisionBox( payload );
+						console.log('Client: provisionBox returned success.', result.data);
 
 						// --- SUCCESS BLOCK ---
 						const newBoxId = result.data.boxId;
@@ -319,13 +440,34 @@
 					}
 					catch( error )
 					{
+						// Enhanced error logging to catch UNAUTHENTICATED or network issues
 						console.error( 'Error submitting location:', error );
-						showMessage( 'error', `Submission failed: ${ error.message }` );
+
+						let displayMessage = `Submission failed: ${ error.message || 'An unknown error occurred.' }`;
+
+						if (error.code) {
+							// Check if it's an HttpsError from the server
+							console.error(`Error Code: ${error.code}. Details: ${error.details}`);
+							displayMessage = `Error (${error.code}): ${error.message}`;
+						} else if (error.name === 'FirebaseError' && error.message.includes('permission-denied')) {
+							// Fallback for older SDK error handling
+							displayMessage = 'Permission Denied: Check the volunteer passcode.';
+						} else if (error.name === 'FirebaseError' && error.message.includes('UNAUTHENTICATED')) {
+							// The function was rejected by the transport layer
+							displayMessage = 'Authentication Required: Please sign out and sign in again, then retry.';
+							console.error('CRITICAL: Callable function rejected request due to missing/invalid auth token.');
+						}
+
+						showMessage( 'error', displayMessage );
 						submitBtn.disabled = false;
 						submitBtn.textContent = 'Submit Location';
 					}
 				}
 
+
+				/**
+				 * Initializes Firebase and sets up auth listener
+				 */
 				/**
 				 * Initializes Firebase and sets up auth listener
 				 */
@@ -348,12 +490,20 @@
 					app = initializeApp( firebaseConfig );
 					auth = getAuth( app );
 					db = getFirestore( app );
-					// --- NEW: Initialize Functions ---
-					functions = getFunctions( app );
-					provisionBox = httpsCallable( functions, 'provisionBox' );
-					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteer' );
+
+					// --- CRITICAL FIX: Explicitly set the function region ---
+					functions = getFunctions( app, 'us-central1' );
+
+					provisionBox = httpsCallable( functions, 'provisionBoxV2' );
+					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
 
 					const provider = new GoogleAuthProvider();
+
+					// ADDED EVENT LISTENERS FOR EMAIL/PASSWORD
+					emailSignInBtn.onclick = handleEmailSignIn;
+					emailSignUpBtn.onclick = handleEmailSignUp;
+					toggleSignUpBtn.onclick = toggleEmailAuthMode;
+
 
 					signInBtn.onclick = () => signInWithPopup( auth, provider );
 					signOutBtn.onclick = () => signOut( auth );
@@ -363,37 +513,30 @@
 					{
 						if( user && !user.isAnonymous )
 						{
-							// User is signed in with Google.
+							clearAuthMessage();
 
-							// --- NEW: Check if box is already set up ---
 							if( !scannedBoxId )
 							{
-								// No ID, just show the form (or an error)
 								authContainer.classList.add( 'hidden' );
-								form.classList.add( 'hidden' ); // Keep form hidden
+								form.classList.add( 'hidden' );
 								showMessage( 'error', 'No Box ID found in URL. Cannot check status.' );
 								return;
 							}
 
 							try
 							{
-								// 1. Check the 'locations' collection for this ID
 								const locRef = doc( db, locationsCollectionPath, scannedBoxId );
 								const locSnap = await getDoc( locRef );
 
 								if( locSnap.exists() )
 								{
-									// --- IT EXISTS! Redirect to status page ---
 									authContainer.classList.add( 'hidden' );
 									form.classList.add( 'hidden' );
 									showMessage( 'success', 'This box is already set up. Redirecting to status page...' );
 
-									// Immediate redirect
 									window.location.href = `/status/?id=${ scannedBoxId }`;
-									return; // Stop processing
+									return;
 								}
-
-								// --- Box does NOT exist, proceed with setup logic ---
 
 								authContainer.classList.add( 'hidden' );
 								form.classList.remove( 'hidden' );
@@ -402,13 +545,11 @@
 								const passcode = document.getElementById( 'passcode' );
 								const passcodeLabel = passcodeGroup.querySelector( 'label' );
 
-								// 2. Check if user is already an authorized volunteer
 								passcodeLabel.textContent = 'Verifying authorization...';
 								const result = await isAuthorizedVolunteer();
 
 								if( result.data.isAuthorized )
 								{
-									// YES, user is authorized. Hide password.
 									passcodeGroup.classList.add( 'hidden' );
 									passcode.required = false;
 									passcode.value = '';
@@ -416,7 +557,6 @@
 								}
 								else
 								{
-									// NO, user is new. Show password.
 									passcodeGroup.classList.remove( 'hidden' );
 									passcode.required = true;
 									passcodeLabel.textContent = 'Password (New Volunteer)';
@@ -437,8 +577,13 @@
 							// User is signed out
 							authContainer.classList.remove( 'hidden' );
 							form.classList.add( 'hidden' );
+							clearAuthMessage();
 
-							// Show password field and make it required by default when logged out
+							// Reset email auth form to sign in mode
+							if (emailSignInBtn.classList.contains('hidden')) {
+								toggleEmailAuthMode();
+							}
+
 							document.getElementById( 'passcode' ).parentElement.classList.remove( 'hidden' );
 							document.getElementById( 'passcode' ).required = true;
 
@@ -449,7 +594,6 @@
 						}
 					} );
 				}
-
 				init();
 			</script>
 

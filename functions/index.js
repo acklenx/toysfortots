@@ -95,23 +95,30 @@ Timestamp: ${ reportData.timestamp }
 const PRIVATE_PATH_PREFIX = 'artifacts/toysfortots-eae4d/private/01/data/01';
 const CONFIG_PATH = `${ PRIVATE_PATH_PREFIX }/metadata/config`;
 const AUTH_VOLUNTEERS_PATH = `${ PRIVATE_PATH_PREFIX }/authorizedVolunteers`;
-const PUBLIC_DATA_PREFIX = 'artifacts/toysfortots-eae4d/public/01/data/01'; // ---
-																												// NEW
-																												// ---
+const PUBLIC_DATA_PREFIX = 'artifacts/toysfortots-eae4d/public/01/data/01';
 const LOCATIONS_PATH = `${ PUBLIC_DATA_PREFIX }/locations`;
-const REPORTS_PATH = `${ PUBLIC_DATA_PREFIX }/totsReports`; // --- NEW ---
+const REPORTS_PATH = `${ PUBLIC_DATA_PREFIX }/totsReports`;
 
-exports.provisionBox = onCall( async( request ) =>
+/**
+ * RENAMED TO V2
+ */
+exports.provisionBoxV2 = onCall( async( request ) =>
 {
+	console.log('--- provisionBoxV2 STARTED ---');
+
 	// 1. Check auth
-	if( !request.auth || !request.auth.token.firebase.sign_in_provider )
+	if( !request.auth || !request.auth.uid )
 	{
-		throw new HttpsError( 'unauthenticated', 'You must be signed in with Google to perform this action.' );
+		console.warn('Authentication failed: No request.auth or uid.');
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to perform this action.' );
 	}
 
 	const uid = request.auth.uid;
 	const userEmail = request.auth.token.email;
-	const userName = request.auth.token.name;
+	const userName = request.auth.token.name || userEmail;
+	const signInProvider = request.auth.token.firebase.sign_in_provider;
+
+	console.log(`User Authenticated. UID: ${uid}, Email: ${userEmail}, Provider: ${signInProvider}`);
 
 	const data = request.data;
 	const db = getFirestore();
@@ -122,63 +129,80 @@ exports.provisionBox = onCall( async( request ) =>
 	try {
 		const authSnap = await authVolRef.get();
 		isAlreadyAuthorized = authSnap.exists;
+		console.log(`Authorization check: User is already authorized: ${isAlreadyAuthorized}`);
 	} catch( error ) {
+		console.error( 'Authorization check failed:', error);
 		throw new HttpsError( 'internal', 'Could not check authorization.' );
 	}
 
-	// 3. Validate Passcode if needed
+	// 3. Validate Passcode if needed (CRITICAL LOGGING ADDED HERE)
 	if( !isAlreadyAuthorized ) {
+		console.log('User not authorized. Checking passcode from request data.');
 		let secretPasscode;
 		try {
 			const configDoc = await db.doc( CONFIG_PATH ).get();
 			if( !configDoc.exists ) {
+				console.error('Config document missing at:', CONFIG_PATH);
 				throw new HttpsError( 'internal', 'Server configuration is missing. Cannot verify passcode.' );
 			}
 			secretPasscode = configDoc.data().sharedPasscode;
-			if ( !data.passcode || data.passcode !== secretPasscode ) {
+
+			if ( !data.passcode ) {
+				console.warn('Passcode missing in request data.');
+				throw new HttpsError( 'permission-denied', 'New volunteers must provide the correct password.' );
+			}
+
+			// --- LOGGING THE PASSCODES BEFORE THROWING ERROR ---
+			console.log(`Passcode Check: Submitted='${data.passcode}', Expected='${secretPasscode}'`);
+
+			if ( data.passcode !== secretPasscode ) {
+				console.warn('Incorrect passcode submitted.');
 				throw new HttpsError( 'permission-denied', 'Incorrect passcode. New volunteers must provide the correct password.' );
 			}
+			console.log('Passcode validated successfully.');
 		} catch( error ) {
 			if (error instanceof HttpsError) throw error; // Re-throw HttpsError
+			console.error('Error during passcode validation:', error);
 			throw new HttpsError( 'internal', 'Could not read server configuration.' );
 		}
 	}
 
 	// 4. Check input data
 	if( !data.boxId || !data.address || !data.city || !data.state ) {
+		console.warn('Invalid argument: Missing required fields in request data.');
 		throw new HttpsError( 'invalid-argument', 'Box ID, address, city, and state are required.' );
 	}
 
+	// ... (rest of the function, steps 5, 6, 7 are unchanged) ...
 	// 5. Geocode address
 	let geocodedLat = null;
 	let geocodedLon = null;
 	const fullAddress = `${ data.address }, ${ data.city }, ${ data.state }`;
+	console.log(`Attempting to geocode address: ${fullAddress}`);
 
-	const apiKey = GEOCODING_API_KEY.value(); // <-- GET KEY VALUE
+	const apiKey = GEOCODING_API_KEY.value();
 
 	if (!apiKey) {
-		console.error("GEOCODING_API_KEY secret is missing or could not be accessed!"); // <-- ADDED LOG
-		// Continue without geocoding, but log the error clearly
+		console.error("GEOCODING_API_KEY secret is missing or could not be accessed!");
 	} else {
 		try {
 			const geoResponse = await mapsClient.geocode( {
 				params: {
 					address: fullAddress,
-					key: apiKey // Use the loaded key
+					key: apiKey
 				}
 			} );
 
-			// --- Log the ENTIRE response for debugging ---
 			if( geoResponse.data.status === 'OK' ) {
 				const geometry = geoResponse.data.results[ 0 ].geometry;
 				geocodedLat = geometry.location.lat;
 				geocodedLon = geometry.location.lng;
-				console.log( `Geocoding successful: ${geocodedLat}, ${geocodedLon}` ); // <-- UPDATED LOG
+				console.log( `Geocoding successful: ${geocodedLat}, ${geocodedLon}` );
 			} else {
-				console.warn( `Geocoding failed: Status=${geoResponse.data.status}, ErrorMessage=${geoResponse.data.error_message || 'N/A'}` ); // <-- UPDATED LOG
+				console.warn( `Geocoding failed: Status=${geoResponse.data.status}, ErrorMessage=${geoResponse.data.error_message || 'N/A'}` );
 			}
 		} catch( error ) {
-			console.error( "Geocoding API error during request:", error.response ? JSON.stringify(error.response.data) : error.message ); // <-- UPDATED LOG
+			console.error( "Geocoding API error during request:", error.response ? JSON.stringify(error.response.data) : error.message );
 		}
 	}
 
@@ -187,9 +211,10 @@ exports.provisionBox = onCall( async( request ) =>
 		label: data.label, address: data.address, city: data.city, state: data.state,
 		boxes: data.boxes, volunteer: userName, status: 'active',
 		created: new Date().toISOString(), provisionedBy: uid,
-		lat: geocodedLat, lon: geocodedLon, // Will be null if geocoding failed
+		lat: geocodedLat, lon: geocodedLon,
 		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone
 	};
+	console.log('New location object built.');
 
 	// 7. Save everything in a batch
 	try {
@@ -197,7 +222,7 @@ exports.provisionBox = onCall( async( request ) =>
 		const docSnap = await newLocationRef.get();
 
 		if( docSnap.exists ) {
-			console.warn(`Attempted to provision existing Box ID: ${data.boxId}`); // <-- ADDED LOG
+			console.warn(`Attempted to provision existing Box ID: ${data.boxId}`);
 			throw new HttpsError( 'already-exists', `Box ID ${ data.boxId } has already been set up.` );
 		}
 
@@ -205,6 +230,7 @@ exports.provisionBox = onCall( async( request ) =>
 		batch.set( newLocationRef, newLocation );
 
 		if( !isAlreadyAuthorized ) {
+			console.log(`Authorizing new volunteer: ${uid}`);
 			batch.set( authVolRef, {
 				email: userEmail, displayName: userName,
 				authorizedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -219,24 +245,35 @@ exports.provisionBox = onCall( async( request ) =>
 		} );
 
 		await batch.commit();
+		console.log('Batch commit successful.');
 		return { success: true, boxId: data.boxId, message: 'Location saved, user authorized, and initial report created.' };
 
 	} catch( error ) {
 		if( error.code === 'already-exists' ) {
+			console.warn('Batch failed due to already-exists error.');
 			throw error;
 		}
+		console.error('Batch commit failed with internal error:', error);
 		throw new HttpsError( 'internal', 'Failed to save location data.' );
+	} finally {
+		console.log('--- provisionBoxV2 FINISHED ---');
 	}
 } );
 
 
-exports.isAuthorizedVolunteer = onCall( async( request ) =>
+/**
+ * RENAMED TO V2
+ */
+exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 {
-	// 1. Check for authentication
-	if( !request.auth || !request.auth.token.firebase.sign_in_provider )
+	// 1. Check for authentication (FIXED: Only check for request.auth and uid)
+	if( !request.auth || !request.auth.uid )
 	{
-		throw new HttpsError( 'unauthenticated', 'You must be signed in with Google to perform this action.' );
+		console.warn('isAuthorizedVolunteerV2: Authentication failed (No auth or uid).');
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to perform this action.' );
 	}
+
+	console.log(`isAuthorizedVolunteerV2: Checking authorization for UID: ${request.auth.uid}`);
 
 	const uid = request.auth.uid;
 	const db = getFirestore();
@@ -249,16 +286,18 @@ exports.isAuthorizedVolunteer = onCall( async( request ) =>
 
 		if( docSnap.exists )
 		{
+			console.log('isAuthorizedVolunteerV2: User is authorized.');
 			return { isAuthorized: true, displayName: request.auth.token.name };
 		}
 		else
 		{
+			console.log('isAuthorizedVolunteerV2: User is NOT authorized.');
 			return { isAuthorized: false, displayName: request.auth.token.name };
 		}
 	}
 	catch( error )
 	{
-		console.error( 'Error checking authorization:', error );
+		console.error( 'isAuthorizedVolunteerV2: Error checking authorization:', error );
 		throw new HttpsError( 'internal', 'Could not check authorization status.' );
 	}
 } );
