@@ -206,21 +206,29 @@
 						<button id="gps-btn" type="button" class="w-3/4 block mx-auto py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition duration-200">
 							Use My GPS Location
 						</button>
+						<div id="gps-error-msg" class="text-center text-sm text-red-600 mt-2"></div>
+					</div>
+
+					<div id="show-address-btn" class="text-center my-4 text-gray-700 cursor-pointer hover:text-gray-900">
+						Click <span class="underline font-medium">here</span> to type in the address
 					</div>
 
 					<input type="hidden" id="lat" name="lat">
 					<input type="hidden" id="lon" name="lon">
-					<div class="form-group">
-						<label for="address">Full Street Address</label>
-						<input type="text" id="address" name="address" required>
-					</div>
-					<div class="form-group">
-						<label for="city">City</label>
-						<input type="text" id="city" name="city" required>
-					</div>
-					<div class="form-group">
-						<label for="state">State</label>
-						<input type="text" id="state" name="state" value="GA" required>
+
+					<div id="manual-address-fields" class="hidden">
+						<div class="form-group">
+							<label for="address">Full Street Address</label>
+							<input type="text" id="address" name="address" required>
+						</div>
+						<div class="form-group">
+							<label for="city">City</label>
+							<input type="text" id="city" name="city" required>
+						</div>
+						<div class="form-group">
+							<label for="state">State</label>
+							<input type="text" id="state" name="state" value="GA" required>
+						</div>
 					</div>
 
 					<div class="form-group" style="display: none;">
@@ -324,7 +332,9 @@
 				const addressInput = document.getElementById('address'); // Assuming 'address' is already defined, but good to ensure
 				const cityInput = document.getElementById('city');
 				const stateInput = document.getElementById('state');
-
+				const showAddressBtn = document.getElementById('show-address-btn');
+				const manualAddressFields = document.getElementById('manual-address-fields');
+				const gpsErrorMsg = document.getElementById('gps-error-msg');
 				// --- NEW/MODIFIED EMAIL DOM ELEMENTS ---
 				const showEmailSetupBtn = document.getElementById('show-email-setup-btn');
 				const orDivider = document.getElementById('or-divider');
@@ -349,19 +359,33 @@
 				/**
 				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
 				 */
+				/**
+				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
+				 */
 				function getGeoLocation() {
-					showMessage('info', 'Attempting to get current location via GPS...');
+					// --- NEW: Clear old messages ---
+					showMessage('', ''); // Clear main message container
+					gpsErrorMsg.textContent = ''; // Clear local GPS error
+
 					gpsBtn.disabled = true;
 
 					// Reset button appearance while searching
 					gpsBtn.textContent = 'Searching...';
-					gpsBtn.classList.remove('bg-green-600');
-					gpsBtn.classList.add('bg-yellow-500');
+					gpsBtn.classList.remove('bg-red-500', 'bg-green-600'); // Remove both potential colors
+					gpsBtn.classList.add('bg-yellow-500'); // Searching color
 
 					if (!navigator.geolocation) {
-						showMessage('error', 'Geolocation is not supported by this browser.');
+						// --- UPDATED: Show error locally ---
+						gpsErrorMsg.textContent = 'Geolocation is not supported by this browser.';
 						gpsBtn.disabled = false;
-						gpsBtn.textContent = 'Use My Current Location (GPS)';
+						gpsBtn.textContent = 'Use My GPS Location';
+						gpsBtn.classList.remove('bg-yellow-500');
+						gpsBtn.classList.add('bg-red-500'); // Keep original red color
+
+						// --- NEW: Show manual fields on this error too ---
+						manualAddressFields.classList.remove('hidden');
+						showAddressBtn.classList.add('hidden');
+						addressInput.focus();
 						return;
 					}
 
@@ -374,7 +398,7 @@
 						lonInput.value = lon;
 
 						// Success message for console and brief notification
-						showMessage('success', `Location captured!`);
+						showMessage('success', `Location captured!`); // This is fine
 
 						// Format coordinates for display (faint, small print)
 						const latFixed = lat.toFixed(4);
@@ -382,31 +406,45 @@
 
 						// --- VISUAL CONFIRMATION CHANGE ---
 						gpsBtn.innerHTML = `
-            Location Set (GPS)
-            <div class="text-xs font-normal opacity-75 mt-1">
-                Lat: ${latFixed}, Lon: ${lonFixed}
-            </div>
-        `;
+                       Location Set (GPS)
+                       <div class="text-xs font-normal opacity-75 mt-1">
+                           Lat: ${latFixed}, Lon: ${lonFixed}
+                       </div>
+                   `;
 						// --- END VISUAL CONFIRMATION CHANGE ---
+
+						// --- Show manual fields and hide toggle button ---
+						manualAddressFields.classList.remove('hidden');
+						showAddressBtn.classList.add('hidden');
 
 						// Focus the address input so the user can quickly fill in the business name/address line
 						addressInput.focus();
 
 						gpsBtn.classList.remove('bg-yellow-500');
-						gpsBtn.classList.add('bg-green-600');
+						gpsBtn.classList.add('bg-green-600'); // Success color
 						gpsBtn.disabled = false;
+
 					}, (error) => {
+						// --- THIS IS THE UPDATED ERROR CALLBACK ---
 						console.error('Geolocation Error:', error);
-						showMessage('error', `Could not get location: ${error.message}`);
+
+						// --- NEW: Show error message locally ---
+						gpsErrorMsg.textContent = `Could not get location: ${error.message}`;
 
 						// Reset button appearance on failure
-						gpsBtn.textContent = 'Use My Current Location (GPS)';
-						gpsBtn.classList.remove('bg-green-600');
-						gpsBtn.classList.add('bg-yellow-500');
+						gpsBtn.textContent = 'Use My GPS Location'; // Corrected text
+						gpsBtn.classList.remove('bg-yellow-500', 'bg-green-600');
+						gpsBtn.classList.add('bg-red-500'); // Back to original red
 
 						gpsBtn.disabled = false;
 						latInput.value = '';
 						lonInput.value = '';
+
+						// --- NEW: Show manual fields on error ---
+						manualAddressFields.classList.remove('hidden');
+						showAddressBtn.classList.add('hidden');
+						addressInput.focus();
+
 					}, {
 						enableHighAccuracy: true,
 						timeout: 5000,
@@ -685,12 +723,18 @@
 					const provider = new GoogleAuthProvider();
 
 					// --- ADDED/MODIFIED EVENT LISTENERS ---
-					showEmailSetupBtn.onclick = showEmailSetup; // New
+					showEmailSetupBtn.onclick = showEmailSetup;
 					emailSignInBtn.onclick = handleEmailSignIn;
 					emailSignUpBtn.onclick = handleEmailSignUp;
 					toggleSignUpBtn.onclick = toggleEmailAuthMode;
 					gpsBtn.onclick = getGeoLocation;
 
+					showAddressBtn.onclick = () => {
+						gpsErrorMsg.textContent = '';
+						manualAddressFields.classList.remove('hidden');
+						showAddressBtn.classList.add('hidden');
+						addressInput.focus();
+					};
 
 					signInBtn.onclick = () => signInWithPopup( auth, provider );
 					signOutBtn.onclick = () => signOut( auth );
