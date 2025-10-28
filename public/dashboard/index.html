@@ -13,7 +13,6 @@
 				getAuth,
 				onAuthStateChanged,
 				GoogleAuthProvider,
-				signInWithRedirect,
 				getRedirectResult,
 				signOut, // Added signOut
 				signInWithPopup, // Added signInWithPopup for non-redirect methods
@@ -536,7 +535,7 @@
 			<div id="auth-buttons">
 				<!-- Email/Password Section -->
 				<div id="email-auth-section" class="mt-8 p-4 border rounded-lg bg-gray-50">
-					<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Sign In with Email</h2>
+					<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title"><label for="auth-password">Sign In</label> with <label for="auth-email">Email</label></h2>
 					<input type="email" id="auth-email" placeholder="Email Address" class="w-full p-2 mb-3 border rounded">
 					<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-4 border rounded">
 
