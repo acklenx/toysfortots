@@ -186,6 +186,13 @@
 						<input type="text" id="address" name="address" required>
 					</div>
 					<div class="form-group">
+						<button id="gps-btn" type="button" class="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md transition duration-200">
+							Use My Current Location (GPS)
+						</button>
+					</div>
+					<input type="hidden" id="lat" name="lat">
+					<input type="hidden" id="lon" name="lon">
+					<div class="form-group">
 						<label for="city">City</label>
 						<input type="text" id="city" name="city" required>
 					</div>
@@ -275,7 +282,7 @@
 				// Firebase instances
 				let app, auth, db, functions, provisionBox, isAuthorizedVolunteer;
 
-				// DOM Elements (UPDATED)
+				// DOM Elements
 				const authContainer = document.getElementById( 'auth-container' );
 				const signInBtn = document.getElementById( 'sign-in-btn' ); // Google Sign In
 				const signOutBtn = document.getElementById( 'sign-out-btn' );
@@ -283,6 +290,12 @@
 				const messageContainer = document.getElementById( 'message-container' );
 				const submitBtn = document.getElementById( 'submit-btn' );
 				const boxIdDisplay = document.getElementById( 'box-id-display' );
+				const latInput = document.getElementById('lat');
+				const lonInput = document.getElementById('lon');
+				const gpsBtn = document.getElementById('gps-btn');
+				const addressInput = document.getElementById('address'); // Assuming 'address' is already defined, but good to ensure
+				const cityInput = document.getElementById('city');
+				const stateInput = document.getElementById('state');
 
 				// NEW EMAIL/PASSWORD DOM ELEMENTS
 				const emailAuthTitle = document.getElementById('email-auth-title');
@@ -297,6 +310,75 @@
 				function showMessage( type, text )
 				{
 					messageContainer.innerHTML = `<div class="message ${ type }">${ text }</div>`;
+				}
+
+
+				/**
+				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
+				 */
+				function getGeoLocation() {
+					showMessage('info', 'Attempting to get current location via GPS...');
+					gpsBtn.disabled = true;
+
+					// Reset button appearance while searching
+					gpsBtn.textContent = 'Searching...';
+					gpsBtn.classList.remove('bg-green-600');
+					gpsBtn.classList.add('bg-yellow-500');
+
+					if (!navigator.geolocation) {
+						showMessage('error', 'Geolocation is not supported by this browser.');
+						gpsBtn.disabled = false;
+						gpsBtn.textContent = 'Use My Current Location (GPS)';
+						return;
+					}
+
+					navigator.geolocation.getCurrentPosition(async (position) => {
+						const lat = position.coords.latitude;
+						const lon = position.coords.longitude;
+
+						// Populate hidden fields
+						latInput.value = lat;
+						lonInput.value = lon;
+
+						// Success message for console and brief notification
+						showMessage('success', `Location captured!`);
+
+						// Format coordinates for display (faint, small print)
+						const latFixed = lat.toFixed(4);
+						const lonFixed = lon.toFixed(4);
+
+						// --- VISUAL CONFIRMATION CHANGE ---
+						gpsBtn.innerHTML = `
+            Location Set (GPS)
+            <div class="text-xs font-normal opacity-75 mt-1">
+                Lat: ${latFixed}, Lon: ${lonFixed}
+            </div>
+        `;
+						// --- END VISUAL CONFIRMATION CHANGE ---
+
+						// Focus the address input so the user can quickly fill in the business name/address line
+						addressInput.focus();
+
+						gpsBtn.classList.remove('bg-yellow-500');
+						gpsBtn.classList.add('bg-green-600');
+						gpsBtn.disabled = false;
+					}, (error) => {
+						console.error('Geolocation Error:', error);
+						showMessage('error', `Could not get location: ${error.message}`);
+
+						// Reset button appearance on failure
+						gpsBtn.textContent = 'Use My Current Location (GPS)';
+						gpsBtn.classList.remove('bg-green-600');
+						gpsBtn.classList.add('bg-yellow-500');
+
+						gpsBtn.disabled = false;
+						latInput.value = '';
+						lonInput.value = '';
+					}, {
+						enableHighAccuracy: true,
+						timeout: 5000,
+						maximumAge: 0
+					});
 				}
 
 				function showAuthMessage(type, text) {
@@ -404,7 +486,7 @@
 					// Get data from the form
 					const formData = new FormData( form );
 
-					// Build the payload
+					// Build the payload (UPDATED to include lat/lon)
 					const payload = {
 						boxId: scannedBoxId,
 						label: formData.get( 'label' ),
@@ -412,18 +494,23 @@
 						city: formData.get( 'city' ),
 						state: formData.get( 'state' ),
 						boxes: parseInt( formData.get( 'boxes' ), 10 ),
-						passcode: formData.get( 'passcode' ), // This will be blank if hidden
+						passcode: formData.get( 'passcode' ),
 						contactName: formData.get( 'contactName' ),
 						contactEmail: formData.get( 'contactEmail' ),
-						contactPhone: formData.get( 'contactPhone' )
+						contactPhone: formData.get( 'contactPhone' ),
+						// --- NEW: GPS Coordinates from hidden fields ---
+						lat: formData.get( 'lat' ) ? parseFloat(formData.get('lat')) : null,
+						lon: formData.get( 'lon' ) ? parseFloat(formData.get('lon')) : null
 					};
 
 					try
 					{
-						// --- Call the Cloud Function ---
-						console.log('Client: Attempting to call provisionBox with payload:', payload);
-						const result = await provisionBox( payload );
-						console.log('Client: provisionBox returned success.', result.data);
+						// Ensure you're calling the correct V2 function name
+						const provisionBoxV2 = httpsCallable( functions, 'provisionBoxV2' );
+
+						console.log('Client: Attempting to call provisionBoxV2 with payload:', payload);
+						const result = await provisionBoxV2( payload );
+						console.log('Client: provisionBoxV2 returned success.', result.data);
 
 						// --- SUCCESS BLOCK ---
 						const newBoxId = result.data.boxId;
@@ -503,6 +590,7 @@
 					emailSignInBtn.onclick = handleEmailSignIn;
 					emailSignUpBtn.onclick = handleEmailSignUp;
 					toggleSignUpBtn.onclick = toggleEmailAuthMode;
+					gpsBtn.onclick = getGeoLocation;
 
 
 					signInBtn.onclick = () => signInWithPopup( auth, provider );
