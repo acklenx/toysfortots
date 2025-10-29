@@ -220,6 +220,8 @@
 
 					<input type="hidden" id="lat" name="lat">
 					<input type="hidden" id="lon" name="lon">
+					<input type="hidden" id="county" name="county">
+					<input type="hidden" id="postalcode" name="postalcode">
 
 					<div id="manual-address-fields" class="hidden">
 						<div class="form-group">
@@ -228,7 +230,7 @@
 						</div>
 						<div class="form-group">
 							<label for="city">City</label>
-							<input type="text" id="city" name="city" required>
+							<input type="text" id="city" name="city">
 						</div>
 						<div class="form-group">
 							<label for="state">State</label>
@@ -334,7 +336,11 @@
 				const latInput = document.getElementById('lat');
 				const lonInput = document.getElementById('lon');
 				const gpsBtn = document.getElementById('gps-btn');
-				const addressInput = document.getElementById('address'); // Assuming 'address' is already defined, but good to ensure
+				const addressInput = document.getElementById('address');
+				const cityInput = document.getElementById('city');
+				const stateInput = document.getElementById('state');
+				const countyInput = document.getElementById('county');
+				const postalCodeInput = document.getElementById('postalcode');
 				const showAddressBtn = document.getElementById('show-address-btn');
 				const manualAddressFields = document.getElementById('manual-address-fields');
 				const gpsErrorMsg = document.getElementById('gps-error-msg');
@@ -367,33 +373,36 @@
 				/**
 				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
 				 */
-				function getGeoLocation() {
-					// --- NEW: Clear old messages ---
-					showMessage('', ''); // Clear main message container
-					gpsErrorMsg.textContent = ''; // Clear local GPS error
 
+
+				/**
+				 * Uses the browser's Geolocation API, then performs reverse geocoding
+				 * to get coordinates AND address, filling the form fields.
+				 */
+				async function getGeoLocation() {
+					// --- Clear old messages ---
+					showMessage('', '');
+					gpsErrorMsg.textContent = '';
 					gpsBtn.disabled = true;
 
 					// Reset button appearance while searching
 					gpsBtn.textContent = 'Searching...';
-					gpsBtn.classList.remove('bg-red-500', 'bg-green-600'); // Remove both potential colors
-					gpsBtn.classList.add('bg-yellow-500'); // Searching color
+					gpsBtn.classList.remove('bg-red-500', 'bg-green-600');
+					gpsBtn.classList.add('bg-yellow-500');
 
 					if (!navigator.geolocation) {
-						// --- UPDATED: Show error locally ---
 						gpsErrorMsg.textContent = 'Geolocation is not supported by this browser.';
 						gpsBtn.disabled = false;
 						gpsBtn.textContent = 'Use My GPS Location';
 						gpsBtn.classList.remove('bg-yellow-500');
-						gpsBtn.classList.add('bg-red-500'); // Keep original red color
-
-						// --- NEW: Show manual fields on this error too ---
+						gpsBtn.classList.add('bg-red-500');
 						manualAddressFields.classList.remove('hidden');
 						showAddressBtn.classList.add('hidden');
 						addressInput.focus();
 						return;
 					}
 
+					// 1. GET GPS COORDINATES
 					navigator.geolocation.getCurrentPosition(async (position) => {
 						const lat = position.coords.latitude;
 						const lon = position.coords.longitude;
@@ -402,57 +411,87 @@
 						latInput.value = lat;
 						lonInput.value = lon;
 
-						// Success message for console and brief notification
-						showMessage('success', `Location captured!`); // This is fine
+						try {
+							// 2. GET ADDRESS (REVERSE GEOCODING)
+							gpsBtn.textContent = 'Got GPS, Getting Address...';
+							const geoApiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
 
-						// Format coordinates for display (faint, small print)
+							const response = await fetch(geoApiUrl);
+							if (!response.ok) {
+								throw new Error(`Address lookup failed (status: ${response.status})`);
+							}
+							const data = await response.json();
+
+							console.log('Reverse Geocode Response:', data); // For your debugging
+							// Populate address fields
+							if (data && data.address) {
+								const addr = data.address;
+
+								// Construct the street address (house number + road)
+								const street = `${addr.house_number || ''} ${addr.road || ''}`.trim();
+
+								addressInput.value = street;
+								cityInput.value = addr.city || addr.town || addr.village || '';
+								stateInput.value = addr.state || 'GA'; // Use found state, default to GA
+								countyInput.value = addr.county || '';
+								postalCodeInput.value = addr.postcode || '';
+								// Bonus: Try to find a good "Location Name"
+								const labelInput = document.getElementById('label');
+								if (labelInput.value === '') { // Only if not already filled
+									labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
+								}
+
+								showMessage('success', 'Location and Address captured!');
+							} else {
+								throw new Error('Address not found in API response.');
+							}
+
+						} catch (geoError) {
+							console.error('Reverse Geocoding Error:', geoError);
+							gpsErrorMsg.textContent = 'Got GPS, but failed to get address. Please type it manually.';
+							// We still continue, to show the manual fields
+						}
+
+						// 3. SHOW FIELDS AND SET SUCCESS STATE (this runs after try/catch)
 						const latFixed = lat.toFixed(4);
 						const lonFixed = lon.toFixed(4);
 
-						// --- VISUAL CONFIRMATION CHANGE ---
 						gpsBtn.innerHTML = `
-                       Location Set (GPS)
-                       <div class="text-xs font-normal opacity-75 mt-1">
-                           Lat: ${latFixed}, Lon: ${lonFixed}
-                       </div>
-                   `;
-						// --- END VISUAL CONFIRMATION CHANGE ---
+            Location Set (GPS)
+            <div class="text-xs font-normal opacity-75 mt-1">
+                Lat: ${latFixed}, Lon: ${lonFixed}
+            </div>
+        `;
 
-						// --- Show manual fields and hide toggle button ---
 						manualAddressFields.classList.remove('hidden');
 						showAddressBtn.classList.add('hidden');
 
-						// Focus the address input so the user can quickly fill in the business name/address line
-						addressInput.focus();
+						// Focus the "Location Name" field first, as address is likely filled
+						document.getElementById('label').focus();
 
 						gpsBtn.classList.remove('bg-yellow-500');
 						gpsBtn.classList.add('bg-green-600'); // Success color
 						gpsBtn.disabled = false;
 
 					}, (error) => {
-						// --- THIS IS THE UPDATED ERROR CALLBACK ---
+						// --- THIS IS THE GEOLOCATION ERROR CALLBACK ---
 						console.error('Geolocation Error:', error);
-
-						// --- NEW: Show error message locally ---
 						gpsErrorMsg.textContent = `Could not get location: ${error.message}`;
 
-						// Reset button appearance on failure
-						gpsBtn.textContent = 'Use My GPS Location'; // Corrected text
+						gpsBtn.textContent = 'Use My GPS Location';
 						gpsBtn.classList.remove('bg-yellow-500', 'bg-green-600');
-						gpsBtn.classList.add('bg-red-500'); // Back to original red
-
+						gpsBtn.classList.add('bg-red-500');
 						gpsBtn.disabled = false;
 						latInput.value = '';
 						lonInput.value = '';
 
-						// --- NEW: Show manual fields on error ---
 						manualAddressFields.classList.remove('hidden');
 						showAddressBtn.classList.add('hidden');
 						addressInput.focus();
 
 					}, {
 						enableHighAccuracy: true,
-						timeout: 5000,
+						timeout: 10000, // Increased timeout to 10s
 						maximumAge: 0
 					});
 				}
@@ -617,8 +656,10 @@
 						label: formData.get( 'label' ),
 						address: formData.get( 'address' ),
 						city: formData.get( 'city' ),
+						county: formData.get( 'county' ),
 						state: formData.get( 'state' ),
-						boxes: parseInt( formData.get( 'boxes' ), 10 ),
+						postalcode: formData.get( 'postalcode' ),
+						boxes: 1,
 						passcode: formData.get( 'passcode' ),
 						contactName: formData.get( 'contactName' ),
 						contactEmail: formData.get( 'contactEmail' ),
@@ -627,6 +668,7 @@
 						lat: formData.get( 'lat' ) ? parseFloat(formData.get('lat')) : null,
 						lon: formData.get( 'lon' ) ? parseFloat(formData.get('lon')) : null
 					};
+					console.log('Client: Submitting form with payload:', payload );
 
 					try
 					{

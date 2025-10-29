@@ -168,9 +168,9 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 	}
 
 	// 4. Check input data
-	if( !data.boxId || !data.address || !data.city || !data.state ) {
+	if( !data.boxId || !data.address ) {
 		console.warn('Invalid argument: Missing required fields in request data.');
-		throw new HttpsError( 'invalid-argument', 'Box ID, address, city, and state are required.' );
+		throw new HttpsError( 'invalid-argument', 'Box ID address address, are required.' );
 	}
 
 	// ... (rest of the function, steps 5, 6, 7 are unchanged) ...
