@@ -131,12 +131,20 @@
 					const location = locSnap.data();
 					currentBoxInfo = `${ location.label } (ID: ${ boxId }) @ ${ location.address }`;
 					loadingMessage.remove();
+					let volunteerDisplayName = 'MCL 1311'; // Default
+					if (location.volunteer) { // Check if the volunteer field exists
+						volunteerDisplayName = location.volunteer;
+						const atIndex = volunteerDisplayName.indexOf('@');
+						if (atIndex !== -1) {
+							volunteerDisplayName = volunteerDisplayName.substring(0, atIndex);
+						}
+					}
 					listDiv.innerHTML = `
                    <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
                        <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
                        <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
                        <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
-                       <p class="text-sm font-semibold">Assigned Volunteer: ${ location.volunteer }</p>
+                       <p class="text-sm font-semibold">Assigned Volunteer: ${volunteerDisplayName }</p>
                    </div>
                `;
 

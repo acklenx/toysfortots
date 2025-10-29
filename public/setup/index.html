@@ -429,8 +429,6 @@
 							// Populate address fields
 							if (data && data.address) {
 								const addr = data.address;
-
-
 								addressInput.value = `${addr.house_number || ''} ${addr.road || ''}`.trim();
 								cityInput.value = addr.city || addr.town || addr.village || '';
 								stateInput.value = addr.state || 'GA'; // Use found state, default to GA
