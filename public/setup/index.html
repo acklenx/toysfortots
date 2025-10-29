@@ -274,6 +274,8 @@
 					<div id="message-container"></div>
 
 					<div class="text-center">
+						<p id="user-display" class="text-sm text-gray-500 mb-2"></p>
+
 						<button id="sign-out-btn" type="button" class="mt-4 text-sm text-gray-600 hover:text-gray-900">
 							Sign Out
 						</button>
@@ -327,8 +329,9 @@
 
 				// DOM Elements
 				const authContainer = document.getElementById( 'auth-container' );
-				const signInBtn = document.getElementById( 'sign-in-btn' ); // Google Sign In
+				const signInBtn = document.getElementById( 'sign-in-btn' );
 				const signOutBtn = document.getElementById( 'sign-out-btn' );
+				const userDisplay = document.getElementById( 'user-display' );
 				const form = document.getElementById( 'new-location-form' );
 				const messageContainer = document.getElementById( 'message-container' );
 				const submitBtn = document.getElementById( 'submit-btn' );
@@ -427,10 +430,8 @@
 							if (data && data.address) {
 								const addr = data.address;
 
-								// Construct the street address (house number + road)
-								const street = `${addr.house_number || ''} ${addr.road || ''}`.trim();
 
-								addressInput.value = street;
+								addressInput.value = `${addr.house_number || ''} ${addr.road || ''}`.trim();
 								cityInput.value = addr.city || addr.town || addr.village || '';
 								stateInput.value = addr.state || 'GA'; // Use found state, default to GA
 								countyInput.value = addr.county || '';
@@ -813,6 +814,18 @@
 
 								authContainer.classList.add( 'hidden' );
 								form.classList.remove( 'hidden' );
+								if (user.email) {
+									let displayName = user.email;
+									const atIndex = displayName.indexOf('@');
+									if (atIndex !== -1) {
+										displayName = displayName.substring(0, atIndex);
+									}
+									userDisplay.textContent = `Signed in as: ${displayName}`;
+									userDisplay.classList.remove('hidden');
+								} else {
+									// Hide if user has no email (e.g., anonymous)
+									userDisplay.classList.add('hidden');
+								}
 								showEmailSetupBtn.classList.remove('hidden'); // Ensure this is visible on auth -> form transition
 
 								const passcodeGroup = passcode.parentElement;
@@ -851,6 +864,8 @@
 							authContainer.classList.remove( 'hidden' );
 							form.classList.add( 'hidden' );
 							clearAuthMessage();
+							userDisplay.textContent = '';
+							userDisplay.classList.add('hidden');
 
 							// Make sure email setup button is visible again
 							showEmailSetupBtn.classList.remove('hidden');
