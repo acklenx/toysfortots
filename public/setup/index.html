@@ -257,7 +257,7 @@
 
 					<div class="form-group">
 						<label for="contactEmail">Contact Email</label>
-						<input type="email" id="contactEmail" name="contactEmail" required>
+						<input type="email" id="contactEmail" name="contactEmail">
 					</div>
 
 					<div class="form-group">
@@ -630,6 +630,25 @@
 				{
 					e.preventDefault();
 
+					// --- NEW: Get form data first for validation ---
+					const formData = new FormData( form );
+					const contactName = formData.get('contactName').trim();
+					const contactEmail = formData.get('contactEmail').trim();
+					const contactPhone = formData.get('contactPhone').trim();
+
+					// --- NEW: Validation Logic ---
+					if ( !contactName ) {
+						showMessage('error', 'Please enter a Location Contact Name.');
+						return; // Stop the submission
+					}
+
+					if ( !contactEmail && !contactPhone ) {
+						showMessage('error', 'Please provide either a Contact Email or a Contact Phone.');
+						return; // Stop the submission
+					}
+					// --- END: Validation Logic ---
+
+
 					if( !auth.currentUser || auth.currentUser.isAnonymous ) {
 						showMessage( 'error', 'You must be signed in to submit this form.' );
 						console.error('Client Error: Submission attempted while user is logged out or anonymous.');
@@ -646,8 +665,7 @@
 					submitBtn.textContent = 'Submitting...';
 					showMessage( '', '' );
 
-					// Get data from the form
-					const formData = new FormData( form );
+					// const formData = new FormData( form ); // <-- MOVED TO TOP
 
 					// Build the payload (UPDATED to include lat/lon)
 					const payload = {
@@ -660,10 +678,12 @@
 						postalcode: formData.get( 'postalcode' ),
 						boxes: 1,
 						passcode: formData.get( 'passcode' ),
-						contactName: formData.get( 'contactName' ),
-						contactEmail: formData.get( 'contactEmail' ),
-						contactPhone: formData.get( 'contactPhone' ),
-						// --- NEW: GPS Coordinates from hidden fields ---
+
+						// --- MODIFIED: Use our trimmed variables ---
+						contactName: contactName,
+						contactEmail: contactEmail,
+						contactPhone: contactPhone,
+
 						lat: formData.get( 'lat' ) ? parseFloat(formData.get('lat')) : null,
 						lon: formData.get( 'lon' ) ? parseFloat(formData.get('lon')) : null
 					};
