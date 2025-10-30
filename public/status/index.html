@@ -4,11 +4,8 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Box History</title>
-
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
-
 		<script type="module">
-
 			import { auth, db, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				signInAnonymously,
@@ -25,8 +22,6 @@
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 			let appInitialized = false;
-
-
 			const formatDate = ( isoString ) =>
 			{
 				if( !isoString )
@@ -36,18 +31,14 @@
 				const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
 				return new Date( isoString ).toLocaleString( undefined, options );
 			};
-
 			const renderReportItem = ( report ) =>
 			{
-
 				const reportTypeName = report.reportType || report[ 'report-type' ] || 'unknown_report';
-
 				const isProblem = reportTypeName.includes( 'problem' );
 				const bgColor = isProblem ? 'bg-red-50' : 'bg-white';
 				const borderColor = isProblem ? 'border-tots-red/50' : 'border-gray-200';
 				const statusColor = report.status === 'new' ? 'text-tots-red' : 'text-tots-green';
 				const statusText = report.status === 'new' ? 'New' : 'Cleared';
-
 				let reporterInfoHtml = '';
 				if( report.reporterName || report.reporterEmail )
 				{
@@ -59,7 +50,6 @@
                 </div>
              `;
 				}
-
 				return `
                 <li class="${ bgColor } p-4 rounded-lg border ${ borderColor } shadow-sm">
                     <div class="flex justify-between items-center mb-2">
@@ -77,40 +67,29 @@
             `;
 			};
 
-
 			async function initApp()
 			{
 				const listDiv = document.getElementById( 'location-display' );
 				const loadingMessage = document.getElementById( 'loading-message' );
 				const historyContainer = document.getElementById( 'history-container' );
 				const historyLoading = document.getElementById( 'history-loading' );
-
 				const params = new URLSearchParams( window.location.search );
 				const boxId = params.get( 'id' );
-
 				if( !boxId )
 				{
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 					loadingMessage.textContent = 'Error: Box ID missing from the link.';
 					return;
 				}
-
-
 				const reportsCollectionRef = collection( db, reportsCollectionPath );
-
 				try
 				{
-
-
 					const locRef = doc( db, locationsCollectionPath, boxId );
 					const locSnap = await getDoc( locRef );
-
 					if( locSnap.exists() )
 					{
 						const location = locSnap.data();
 						loadingMessage.remove();
-
-
 						let volunteerDisplayName = 'N/A';
 						if( location.volunteer )
 						{
@@ -121,14 +100,12 @@
 								volunteerDisplayName = volunteerDisplayName.substring( 0, atIndex );
 							}
 						}
-
 						listDiv.innerHTML = `
                         <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
                             <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
                             <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
                             <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
                             <p class="text-sm font-semibold">Assigned Volunteer: ${ volunteerDisplayName }</p>
-
                             <div class="mt-4 pt-3 border-t border-tots-red/30">
                                 <h3 class="text-md font-semibold text-gray-800 mb-1">Location Contact:</h3>
                                 <p class="text-sm text-gray-600"><strong>Name:</strong> ${ location.contactName || 'N/A' }</p>
@@ -146,29 +123,23 @@
 						setTimeout( () => { window.location.href = `/setup/?id=${ boxId }`; }, 2000 );
 						return;
 					}
-
-
 					const q = query( reportsCollectionRef,
 							where( 'boxId', '==', boxId ),
 							orderBy( 'timestamp', 'desc' )
 					);
-
 					const querySnapshot = await getDocs( q );
 					historyLoading.remove();
-
 					if( querySnapshot.empty )
 					{
 						historyContainer.innerHTML = '<p class="text-gray-500 text-center">No reports found for this box.</p>';
 						return;
 					}
-
 					let historyHtml = '';
 					querySnapshot.forEach( docSnap =>
 					{
 						historyHtml += renderReportItem( docSnap.data() );
 					} );
 					historyContainer.innerHTML = historyHtml;
-
 				}
 				catch( error )
 				{
@@ -180,7 +151,6 @@
 			{
 				if( user && !appInitialized )
 				{
-
 					appInitialized = true;
 					initApp();
 				}
@@ -193,7 +163,6 @@
 				}
 			} );
 		</script>
-
 		<script src="https://cdn.tailwindcss.com"></script>
 		<script>
 			tailwind.config = {
@@ -209,22 +178,17 @@
 				}
 			};
 		</script>
-
 	</head>
 	<body onload="setupFirebase()">
-
 		<div id="header-placeholder"></div>
-
 		<div class="max-w-md mx-auto" style="margin-top: 20px; margin-bottom: 20px;">
 			<div class="bg-tots-red p-6 rounded-t-xl shadow-lg">
 				<h1 class="text-3xl font-extrabold text-white text-center">Box Report History</h1>
 			</div>
-
 			<main class="p-4 md:p-6 bg-white shadow-lg rounded-b-xl">
 				<section id="location-display" class="mb-6">
 					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
 				</section>
-
 				<section id="history">
 					<h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">
 						Report Log
@@ -235,7 +199,6 @@
 				</section>
 			</main>
 		</div>
-
 		<div id="footer-placeholder"></div>
 		<script src="/loader.js" defer></script>
 	</body>
