@@ -290,26 +290,6 @@
 		</script>
 
 		<script src="https://cdn.tailwindcss.com"></script>
-		<style>
-			.collapsible-content {
-				max-height: 0;
-				overflow: hidden;
-				transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
-				padding: 0 1rem;
-			}
-
-			.collapsible-content.open {
-				max-height: 1000px;
-				padding-top: 1rem;
-				padding-bottom: 1rem;
-			}
-
-			/* Added to prevent Tailwind from overwriting header link styles */
-			header h1 a:hover,
-			header h2 a:hover {
-				text-decoration: underline;
-			}
-		</style>
 		<script>
 			tailwind.config = {
 				theme: {
