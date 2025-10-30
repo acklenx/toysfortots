@@ -268,7 +268,6 @@
 								throw new Error( `Address lookup failed (status: ${ response.status })` );
 							}
 							const data = await response.json();
-
 							console.log( 'Reverse Geocode Response:', data ); // For your debugging
 
 							if( data && data.address )
@@ -296,9 +295,7 @@
 						}
 						catch( geoError )
 						{
-							console.error( 'Reverse Geocoding Error:', geoError );
 							gpsErrorMsg.textContent = 'Got GPS, but failed to get address. Please type it manually.';
-
 						}
 
 
@@ -324,21 +321,16 @@
 
 					}, ( error ) =>
 					{
-
-						console.error( 'Geolocation Error:', error );
 						gpsErrorMsg.textContent = `Could not get location: ${ error.message }`;
-
 						gpsBtn.textContent = 'Use My GPS Location';
 						gpsBtn.classList.remove( 'bg-yellow-500', 'bg-green-600' );
 						gpsBtn.classList.add( 'bg-red-500' );
 						gpsBtn.disabled = false;
 						latInput.value = '';
 						lonInput.value = '';
-
 						manualAddressFields.classList.remove( 'hidden' );
 						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
-
 					}, {
 						enableHighAccuracy: true,
 						timeout: 10000, // Increased timeout to 10s
@@ -398,7 +390,6 @@
 					catch( error )
 					{
 						console.error( 'Email Sign In Error:', error );
-
 						if( error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' )
 						{
 							showAuthMessage( 'error', 'Sign in failed: Invalid username or password.' );
@@ -444,8 +435,6 @@
 					}
 					catch( error )
 					{
-						console.error( 'Email Sign Up Error:', error );
-
 						if( error.code === 'auth/email-already-in-use' )
 						{
 							showAuthMessage( 'error', 'Sign up failed: This username is already taken.' );
@@ -524,7 +513,6 @@
 
 					if( !scannedBoxId )
 					{
-						showMessage( 'error', 'No Box ID found. Cannot submit.' );
 						return;
 					}
 
@@ -553,20 +541,12 @@
 						lon: formData.get( 'lon' ) ? parseFloat( formData.get( 'lon' ) ) : null
 					};
 					console.log( 'Client: Submitting form with payload:', payload );
-
 					try
 					{
 
 						const provisionBoxV2 = httpsCallable( functions, 'provisionBoxV2' );
-
-						console.log( 'Client: Attempting to call provisionBoxV2 with payload:', payload );
 						const result = await provisionBoxV2( payload );
-						console.log( 'Client: provisionBoxV2 returned success.', result.data );
-
-
 						const newBoxId = result.data.boxId;
-						showMessage( 'success', `Success! Box ID: <strong>${ newBoxId }</strong> saved. Redirecting in 2 seconds...` );
-
 						form.reset();
 						boxIdDisplay.textContent = scannedBoxId;
 
@@ -578,27 +558,19 @@
 					}
 					catch( error )
 					{
-
 						console.error( 'Error submitting location:', error );
-
 						let displayMessage = `Submission failed: ${ error.message || 'An unknown error occurred.' }`;
-
 						if( error.code )
 						{
-
-							console.error( `Error Code: ${ error.code }. Details: ${ error.details }` );
 							displayMessage = `Error (${ error.code }): ${ error.message }`;
 						}
 						else if( error.name === 'FirebaseError' && error.message.includes( 'permission-denied' ) )
 						{
-
 							displayMessage = 'Permission Denied: Check the volunteer passcode.';
 						}
 						else if( error.name === 'FirebaseError' && error.message.includes( 'UNAUTHENTICATED' ) )
 						{
-
 							displayMessage = 'Authentication Required: Please sign out and sign in again, then retry.';
-							console.error( 'CRITICAL: Callable function rejected request due to missing/invalid auth token.' );
 						}
 
 						showMessage( 'error', displayMessage );
@@ -606,7 +578,6 @@
 						submitBtn.textContent = 'Submit Location';
 					}
 				}
-
 
 				function init()
 				{
@@ -734,7 +705,6 @@
 							}
 							catch( error )
 							{
-								console.error( 'Setup page check failed:', error );
 								authContainer.classList.add( 'hidden' );
 								form.classList.add( 'hidden' );
 								showMessage( 'error', `An error occurred: ${ error.message }` );
