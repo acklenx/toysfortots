@@ -30,7 +30,11 @@
 
 					<div id="email-auth-section" class="mt-4 p-4 border rounded-lg bg-gray-50 hidden">
 
-						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create <label for="auth-email">Account</label> with <label for="auth-password">Username</label></h2>
+						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create
+							<label for="auth-email">Account</label>
+							with
+							<label for="auth-password">Username</label>
+						</h2>
 
 						<input type="text" id="auth-email" placeholder="Username" class="w-full p-2 mb-2 border rounded">
 
@@ -134,8 +138,6 @@
 						<input type="tel" id="contactPhone" name="contactPhone">
 					</div>
 
-
-
 					<div class="form-group">
 						<button id="submit-btn" type="submit">Submit Location</button>
 					</div>
@@ -153,15 +155,13 @@
 			</div>
 
 			<script type="module">
-				// --- 1. IMPORTS (No change needed here, we use the same auth import) ---
-				import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+
+				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
 				import {
-					getAuth,
 					onAuthStateChanged,
 					GoogleAuthProvider,
 					signInWithPopup,
 					signOut,
-					// NEW IMPORTS:
 					createUserWithEmailAndPassword,
 					signInWithEmailAndPassword
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -170,33 +170,16 @@
 					doc,
 					getDoc
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-				// --- Import Functions ---
 				import {
 					getFunctions,
 					httpsCallable
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 
-				// --- 2. CONFIG & TOP-LEVEL VARS ---
-				const firebaseConfig = {
-					apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-					authDomain: 'toysfortots.mcl1311.com',
-					projectId: 'toysfortots-eae4d',
-					storageBucket: 'toysfortots-eae4d.firebasestorage.app',
-					messagingSenderId: '505039956655',
-					appId: '1:505039956655:web:c750c66b28f7facd82025a'
-				};
-
-				const appId = firebaseConfig.projectId;
 				let scannedBoxId = null;
-				const publicDocumentId = '01';
-				const dataDocumentId = '01';
-				const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
+				let provisionBox, isAuthorizedVolunteer; // Firebase function refs
 
-				// Firebase instances
-				let app, auth, db, functions, provisionBox, isAuthorizedVolunteer;
 
-				// DOM Elements
 				const authContainer = document.getElementById( 'auth-container' );
 				const signInBtn = document.getElementById( 'sign-in-btn' );
 				const signOutBtn = document.getElementById( 'sign-out-btn' );
@@ -205,321 +188,337 @@
 				const messageContainer = document.getElementById( 'message-container' );
 				const submitBtn = document.getElementById( 'submit-btn' );
 				const boxIdDisplay = document.getElementById( 'box-id-display' );
-				const latInput = document.getElementById('lat');
-				const lonInput = document.getElementById('lon');
-				const gpsBtn = document.getElementById('gps-btn');
-				const addressInput = document.getElementById('address');
-				const cityInput = document.getElementById('city');
-				const stateInput = document.getElementById('state');
-				const countyInput = document.getElementById('county');
-				const postalCodeInput = document.getElementById('postalcode');
-				const showAddressBtn = document.getElementById('show-address-btn');
-				const manualAddressFields = document.getElementById('manual-address-fields');
-				const gpsErrorMsg = document.getElementById('gps-error-msg');
-				const passcode = document.getElementById('passcode');
-				const togglePasscode = document.getElementById('toggle-passcode');
-				// --- NEW/MODIFIED EMAIL DOM ELEMENTS ---
-				const showEmailSetupBtn = document.getElementById('show-email-setup-btn');
-				const orDivider = document.getElementById('or-divider');
-				const emailAuthSection = document.getElementById('email-auth-section');
-				const emailAuthTitle = document.getElementById('email-auth-title');
-				const authEmail = document.getElementById('auth-email');
-				const authPassword = document.getElementById('auth-password');
-				const togglePassword = document.getElementById('toggle-password');
-				const passwordHint = document.getElementById('password-hint'); // New
-				const emailSignInBtn = document.getElementById('email-sign-in-btn');
-				const emailSignUpBtn = document.getElementById('email-sign-up-btn');
-				const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
+				const latInput = document.getElementById( 'lat' );
+				const lonInput = document.getElementById( 'lon' );
+				const gpsBtn = document.getElementById( 'gps-btn' );
+				const addressInput = document.getElementById( 'address' );
+				const cityInput = document.getElementById( 'city' );
+				const stateInput = document.getElementById( 'state' );
+				const countyInput = document.getElementById( 'county' );
+				const postalCodeInput = document.getElementById( 'postalcode' );
+				const showAddressBtn = document.getElementById( 'show-address-btn' );
+				const manualAddressFields = document.getElementById( 'manual-address-fields' );
+				const gpsErrorMsg = document.getElementById( 'gps-error-msg' );
+				const passcode = document.getElementById( 'passcode' );
+				const togglePasscode = document.getElementById( 'toggle-passcode' );
+
+				const showEmailSetupBtn = document.getElementById( 'show-email-setup-btn' );
+				const orDivider = document.getElementById( 'or-divider' );
+				const emailAuthSection = document.getElementById( 'email-auth-section' );
+				const emailAuthTitle = document.getElementById( 'email-auth-title' );
+				const authEmail = document.getElementById( 'auth-email' );
+				const authPassword = document.getElementById( 'auth-password' );
+				const togglePassword = document.getElementById( 'toggle-password' );
+				const passwordHint = document.getElementById( 'password-hint' ); // New
+				const emailSignInBtn = document.getElementById( 'email-sign-in-btn' );
+				const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
+				const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
 
 
-				// --- 3. HELPER FUNCTIONS ---
 				function showMessage( type, text )
 				{
 					messageContainer.innerHTML = `<div class="message ${ type }">${ text }</div>`;
 				}
 
 
-				/**
-				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
-				 */
-				/**
-				 * Uses the browser's Geolocation API to get coordinates and fill address fields.
-				 */
+				async function getGeoLocation()
+				{
 
-
-				/**
-				 * Uses the browser's Geolocation API, then performs reverse geocoding
-				 * to get coordinates AND address, filling the form fields.
-				 */
-				async function getGeoLocation() {
-					// --- Clear old messages ---
-					showMessage('', '');
+					showMessage( '', '' );
 					gpsErrorMsg.textContent = '';
 					gpsBtn.disabled = true;
 
-					// Reset button appearance while searching
-					gpsBtn.textContent = 'Searching...';
-					gpsBtn.classList.remove('bg-red-500', 'bg-green-600');
-					gpsBtn.classList.add('bg-yellow-500');
 
-					if (!navigator.geolocation) {
+					gpsBtn.textContent = 'Searching...';
+					gpsBtn.classList.remove( 'bg-red-500', 'bg-green-600' );
+					gpsBtn.classList.add( 'bg-yellow-500' );
+
+					if( !navigator.geolocation )
+					{
 						gpsErrorMsg.textContent = 'Geolocation is not supported by this browser.';
 						gpsBtn.disabled = false;
 						gpsBtn.textContent = 'Use My GPS Location';
-						gpsBtn.classList.remove('bg-yellow-500');
-						gpsBtn.classList.add('bg-red-500');
-						manualAddressFields.classList.remove('hidden');
-						showAddressBtn.classList.add('hidden');
+						gpsBtn.classList.remove( 'bg-yellow-500' );
+						gpsBtn.classList.add( 'bg-red-500' );
+						manualAddressFields.classList.remove( 'hidden' );
+						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
 						return;
 					}
 
-					// 1. GET GPS COORDINATES
-					navigator.geolocation.getCurrentPosition(async (position) => {
+
+					navigator.geolocation.getCurrentPosition( async( position ) =>
+					{
 						const lat = position.coords.latitude;
 						const lon = position.coords.longitude;
 
-						// Populate hidden fields
+
 						latInput.value = lat;
 						lonInput.value = lon;
 
-						try {
-							// 2. GET ADDRESS (REVERSE GEOCODING)
-							gpsBtn.textContent = 'Got GPS, Getting Address...';
-							const geoApiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+						try
+						{
 
-							const response = await fetch(geoApiUrl);
-							if (!response.ok) {
-								throw new Error(`Address lookup failed (status: ${response.status})`);
+							gpsBtn.textContent = 'Got GPS, Getting Address...';
+							const geoApiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${ lat }&lon=${ lon }`;
+
+							const response = await fetch( geoApiUrl );
+							if( !response.ok )
+							{
+								throw new Error( `Address lookup failed (status: ${ response.status })` );
 							}
 							const data = await response.json();
 
-							console.log('Reverse Geocode Response:', data); // For your debugging
-							// Populate address fields
-							if (data && data.address) {
+							console.log( 'Reverse Geocode Response:', data ); // For your debugging
+
+							if( data && data.address )
+							{
 								const addr = data.address;
-								addressInput.value = `${addr.house_number || ''} ${addr.road || ''}`.trim();
+								addressInput.value = `${ addr.house_number || '' } ${ addr.road || '' }`.trim();
 								cityInput.value = addr.city || addr.town || addr.village || '';
 								stateInput.value = addr.state || 'GA'; // Use found state, default to GA
 								countyInput.value = addr.county || '';
 								postalCodeInput.value = addr.postcode || '';
-								// Bonus: Try to find a good "Location Name"
-								const labelInput = document.getElementById('label');
-								if (labelInput.value === '') { // Only if not already filled
+
+								const labelInput = document.getElementById( 'label' );
+								if( labelInput.value === '' )
+								{ // Only if not already filled
 									labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
 								}
 
-								showMessage('success', 'Location and Address captured!');
-							} else {
-								throw new Error('Address not found in API response.');
+								showMessage( 'success', 'Location and Address captured!' );
+							}
+							else
+							{
+								throw new Error( 'Address not found in API response.' );
 							}
 
-						} catch (geoError) {
-							console.error('Reverse Geocoding Error:', geoError);
+						}
+						catch( geoError )
+						{
+							console.error( 'Reverse Geocoding Error:', geoError );
 							gpsErrorMsg.textContent = 'Got GPS, but failed to get address. Please type it manually.';
-							// We still continue, to show the manual fields
+
 						}
 
-						// 3. SHOW FIELDS AND SET SUCCESS STATE (this runs after try/catch)
-						const latFixed = lat.toFixed(4);
-						const lonFixed = lon.toFixed(4);
+
+						const latFixed = lat.toFixed( 4 );
+						const lonFixed = lon.toFixed( 4 );
 
 						gpsBtn.innerHTML = `
             Location Set (GPS)
             <div class="text-xs font-normal opacity-75 mt-1">
-                Lat: ${latFixed}, Lon: ${lonFixed}
+                Lat: ${ latFixed }, Lon: ${ lonFixed }
             </div>
         `;
 
-						manualAddressFields.classList.remove('hidden');
-						showAddressBtn.classList.add('hidden');
+						manualAddressFields.classList.remove( 'hidden' );
+						showAddressBtn.classList.add( 'hidden' );
 
-						// Focus the "Location Name" field first, as address is likely filled
-						document.getElementById('label').focus();
 
-						gpsBtn.classList.remove('bg-yellow-500');
-						gpsBtn.classList.add('bg-green-600'); // Success color
+						document.getElementById( 'label' ).focus();
+
+						gpsBtn.classList.remove( 'bg-yellow-500' );
+						gpsBtn.classList.add( 'bg-green-600' ); // Success color
 						gpsBtn.disabled = false;
 
-					}, (error) => {
-						// --- THIS IS THE GEOLOCATION ERROR CALLBACK ---
-						console.error('Geolocation Error:', error);
-						gpsErrorMsg.textContent = `Could not get location: ${error.message}`;
+					}, ( error ) =>
+					{
+
+						console.error( 'Geolocation Error:', error );
+						gpsErrorMsg.textContent = `Could not get location: ${ error.message }`;
 
 						gpsBtn.textContent = 'Use My GPS Location';
-						gpsBtn.classList.remove('bg-yellow-500', 'bg-green-600');
-						gpsBtn.classList.add('bg-red-500');
+						gpsBtn.classList.remove( 'bg-yellow-500', 'bg-green-600' );
+						gpsBtn.classList.add( 'bg-red-500' );
 						gpsBtn.disabled = false;
 						latInput.value = '';
 						lonInput.value = '';
 
-						manualAddressFields.classList.remove('hidden');
-						showAddressBtn.classList.add('hidden');
+						manualAddressFields.classList.remove( 'hidden' );
+						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
 
 					}, {
 						enableHighAccuracy: true,
 						timeout: 10000, // Increased timeout to 10s
 						maximumAge: 0
-					});
+					} );
 				}
 
-				function showAuthMessage(type, text) {
-					const emailAuthSection = document.getElementById('email-auth-section');
-					let msgDiv = document.getElementById('auth-msg');
-					if (!msgDiv) {
-						msgDiv = document.createElement('div');
+				function showAuthMessage( type, text )
+				{
+					const emailAuthSection = document.getElementById( 'email-auth-section' );
+					let msgDiv = document.getElementById( 'auth-msg' );
+					if( !msgDiv )
+					{
+						msgDiv = document.createElement( 'div' );
 						msgDiv.id = 'auth-msg';
-						// Insert before the email input
-						emailAuthSection.insertBefore(msgDiv, authEmail);
+
+						emailAuthSection.insertBefore( msgDiv, authEmail );
 					}
-					msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
+					msgDiv.innerHTML = `<div class="message ${ type } mt-3 mb-3">${ text }</div>`;
 				}
 
-				function clearAuthMessage() {
-					const msgDiv = document.getElementById('auth-msg');
-					if (msgDiv) {
+				function clearAuthMessage()
+				{
+					const msgDiv = document.getElementById( 'auth-msg' );
+					if( msgDiv )
+					{
 						msgDiv.remove();
 					}
 				}
 
-				// --- 4. NEW EMAIL/PASSWORD HANDLERS ---
 
-				// --- 4. NEW EMAIL/PASSWORD HANDLERS ---
-				async function handleEmailSignIn() {
+				async function handleEmailSignIn()
+				{
 					clearAuthMessage();
 					const username = authEmail.value; // Get username
 					const password = authPassword.value;
-					if (!username || !password) {
-						showAuthMessage('error', 'Please enter both username and password.');
+					if( !username || !password )
+					{
+						showAuthMessage( 'error', 'Please enter both username and password.' );
 						return;
 					}
 
-					// Add validation to prevent users from entering an email
-					if (username.includes('@')) {
-						showAuthMessage('error', 'Username cannot contain "@" symbol. Just enter the username.');
+
+					if( username.includes( '@' ) )
+					{
+						showAuthMessage( 'error', 'Username cannot contain "@" symbol. Just enter the username.' );
 						return;
 					}
 
-					// Construct the full email
-					const email = `${username}@toysfortots.mcl1311.com`;
 
-					try {
-						await signInWithEmailAndPassword(auth, email, password);
-					} catch (error) {
-						console.error('Email Sign In Error:', error);
-						// Provide a user-friendly error
-						if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-							showAuthMessage('error', 'Sign in failed: Invalid username or password.');
-						} else {
-							showAuthMessage('error', `Sign in failed: ${error.message}`);
+					const email = `${ username }@toysfortots.mcl1311.com`;
+
+					try
+					{
+						await signInWithEmailAndPassword( auth, email, password );
+					}
+					catch( error )
+					{
+						console.error( 'Email Sign In Error:', error );
+
+						if( error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' )
+						{
+							showAuthMessage( 'error', 'Sign in failed: Invalid username or password.' );
+						}
+						else
+						{
+							showAuthMessage( 'error', `Sign in failed: ${ error.message }` );
 						}
 					}
 				}
 
-				async function handleEmailSignUp() {
+				async function handleEmailSignUp()
+				{
 					clearAuthMessage();
 					const username = authEmail.value; // Get username
 					const password = authPassword.value;
-					// const retypePassword = authPasswordRetype.value; // <-- REMOVED
 
-					if (!username || !password) { // <-- MODIFIED (removed retypePassword)
-						showAuthMessage('error', 'Please fill out all fields.');
+
+					if( !username || !password )
+					{ // <-- MODIFIED (removed retypePassword)
+						showAuthMessage( 'error', 'Please fill out all fields.' );
 						return;
 					}
 
-					// Add validation to prevent users from entering an email
-					if (username.includes('@')) {
-						showAuthMessage('error', 'Username cannot contain "@" symbol.');
+
+					if( username.includes( '@' ) )
+					{
+						showAuthMessage( 'error', 'Username cannot contain "@" symbol.' );
 						return;
 					}
 
-					if (password.length < 6) {
-						showAuthMessage('error', 'Password must be at least 6 characters.');
+					if( password.length < 6 )
+					{
+						showAuthMessage( 'error', 'Password must be at least 6 characters.' );
 						return;
 					}
 
-					const email = `${username}@toysfortots.mcl1311.com`;
+					const email = `${ username }@toysfortots.mcl1311.com`;
 
-					try {
-						await createUserWithEmailAndPassword(auth, email, password);
-					} catch (error) {
-						console.error('Email Sign Up Error:', error);
-						// Provide a user-friendly error
-						if (error.code === 'auth/email-already-in-use') {
-							showAuthMessage('error', 'Sign up failed: This username is already taken.');
-						} else {
-							showAuthMessage('error', `Sign up failed: ${error.message}`);
+					try
+					{
+						await createUserWithEmailAndPassword( auth, email, password );
+					}
+					catch( error )
+					{
+						console.error( 'Email Sign Up Error:', error );
+
+						if( error.code === 'auth/email-already-in-use' )
+						{
+							showAuthMessage( 'error', 'Sign up failed: This username is already taken.' );
+						}
+						else
+						{
+							showAuthMessage( 'error', `Sign up failed: ${ error.message }` );
 						}
 					}
 				}
 
-				function toggleEmailAuthMode() {
+				function toggleEmailAuthMode()
+				{
 					clearAuthMessage();
-					// Clear passwords when toggling
+
 					authPassword.value = '';
-					const isSignUpMode = emailSignInBtn.classList.contains('hidden');
+					const isSignUpMode = emailSignInBtn.classList.contains( 'hidden' );
 
-					if (isSignUpMode) {
+					if( isSignUpMode )
+					{
 						emailAuthTitle.textContent = 'Sign In with Username';
-						emailSignInBtn.classList.remove('hidden');
-						emailSignUpBtn.classList.add('hidden');
-						passwordHint.classList.add('hidden');
+						emailSignInBtn.classList.remove( 'hidden' );
+						emailSignUpBtn.classList.add( 'hidden' );
+						passwordHint.classList.add( 'hidden' );
 						toggleSignUpBtn.innerHTML = 'New user? <span class="text-marine-blue underline">Create an account</span>';
-					} else {
+					}
+					else
+					{
 						emailAuthTitle.textContent = 'Create Account with Username';
-						emailSignInBtn.classList.add('hidden');
-						emailSignUpBtn.classList.remove('hidden');
-						passwordHint.classList.remove('hidden');
+						emailSignInBtn.classList.add( 'hidden' );
+						emailSignUpBtn.classList.remove( 'hidden' );
+						passwordHint.classList.remove( 'hidden' );
 						toggleSignUpBtn.innerHTML = 'Already have an account? <span class="text-marine-blue underline">Sign In</span>';
 					}
 				}
 
 
-				// New handler to show the email section
-				function showEmailSetup() {
-					emailAuthSection.classList.remove('hidden');
-					orDivider.classList.remove('hidden');
-					showEmailSetupBtn.classList.add('hidden'); // Hide the button after clicking
+				function showEmailSetup()
+				{
+					emailAuthSection.classList.remove( 'hidden' );
+					orDivider.classList.remove( 'hidden' );
+					showEmailSetupBtn.classList.add( 'hidden' ); // Hide the button after clicking
 				}
-				// --- END NEW EMAIL/PASSWORD HANDLERS ---
 
 
-				/**
-				 * Handles the form submission by calling a Cloud Function
-				 */
-
-				// --- 4. CORE APP LOGIC ---
-
-				/**
-				 * Handles the form submission by calling a Cloud Function
-				 */
 				async function handleFormSubmit( e )
 				{
 					e.preventDefault();
 
-					// --- NEW: Get form data first for validation ---
+
 					const formData = new FormData( form );
-					const contactName = formData.get('contactName').trim();
-					const contactEmail = formData.get('contactEmail').trim();
-					const contactPhone = formData.get('contactPhone').trim();
+					const contactName = formData.get( 'contactName' ).trim();
+					const contactEmail = formData.get( 'contactEmail' ).trim();
+					const contactPhone = formData.get( 'contactPhone' ).trim();
 
-					// --- NEW: Validation Logic ---
-					if ( !contactName ) {
-						showMessage('error', 'Please enter a Location Contact Name.');
+
+					if( !contactName )
+					{
+						showMessage( 'error', 'Please enter a Location Contact Name.' );
 						return; // Stop the submission
 					}
 
-					if ( !contactEmail && !contactPhone ) {
-						showMessage('error', 'Please provide either a Contact Email or a Contact Phone.');
+					if( !contactEmail && !contactPhone )
+					{
+						showMessage( 'error', 'Please provide either a Contact Email or a Contact Phone.' );
 						return; // Stop the submission
 					}
-					// --- END: Validation Logic ---
 
 
-					if( !auth.currentUser || auth.currentUser.isAnonymous ) {
+					if( !auth.currentUser || auth.currentUser.isAnonymous )
+					{
 						showMessage( 'error', 'You must be signed in to submit this form.' );
-						console.error('Client Error: Submission attempted while user is logged out or anonymous.');
+						console.error( 'Client Error: Submission attempted while user is logged out or anonymous.' );
 						return;
 					}
 
@@ -533,9 +532,7 @@
 					submitBtn.textContent = 'Submitting...';
 					showMessage( '', '' );
 
-					// const formData = new FormData( form ); // <-- MOVED TO TOP
 
-					// Build the payload (UPDATED to include lat/lon)
 					const payload = {
 						boxId: scannedBoxId,
 						label: formData.get( 'label' ),
@@ -547,26 +544,26 @@
 						boxes: 1,
 						passcode: formData.get( 'passcode' ),
 
-						// --- MODIFIED: Use our trimmed variables ---
+
 						contactName: contactName,
 						contactEmail: contactEmail,
 						contactPhone: contactPhone,
 
-						lat: formData.get( 'lat' ) ? parseFloat(formData.get('lat')) : null,
-						lon: formData.get( 'lon' ) ? parseFloat(formData.get('lon')) : null
+						lat: formData.get( 'lat' ) ? parseFloat( formData.get( 'lat' ) ) : null,
+						lon: formData.get( 'lon' ) ? parseFloat( formData.get( 'lon' ) ) : null
 					};
-					console.log('Client: Submitting form with payload:', payload );
+					console.log( 'Client: Submitting form with payload:', payload );
 
 					try
 					{
-						// Ensure you're calling the correct V2 function name
+
 						const provisionBoxV2 = httpsCallable( functions, 'provisionBoxV2' );
 
-						console.log('Client: Attempting to call provisionBoxV2 with payload:', payload);
+						console.log( 'Client: Attempting to call provisionBoxV2 with payload:', payload );
 						const result = await provisionBoxV2( payload );
-						console.log('Client: provisionBoxV2 returned success.', result.data);
+						console.log( 'Client: provisionBoxV2 returned success.', result.data );
 
-						// --- SUCCESS BLOCK ---
+
 						const newBoxId = result.data.boxId;
 						showMessage( 'success', `Success! Box ID: <strong>${ newBoxId }</strong> saved. Redirecting in 2 seconds...` );
 
@@ -581,22 +578,27 @@
 					}
 					catch( error )
 					{
-						// Enhanced error logging to catch UNAUTHENTICATED or network issues
+
 						console.error( 'Error submitting location:', error );
 
 						let displayMessage = `Submission failed: ${ error.message || 'An unknown error occurred.' }`;
 
-						if (error.code) {
-							// Check if it's an HttpsError from the server
-							console.error(`Error Code: ${error.code}. Details: ${error.details}`);
-							displayMessage = `Error (${error.code}): ${error.message}`;
-						} else if (error.name === 'FirebaseError' && error.message.includes('permission-denied')) {
-							// Fallback for older SDK error handling
+						if( error.code )
+						{
+
+							console.error( `Error Code: ${ error.code }. Details: ${ error.details }` );
+							displayMessage = `Error (${ error.code }): ${ error.message }`;
+						}
+						else if( error.name === 'FirebaseError' && error.message.includes( 'permission-denied' ) )
+						{
+
 							displayMessage = 'Permission Denied: Check the volunteer passcode.';
-						} else if (error.name === 'FirebaseError' && error.message.includes('UNAUTHENTICATED')) {
-							// The function was rejected by the transport layer
+						}
+						else if( error.name === 'FirebaseError' && error.message.includes( 'UNAUTHENTICATED' ) )
+						{
+
 							displayMessage = 'Authentication Required: Please sign out and sign in again, then retry.';
-							console.error('CRITICAL: Callable function rejected request due to missing/invalid auth token.');
+							console.error( 'CRITICAL: Callable function rejected request due to missing/invalid auth token.' );
 						}
 
 						showMessage( 'error', displayMessage );
@@ -606,12 +608,6 @@
 				}
 
 
-				/**
-				 * Initializes Firebase and sets up auth listener
-				 */
-				/**
-				 * Initializes Firebase and sets up auth listener
-				 */
 				function init()
 				{
 					const params = new URLSearchParams( window.location.search );
@@ -628,12 +624,6 @@
 						boxIdDisplay.textContent = scannedBoxId;
 					}
 
-					app = initializeApp( firebaseConfig );
-					auth = getAuth( app );
-					db = getFirestore( app );
-
-					// --- CRITICAL FIX: Explicitly set the function region ---
-					functions = getFunctions( app, 'us-central1' );
 
 					provisionBox = httpsCallable( functions, 'provisionBoxV2' );
 					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
@@ -646,22 +636,25 @@
 					toggleSignUpBtn.onclick = toggleEmailAuthMode;
 					gpsBtn.onclick = getGeoLocation;
 
-					togglePassword.onclick = function() {
-						const type = authPassword.getAttribute('type') === 'password' ? 'text' : 'password';
-						authPassword.setAttribute('type', type);
-						this.textContent = (type === 'password') ? 'show password' : 'hide password';
+					togglePassword.onclick = function()
+					{
+						const type = authPassword.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
+						authPassword.setAttribute( 'type', type );
+						this.textContent = ( type === 'password' ) ? 'show password' : 'hide password';
 					};
 
-					togglePasscode.onclick = function() {
-						const type = passcode.getAttribute('type') === 'password' ? 'text' : 'password';
-						passcode.setAttribute('type', type);
-						this.textContent = (type === 'password') ? 'show code' : 'hide code';
+					togglePasscode.onclick = function()
+					{
+						const type = passcode.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
+						passcode.setAttribute( 'type', type );
+						this.textContent = ( type === 'password' ) ? 'show code' : 'hide code';
 					};
 
-					showAddressBtn.onclick = () => {
+					showAddressBtn.onclick = () =>
+					{
 						gpsErrorMsg.textContent = '';
-						manualAddressFields.classList.remove('hidden');
-						showAddressBtn.classList.add('hidden');
+						manualAddressFields.classList.remove( 'hidden' );
+						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
 					};
 
@@ -700,19 +693,23 @@
 
 								authContainer.classList.add( 'hidden' );
 								form.classList.remove( 'hidden' );
-								if (user.email) {
+								if( user.email )
+								{
 									let displayName = user.email;
-									const atIndex = displayName.indexOf('@');
-									if (atIndex !== -1) {
-										displayName = displayName.substring(0, atIndex);
+									const atIndex = displayName.indexOf( '@' );
+									if( atIndex !== -1 )
+									{
+										displayName = displayName.substring( 0, atIndex );
 									}
-									userDisplay.textContent = `Signed in as: ${displayName}`;
-									userDisplay.classList.remove('hidden');
-								} else {
-									// Hide if user has no email (e.g., anonymous)
-									userDisplay.classList.add('hidden');
+									userDisplay.textContent = `Signed in as: ${ displayName }`;
+									userDisplay.classList.remove( 'hidden' );
 								}
-								showEmailSetupBtn.classList.remove('hidden'); // Ensure this is visible on auth -> form transition
+								else
+								{
+
+									userDisplay.classList.add( 'hidden' );
+								}
+								showEmailSetupBtn.classList.remove( 'hidden' ); // Ensure this is visible on auth -> form transition
 
 								const passcodeGroup = passcode.parentElement;
 								const passcodeLabel = passcodeGroup.querySelector( 'label' );
@@ -746,23 +743,22 @@
 						}
 						else
 						{
-							// User is signed out
+
 							authContainer.classList.remove( 'hidden' );
 							form.classList.add( 'hidden' );
 							clearAuthMessage();
 							userDisplay.textContent = '';
-							userDisplay.classList.add('hidden');
-
-							// Make sure email setup button is visible again
-							showEmailSetupBtn.classList.remove('hidden');
-							// And email section is hidden
-							emailAuthSection.classList.add('hidden');
-							orDivider.classList.add('hidden');
+							userDisplay.classList.add( 'hidden' );
 
 
-							// Reset email auth form to default "Sign Up" mode
-							// Check if it's currently in "Sign In" mode (Sign In button is VISIBLE)
-							if (!emailSignInBtn.classList.contains('hidden')) {
+							showEmailSetupBtn.classList.remove( 'hidden' );
+
+							emailAuthSection.classList.add( 'hidden' );
+							orDivider.classList.add( 'hidden' );
+
+
+							if( !emailSignInBtn.classList.contains( 'hidden' ) )
+							{
 								toggleEmailAuthMode(); // Toggle it back to Sign Up
 							}
 
@@ -776,6 +772,7 @@
 						}
 					} );
 				}
+
 				init();
 			</script>
 
