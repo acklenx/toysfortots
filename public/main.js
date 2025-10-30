@@ -17,7 +17,7 @@ import {
 // --- 2. CONFIG & TOP-LEVEL VARS ---
 const firebaseConfig = {
 	apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-	authDomain: 'toysfortots-eae4d.firebaseapp.com',
+	authDomain: 'toysfortots.mcl1311.com',
 	projectId: 'toysfortots-eae4d',
 	storageBucket: 'toysfortots-eae4d.firebasestorage.app',
 	messagingSenderId: '505039956655',
@@ -87,8 +87,6 @@ document.addEventListener( 'DOMContentLoaded', () =>
 			querySnapshot.forEach( ( doc ) =>
 			{
 				const location = doc.data();
-				const boxId = doc.id;
-
 				if( location.lat && location.lon )
 				{
 					const marker = L.marker( [ location.lat, location.lon ], { icon: customIcon } ).addTo( map );
