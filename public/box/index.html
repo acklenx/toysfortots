@@ -4,71 +4,34 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Drop Box Action Center</title>
-
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
-
 		<script type="module">
-			// --- 1. IMPORTS ---
-			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+			import { auth, db, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
-				getAuth,
 				signInAnonymously,
 				onAuthStateChanged
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
-				getFirestore,
 				doc,
 				getDoc,
 				addDoc,
 				collection
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
-			// --- 2. CONFIG & TOP-LEVEL VARS ---
-			const firebaseConfig = {
-				apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-				authDomain: 'toysfortots.mcl1311.com',
-				projectId: 'toysfortots-eae4d',
-				storageBucket: 'toysfortots-eae4d.firebasestorage.app',
-				messagingSenderId: '505039956655',
-				appId: '1:505039956655:web:c750c66b28f7facd82025a',
-				measurementId: 'G-XKQYPK0GLC'
-			};
-			const appId = firebaseConfig.projectId;
-
-			let db, auth; // For Firebase
-			let appDB, appAuth, appID, currentBoxInfo; // For your app logic
-
-			// --- 3. FIREBASE SETUP ---
-			const publicDocumentId = '01';
-			const dataDocumentId = '01';
-
+			let currentBoxInfo;
 			const setupFirebase = () =>
 			{
 				console.log( 'Setting up Firebase...' );
-				if( !firebaseConfig.apiKey )
-				{
-					console.error( 'Firebase configuration is missing.' );
-					document.getElementById( 'loading-message' ).textContent = 'ERROR: Firebase Config Missing.';
-					return;
-				}
-
 				try
 				{
-					const app = initializeApp( firebaseConfig );
-					auth = getAuth( app );
-					db = getFirestore( app );
-
 					let appInitialized = false;
-
 					onAuthStateChanged( auth, ( user ) =>
 					{
 						console.log( 'Auth state changed. User:', user ? user.uid : 'null' );
-
 						if( user && !appInitialized )
 						{
 							appInitialized = true;
 							console.log( 'User is authenticated. Initializing main app...' );
-							window.initApp( appId, db, auth );
+							window.initApp();
 						}
 						else if( !user )
 						{
@@ -87,16 +50,7 @@
 					document.getElementById( 'loading-message' ).textContent = `ERROR: Firebase setup failed. ${ error.message }`;
 				}
 			};
-
-			// --- 4. MAIN APP LOGIC ---
-
-
-			window.initApp = async (appId, dbInstance, authInstance) => {
-				appDB = dbInstance;
-				appAuth = authInstance;
-				appID = appId;
-
-				// --- Get references to elements (make sure IDs match HTML) ---
+			window.initApp = async () => {
 				const listDiv = document.getElementById('location-display');
 				const loadingMessage = document.getElementById('loading-message');
 				const pickupBtn = document.getElementById('pickup-btn');
@@ -105,34 +59,29 @@
 				const pickupConf = document.getElementById('pickup-confirmation');
 				const problemConf = document.getElementById('problem-confirmation');
 				const problemDetailsSection = document.getElementById('problem-details-section');
-				const problemDetailsForm = document.getElementById('problem-details-form'); // Needed to get form data
-				const problemSubmitBtn = document.getElementById('problem-submit-btn'); // Get the button
+				const problemDetailsForm = document.getElementById('problem-details-form');
+				const problemSubmitBtn = document.getElementById('problem-submit-btn');
 				const problemDetailsSuccess = document.getElementById('problem-details-success');
-
 				const params = new URLSearchParams(window.location.search);
 				const boxId = params.get('id');
-
 				if (!boxId) {
 					loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 					loadingMessage.textContent = 'Error: ID missing from the link. Cannot display info.';
 					return;
 				}
-
 				try {
-					const locRef = doc(appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId);
+					const locRef = doc(db, locationsCollectionPath, boxId);
 					const locSnap = await getDoc(locRef);
-
 					if (!locSnap.exists()) {
 						console.log(`Box ID ${ boxId } not found. Redirecting to setup page...`);
 						window.location.href = `/setup/?id=${ boxId }`;
 						return;
 					}
-
 					const location = locSnap.data();
 					currentBoxInfo = `${ location.label } (ID: ${ boxId }) @ ${ location.address }`;
 					loadingMessage.remove();
-					let volunteerDisplayName = 'MCL 1311'; // Default
-					if (location.volunteer) { // Check if the volunteer field exists
+					let volunteerDisplayName = 'MCL 1311';
+					if (location.volunteer) {
 						volunteerDisplayName = location.volunteer;
 						const atIndex = volunteerDisplayName.indexOf('@');
 						if (atIndex !== -1) {
@@ -147,14 +96,9 @@
                        <p class="text-sm font-semibold">Assigned Volunteer: ${volunteerDisplayName }</p>
                    </div>
                `;
-
-					// Remove reference to deleted element pickup-box-id-detail
-					// document.getElementById('pickup-box-id-detail').value = currentBoxInfo;
 					document.getElementById('problem-box-id-detail').value = currentBoxInfo;
-
 					pickupBtn.disabled = false;
 					problemBtn.disabled = false;
-
 					const getFormData = (form) => {
 						const formData = new FormData(form);
 						const data = {};
@@ -163,16 +107,12 @@
 						});
 						return data;
 					};
-
 					const toggleSection = (sectionToShow, confToShow, sectionToHide, confToHide) => {
-						// Ensure elements exist before adding/removing classes
 						if (sectionToShow) sectionToShow.classList.add('open');
 						if (confToShow) confToShow.classList.remove('hidden');
 						if (sectionToHide) sectionToHide.classList.remove('open');
 						if (confToHide) confToHide.classList.add('hidden');
 					};
-
-					// --- Pickup Button Listener (Simplified) ---
 					pickupBtn.addEventListener('click', () => {
 						const quickReport = { reportType: 'pickup_alert', description: 'Immediate pickup requested via button click.' };
 						submitReportToFirestore(quickReport, boxId, location);
@@ -181,28 +121,21 @@
 						pickupBtn.classList.add('opacity-50', 'cursor-not-allowed');
 						pickupConf.classList.remove('hidden');
 						pickupConf.textContent = '✅ Message Sent! A volunteer has been notified.';
-						if (problemDetailsSection) problemDetailsSection.classList.remove('open'); // Close problem section if open
+						if (problemDetailsSection) problemDetailsSection.classList.remove('open');
 						if (problemConf) problemConf.classList.add('hidden');
 					});
-
-					// --- Problem Button Listener (Opens Form Only) ---
 					problemBtn.addEventListener('click', () => {
 						toggleSection(
 								problemDetailsSection,
 								problemConf,
 								pickupConf
 						);
-						// problemBtn.style.display = 'none'; // Optional: hide button after click
 					});
-
-					// --- Problem Form SUBMIT BUTTON Listener ---
-					// Make sure the button exists before adding listener
 					if (problemSubmitBtn) {
 						problemSubmitBtn.addEventListener('click', async (e) => {
 							const submitButton = e.target;
 							submitButton.disabled = true;
 							submitButton.textContent = 'Sending...';
-
 							const description = problemDetailsForm.querySelector('textarea[name="description"]').value;
 							if (!description || description.trim() === '') {
 								alert('Please fill out the problem description.');
@@ -210,10 +143,8 @@
 								submitButton.textContent = 'Send Full Problem Report';
 								return;
 							}
-
 							const reportData = getFormData(problemDetailsForm);
 							const success = await submitReportToFirestore(reportData, boxId, location);
-
 							if (success) {
 								problemDetailsSuccess.classList.remove('hidden');
 								submitButton.textContent = 'Report Sent!';
@@ -224,59 +155,44 @@
 							}
 						});
 					} else {
-						console.error("Could not find the problem submit button (#problem-submit-btn)"); // Add error logging
+						console.error("Could not find the problem submit button (#problem-submit-btn)");
 					}
-
 				} catch (error) {
 					console.error('Error fetching location:', error);
-					if (loadingMessage) { // Check if loadingMessage still exists
+					if (loadingMessage) {
 						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 						loadingMessage.textContent = `Error loading location data: ${ error.message }`;
 					}
 				}
 			};
-
-			// --- 5. FIRESTORE UTILITY ---
 			const submitReportToFirestore = async( reportData, boxId, location ) =>
 			{
-				if( !appDB || !appAuth.currentUser )
+				if( !db || !auth.currentUser )
 				{
 					console.error( 'Firestore not initialized or user not authenticated.' );
 					return false;
 				}
 				try
 				{
-					const userId = appAuth.currentUser.uid;
+					const userId = auth.currentUser.uid;
 					const timestamp = new Date().toISOString();
-					const reportCollectionRef = collection( appDB, 'artifacts', appID, 'public', publicDocumentId, 'data', dataDocumentId, 'totsReports' );
-					// --- CORRECTED LOGIC ---
-					// --- NEW LOGIC with distinct reporter fields ---
-					// 1. Get reporter info from the form data
+					const reportCollectionRef = collection( db, reportsCollectionPath );
 					const reporterNameFromForm = reportData.contactName;
 					const reporterEmailFromForm = reportData.contactEmail;
-
-					// 2. Remove the generic contact fields from reportData before merging
-					//    so they don't conflict with location data
 					delete reportData.contactName;
 					delete reportData.contactEmail;
-
-					// 3. Build the final report
 					const fullReport = {
-						...reportData,          // Includes reporter's notes/description etc.
-						...location,          // Includes location's contactName/Email/Phone, label, etc.
+						...reportData,
+						...location,
 						boxId: boxId,
 						timestamp: timestamp,
 						reporterId: userId,
 						status: 'new',
-						// Add the distinct reporter fields
 						reporterName: reporterNameFromForm || null,
 						reporterEmail: reporterEmailFromForm || null
 					};
-					// --- END NEW LOGIC ---
-
 					await addDoc( reportCollectionRef, fullReport );
 					return true;
-
 				}
 				catch( error )
 				{
@@ -284,11 +200,8 @@
 					return false;
 				}
 			};
-
-			// --- 6. EXPOSE SETUP FUNCTION TO GLOBAL SCOPE ---
-			window.setupFirebase = setupFirebase;
+			setupFirebase();
 		</script>
-
 		<script src="https://cdn.tailwindcss.com"></script>
 		<script>
 			tailwind.config = {
@@ -307,8 +220,7 @@
 			};
 		</script>
 	</head>
-	<body onload="setupFirebase()">
-
+	<body>
 		<header>
 			<div class="header-content">
 				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
@@ -328,17 +240,14 @@
 				</a>
 			</div>
 		</header>
-
 		<div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden" style="margin-top: 20px; margin-bottom: 20px;">
 			<div class="bg-tots-red p-6">
 				<h1 class="text-3xl font-extrabold text-white text-center">Tots Box Action Center</h1>
 			</div>
-
 			<main class="p-6">
 				<div id="location-display" class="mb-6">
 					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
 				</div>
-
 				<div id="main-actions" class="space-y-4">
 					<button id="pickup-btn" class="w-full py-3 bg-tots-green hover:bg-green-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
 						<span id="pickup-btn-text">Request Immediate Pickup</span>
@@ -346,33 +255,26 @@
 					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
 						✅ Message Sent! Would you like to send any additional details?
 					</div>
-
 					<div class="h-px bg-gray-200"></div>
-
 					<button id="problem-btn" class="w-full py-2 text-center text-sm font-medium text-gray-600 hover:text-tots-red hover:underline transition duration-200 disabled:opacity-50" disabled>
 						<span id="problem-btn-text">Report a Problem</span>
 					</button>
-
 					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
 						⚠️ Please tell us the nature of the problem.
 					</div>
-
 					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
 						<form id="problem-details-form" class="space-y-3">
 							<input type="hidden" id="problem-box-id-detail" name="boxInfo">
 							<input type="hidden" name="reportType" value="problem_report">
-
 							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the
 								problem? <span class="text-tots-red">*</span></label>
 							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
-
 							<fieldset class="p-3 border rounded-md">
 								<legend class="text-sm font-medium text-gray-700 px-1"><label for="problemContactEmail">Follow-up</label> <label for="problemContactName">Contact</label> (Optional):
 								</legend>
 								<input type="text" id="problemContactName"  name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 								<input type="email" id="problemContactEmail"  name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
 							</fieldset>
-
 							<button type="button" id="problem-submit-btn" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
 								Send Full Problem Report
 							</button>
@@ -381,11 +283,9 @@
 							✅ Thank you! The problem has been recorded instantly!
 						</div>
 					</div>
-
 				</div>
 			</main>
 		</div>
-
 		<div id="footer-placeholder"></div>
 		<script src="/loader.js" defer></script>
 	</body>
