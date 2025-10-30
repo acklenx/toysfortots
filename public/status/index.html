@@ -8,15 +8,13 @@
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
 
 		<script type="module">
-			// --- 1. IMPORTS (Added getDocs, query, where, orderBy) ---
-			import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+
+			import { auth, db, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
-				getAuth,
 				signInAnonymously,
 				onAuthStateChanged
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
-				getFirestore,
 				doc,
 				getDoc,
 				collection,
@@ -26,57 +24,9 @@
 				orderBy
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-			// --- 2. CONFIG & TOP-LEVEL VARS ---
-			const firebaseConfig = {
-				apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-				authDomain: 'toysfortots.mcl1311.com',
-				projectId: 'toysfortots-eae4d',
-				storageBucket: 'toysfortots-eae4d.firebasestorage.app',
-				messagingSenderId: '505039956655',
-				appId: '1:505039956655:web:c750c66b28f7facd82025a',
-				measurementId: 'G-XKQYPK0GLC'
-			};
-			const appId = firebaseConfig.projectId;
-			let db, auth;
-			let appDB, appAuth, appID;
+			let appInitialized = false;
 
-			// --- 3. FIREBASE SETUP ---
-			const publicDocumentId = '01';
-			const dataDocumentId = '01';
-			let reportsCollectionRef;
 
-			const setupFirebase = () =>
-			{
-				try
-				{
-					const app = initializeApp( firebaseConfig );
-					auth = getAuth( app );
-					db = getFirestore( app );
-
-					let appInitialized = false;
-					onAuthStateChanged( auth, ( user ) =>
-					{
-						if( user && !appInitialized )
-						{
-							appInitialized = true;
-							window.initApp( appId, db, auth );
-						}
-						else if( !user )
-						{
-							signInAnonymously( auth ).catch( ( err ) =>
-							{
-								console.error( 'Anonymous sign-in failed:', err );
-							} );
-						}
-					} );
-				}
-				catch( error )
-				{
-					console.error( 'Firebase Initialization Error:', error );
-				}
-			};
-
-			// --- 4. HELPER FUNCTIONS ---
 			const formatDate = ( isoString ) =>
 			{
 				if( !isoString )
@@ -87,9 +37,9 @@
 				return new Date( isoString ).toLocaleString( undefined, options );
 			};
 
-			// This is your last working render function
 			const renderReportItem = ( report ) =>
 			{
+
 				const reportTypeName = report.reportType || report[ 'report-type' ] || 'unknown_report';
 
 				const isProblem = reportTypeName.includes( 'problem' );
@@ -99,14 +49,15 @@
 				const statusText = report.status === 'new' ? 'New' : 'Cleared';
 
 				let reporterInfoHtml = '';
-				if (report.reporterName || report.reporterEmail) { // <-- Check new fields
+				if( report.reporterName || report.reporterEmail )
+				{
 					reporterInfoHtml = `
-					<div class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
-						<p><strong>Reported by:</strong></p>
-						${ report.reporterName ? `<p>Name: ${ report.reporterName }</p>` : '' }
-						${ report.reporterEmail ? `<p>Email: ${ report.reporterEmail }</p>` : '' }
-					</div>
-				`;
+                <div class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                   <p><strong>Reported by:</strong></p>
+                   ${ report.reporterName ? `<p>Name: ${ report.reporterName }</p>` : '' }
+                   ${ report.reporterEmail ? `<p>Email: ${ report.reporterEmail }</p>` : '' }
+                </div>
+             `;
 				}
 
 				return `
@@ -121,18 +72,14 @@
                     <p class="text-xs text-gray-400">
                        Report Time: ${ formatDate( report.timestamp ) }
                     </p>
-                    ${reporterInfoHtml}
+                    ${ reporterInfoHtml }
                 </li>
             `;
 			};
 
-			// --- 5. MAIN APP LOGIC ---
-			window.initApp = async( appId, dbInstance, authInstance ) =>
-			{
-				appDB = dbInstance;
-				appAuth = authInstance;
-				appID = appId;
 
+			async function initApp()
+			{
 				const listDiv = document.getElementById( 'location-display' );
 				const loadingMessage = document.getElementById( 'loading-message' );
 				const historyContainer = document.getElementById( 'history-container' );
@@ -148,12 +95,14 @@
 					return;
 				}
 
-				reportsCollectionRef = collection( appDB, 'artifacts', appID, 'public', publicDocumentId, 'data', dataDocumentId, 'totsReports' );
+
+				const reportsCollectionRef = collection( db, reportsCollectionPath );
 
 				try
 				{
-					// --- Task 1: Get the Box's main info (Same as your page) ---
-					const locRef = doc( appDB, 'artifacts', appId, 'public', publicDocumentId, 'data', dataDocumentId, 'locations', boxId );
+
+
+					const locRef = doc( db, locationsCollectionPath, boxId );
 					const locSnap = await getDoc( locRef );
 
 					if( locSnap.exists() )
@@ -161,23 +110,23 @@
 						const location = locSnap.data();
 						loadingMessage.remove();
 
-						// --- NEW: Logic to strip email ---
-						let volunteerDisplayName = 'N/A'; // Default
-						if (location.volunteer) { // Check if volunteer field exists
+
+						let volunteerDisplayName = 'N/A';
+						if( location.volunteer )
+						{
 							volunteerDisplayName = location.volunteer;
-							const atIndex = volunteerDisplayName.indexOf('@');
-							if (atIndex !== -1) {
-								volunteerDisplayName = volunteerDisplayName.substring(0, atIndex);
+							const atIndex = volunteerDisplayName.indexOf( '@' );
+							if( atIndex !== -1 )
+							{
+								volunteerDisplayName = volunteerDisplayName.substring( 0, atIndex );
 							}
 						}
-						// --- END NEW ---
 
 						listDiv.innerHTML = `
                         <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
                             <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
                             <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
                             <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
-
                             <p class="text-sm font-semibold">Assigned Volunteer: ${ volunteerDisplayName }</p>
 
                             <div class="mt-4 pt-3 border-t border-tots-red/30">
@@ -194,17 +143,11 @@
 						loadingMessage.className = 'text-center text-tots-red font-bold p-4';
 						loadingMessage.textContent = `Error: Box ID not found. Redirecting to setup page in 2 seconds...`;
 						historyLoading.remove();
-
-						// Wait 2 seconds then redirect
-						setTimeout( () =>
-						{
-							window.location.href = `/setup/?id=${ boxId }`;
-						}, 2000 ); // 2000 milliseconds
-
-						return; // Stop further execution
+						setTimeout( () => { window.location.href = `/setup/?id=${ boxId }`; }, 2000 );
+						return;
 					}
 
-					// --- Task 2: Get all reports for this box ---
+
 					const q = query( reportsCollectionRef,
 							where( 'boxId', '==', boxId ),
 							orderBy( 'timestamp', 'desc' )
@@ -229,14 +172,28 @@
 				}
 				catch( error )
 				{
-					console.error( 'Error loading data:', error );
 					loadingMessage.textContent = `Error: ${ error.message }`;
 				}
-			};
+			}
 
-			// --- 6. EXPOSE SETUP FUNCTION ---
-			window.setupFirebase = setupFirebase;
+			onAuthStateChanged( auth, ( user ) =>
+			{
+				if( user && !appInitialized )
+				{
+
+					appInitialized = true;
+					initApp();
+				}
+				else if( !user )
+				{
+					signInAnonymously( auth ).catch( () =>
+					{
+						document.getElementById( 'loading-message' ).textContent = 'Error: Could not get auth.';
+					} );
+				}
+			} );
 		</script>
+
 		<script src="https://cdn.tailwindcss.com"></script>
 		<script>
 			tailwind.config = {

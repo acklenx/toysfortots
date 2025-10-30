@@ -20,10 +20,13 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app, 'us-central1'); // Set region here
+export const functions = getFunctions(app, 'us-central1');
 
-// --- 4. Export the collection path for reuse
+// --- 4. Export shared constants and paths
 const appId = firebaseConfig.projectId;
 const publicDocumentId = '01';
 const dataDocumentId = '01';
-export const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
+const basePath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }`;
+
+export const locationsCollectionPath = `${basePath}/locations`;
+export const reportsCollectionPath = `${basePath}/totsReports`;
