@@ -35,7 +35,7 @@
 						</div>
 
 						<p id="password-hint">
-							Please pick a new password.
+							<label for="auth-password">Please pick a new password.</label>
 						</p>
 
 						<input type="password" id="auth-password" placeholder="Password">
@@ -274,7 +274,7 @@
 						addressInput.focus();
 					}, {
 						enableHighAccuracy: true,
-						timeout: 10000, // Increased timeout to 10s
+						timeout: 10000,
 						maximumAge: 0
 					} );
 				}
