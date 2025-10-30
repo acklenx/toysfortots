@@ -1,9 +1,14 @@
+/* --- Base Variables & Body --- */
 :root {
-    --t4t-red: #D21F3C;
+    --t4t-red: #D21F3C; /* Using this set, you can change it */
     --marine-blue: #002D62;
     --light-gray: #f4f4f4;
     --dark-text: #333;
     --off-white: #fdfdfd;
+}
+
+.hidden {
+    display: none;
 }
 
 body {
@@ -13,19 +18,19 @@ body {
     color: var(--dark-text);
 }
 
-header h1:hover,
-header h2:hover {
-    text-decoration: underline !important;
+.bg-marine-blue {
+    background-color: var(--marine-blue);
 }
 
+/* --- Header --- */
 header {
     background-color: white;
     padding: 15px 20px;
     border-bottom: 5px solid var(--t4t-red);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
-
-    .header-content {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & .header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -33,15 +38,16 @@ header {
         margin: 0 auto;
     }
 
-    .header-text {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & .header-text {
         text-align: center;
 
+        /* Type selectors like h1, h2 are fine to nest */
         h1 {
             color: var(--marine-blue);
             margin: 0;
             font-weight: bold;
             font-size: 1.8rem;
-
             &:hover {
                 text-decoration: underline;
             }
@@ -51,31 +57,29 @@ header {
             color: var(--t4t-red);
             margin: 5px 0;
             font-weight: 500;
-
             &:hover {
                 text-decoration: underline;
             }
         }
 
-        .sub-header {
+        /* --- NATIVE CSS FIX: Added '&' --- */
+        & .sub-header {
             margin: 0;
             font-size: 0.9rem;
             color: #666;
         }
     }
 
-    .logo {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & .logo {
         height: 80px;
 
-
+        /* Nesting with '&' was already correct here */
         &.t4t-logo {
             height: 60px;
         }
     }
 }
-
-/* End of header nesting */
-
 
 /* --- Main Container --- */
 .container {
@@ -87,15 +91,16 @@ header {
     height: 75vh;
     min-height: 500px;
 
-
-    #map {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & #map {
         height: 100%;
         flex: 2;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    #location-list-container {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & #location-list-container {
         flex: 1;
         height: 100%;
         background: white;
@@ -104,8 +109,8 @@ header {
         display: flex;
         flex-direction: column;
 
-
-        .list-header {
+        /* --- NATIVE CSS FIX: Added '&' --- */
+        & .list-header {
             background: var(--marine-blue);
             color: white;
             padding: 15px;
@@ -119,15 +124,13 @@ header {
             }
         }
 
-        #location-list {
+        /* --- NATIVE CSS FIX: Added '&' --- */
+        & #location-list {
             overflow-y: auto;
             flex-grow: 1;
         }
     }
 }
-
-/* End of .container nesting */
-
 
 /* --- Location List Items --- */
 .location-item {
@@ -136,12 +139,11 @@ header {
     cursor: pointer;
     transition: background-color 0.2s;
 
-
     &:hover {
         background-color: #eef5ff;
     }
 
-
+    /* Type selectors are fine to nest */
     h4 {
         margin: 0 0 5px 0;
         color: var(--t4t-red);
@@ -152,7 +154,7 @@ header {
         font-size: 0.9rem;
         color: #555;
 
-
+        /* Nesting with '&' was already correct here */
         &.contact-info {
             font-size: 0.8rem;
             color: #666;
@@ -161,9 +163,7 @@ header {
     }
 }
 
-/* End of .location-item nesting */
-
-
+/* --- Footer --- */
 footer {
     text-align: center;
     padding: 20px;
@@ -171,56 +171,17 @@ footer {
     color: white;
     font-size: 0.9rem;
 
-
-    .footer-bear {
+    /* --- NATIVE CSS FIX: Added '&' --- */
+    & .footer-bear {
         height: 100px;
         margin-top: 10px;
-        display: block; /* Treat the image as a block */
-        margin-left: auto; /* Auto margin left */
-        margin-right: auto; /* Auto margin right */
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
-/* End of footer nesting */
-
-
-/* --- Mobile Responsive --- */
-@media (max-width: 768px) {
-
-    header {
-        .header-content {
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .logo {
-            height: 60px;
-        }
-    }
-
-    .container {
-        flex-direction: column;
-        height: auto;
-
-        #map {
-            height: 40vh;
-            min-height: 300px;
-            width: 100%;
-        }
-
-        #location-list-container {
-            height: 50vh;
-            min-height: 300px;
-            width: 100%;
-        }
-    }
-}
-
-:root {
-    --t4t-red: #cc0000;
-    --marine-blue: #003366;
-}
-
+/* --- Form Styles --- */
 .form-container {
     max-width: 600px;
     margin: 0 auto;
@@ -228,6 +189,14 @@ footer {
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    & h1 {
+        font-size: 1.5rem;      /* text-2xl */
+        line-height: 2rem;
+        font-weight: 700;     /* font-bold */
+        text-align: center;   /* text-center */
+        margin-bottom: 1.5rem;  /* mb-6 */
+        color: #1f2937;        /* text-gray-800 */
+    }
 }
 
 .form-wrapper {
@@ -237,6 +206,7 @@ footer {
 .form-group {
     margin-bottom: 20px;
 
+    /* Type selectors are fine to nest */
     label {
         display: block;
         margin-bottom: 5px;
@@ -288,6 +258,7 @@ footer {
     margin-top: 20px;
     font-weight: 500;
 
+    /* Nesting with '&' was already correct here */
     &.success {
         background-color: #d4edda;
         color: #155724;
@@ -311,42 +282,576 @@ footer {
     color: var(--marine-blue);
 }
 
-header {
-    h1 {
-        a:hover {
-            text-decoration: underline;
-        }
-    }
-
-    h2 {
-        a:hover {
-            text-decoration: underline;
-        }
-    }
-}
-
-.bg-marine-blue {
-    background-color: var(--marine-blue);
-}
-
-
+/* --- Collapsible Styles --- */
 .collapsible-content {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
     padding: 0 1rem;
+
+    /* Merged .collapsible-content.open into one rule */
+    &.open {
+        max-height: 1000px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
 }
 
-.collapsible-content.open {
-    max-height: 1000px;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+
+    header {
+        /* --- NATIVE CSS FIX: Added '&' --- */
+        & .header-content {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        & .logo {
+            height: 60px;
+        }
+    }
+
+    .container {
+        flex-direction: column;
+        height: auto;
+
+        /* --- NATIVE CSS FIX: Added '&' --- */
+        & #map {
+            height: 40vh;
+            min-height: 300px;
+            width: 100%;
+        }
+
+        & #location-list-container {
+            height: 50vh;
+            min-height: 300px;
+            width: 100%;
+        }
+    }
 }
 
-/* Added to prevent Tailwind from overwriting header link styles */
-header h1 a:hover,
-header h2 a:hover {
+/* --- Auth Container Styles --- */
+#auth-container {
+    text-align: center;
+    padding: 40px;
+}
+
+#auth-container p {
+    margin-bottom: 1rem; /* Replaces mb-4 */
+}
+
+#auth-message {
+    color: #374151; /* Replaces text-gray-700 */
+    margin-bottom: 1.5rem; /* Replaces mb-6 */
+}
+
+/* --- Base Button Styles --- */
+#auth-container button {
+    width: 100%;
+    padding: 0.75rem 1.5rem; /* Replaces py-3 px-6 */
+    border-radius: 0.5rem; /* Replaces rounded-lg */
+    font-weight: 600; /* Replaces font-semibold */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Google Sign-In Button */
+#sign-in-btn, #google-login-btn {
+    background-color: #3b82f6; /* Replaces bg-blue-600 */
+    color: white;
+}
+#sign-in-btn:hover, #google-login-btn:hover {
+    background-color: #2563eb; /* Replaces hover:bg-blue-700 */
+}
+
+/* Link-style "show email" button */
+#show-email-setup-btn {
+    font-size: 0.875rem; /* Replaces text-sm */
+    color: #4b5563; /* Replaces text-gray-600 */
+    margin-top: 0.75rem; /* Replaces mt-3 */
+    background: none;
+    padding: 0;
+}
+#show-email-setup-btn:hover {
+    color: #111827; /* Replaces hover:text-gray-900 */
+}
+#show-email-setup-btn span {
+    color: #3b82f6; /* Replaces text-blue-600 */
+    text-decoration: underline; /* Replaces underline */
+}
+
+/* --- Email/Username Auth Section --- */
+#or-divider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    color: #6b7281; /* Replaces text-gray-500 */
+    font-weight: 600; /* Replaces font-semibold */
+}
+
+#email-auth-section {
+    margin-top: 1rem; /* Replaces mt-4 */
+    padding: 1rem; /* Replaces p-4 */
+    border: 1px solid #e5e7eb; /* Replaces border */
+    border-radius: 0.5rem; /* Replaces rounded-lg */
+    background-color: #f9fafb; /* Replaces bg-gray-50 */
+    text-align: left;
+}
+
+#email-auth-title {
+    font-size: 1.25rem; /* Replaces text-xl */
+    font-weight: 700; /* Replaces font-bold */
+    margin-bottom: 1rem; /* Replaces mb-4 */
+    color: #374151; /* Replaces text-gray-700 */
+    text-align: center;
+}
+
+/* Form Inputs */
+#auth-email, #auth-password {
+    width: 100%;
+    padding: 0.5rem; /* Replaces p-2 */
+    border: 1px solid #d1d5db; /* Replaces border */
+    border-radius: 0.25rem; /* Replaces rounded */
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+#auth-email {
+    margin-bottom: 0.5rem; /* Replaces mb-2 */
+}
+#auth-password {
+    margin-bottom: 0.75rem; /* Replaces mb-3 */
+}
+
+#password-hint {
+    font-size: 0.75rem; /* Replaces text-xs */
+    color: #6b7281; /* Replaces text-gray-500 */
+    margin-bottom: 1rem; /* Replaces mb-4 */
+}
+
+#toggle-password {
+    display: block;
+    text-align: right;
+    font-size: 0.875rem; /* Replaces text-sm */
+    color: #3b82f6; /* Replaces text-blue-600 */
+    cursor: pointer;
+    /* Fixed the margin overlap from before */
+    margin-top: -0.5rem;
+    margin-bottom: 0.75rem; /* Replaces mb-3 */
+}
+#toggle-password:hover {
+    text-decoration: underline; /* Replaces hover:underline */
+}
+
+/* Email Sign In/Up Buttons */
+#email-sign-in-btn {
+    background-color: var(--marine-blue);
+    color: white;
+}
+#email-sign-in-btn:hover {
+    background-color: #002244; /* A darker marine blue */
+}
+
+#email-sign-up-btn {
+    background-color: #16a34a; /* Replaces bg-green-600 */
+    color: white;
+}
+#email-sign-up-btn:hover {
+    background-color: #15803d; /* Replaces hover:bg-green-700 */
+}
+
+/* Toggle Sign-in / Sign-up Button */
+#toggle-sign-up-btn {
+    font-size: 0.875rem; /* Replaces text-sm */
+    margin-top: 0.75rem; /* Replaces mt-3 */
+    background: none;
+    font-weight: 500; /* Replaces font-medium */
+    padding: 0;
+    width: auto;
+}
+#toggle-sign-up-btn span {
+    color: var(--marine-blue); /* Replaces text-marine-blue */
+    text-decoration: underline; /* Replaces underline */
+}
+#toggle-sign-up-btn:hover span {
+    color: #cc0000; /* Replaces hover:text-red-700 */
+}
+
+/* --- New Location Form Styles --- */
+
+/* Style for the "show code" text */
+#toggle-passcode {
+    display: block;
+    text-align: right;
+    font-size: 0.875rem; /* text-sm */
+    color: #3b82f6; /* text-blue-600 */
+    cursor: pointer;
+    margin-top: 0.25rem; /* mt-1 */
+    margin-bottom: 0.75rem; /* mb-3 */
+}
+#toggle-passcode:hover {
     text-decoration: underline;
 }
 
-/* End of @media nesting */
+/* Replaces "my-6 h-1 bg-gray-300" */
+.hr-divider {
+    height: 1px;
+    background-color: #d1d5db; /* bg-gray-300 */
+    margin-top: 1.5rem; /* my-6 */
+    margin-bottom: 1.5rem; /* my-6 */
+}
+
+/* GPS Button */
+#gps-btn {
+    display: block;
+    width: 75%; /* w-3/4 */
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 0.5rem; /* py-2 */
+    padding-bottom: 0.5rem; /* py-2 */
+    background-color: #ef4444; /* bg-red-500 */
+    color: white;
+    font-weight: 600; /* font-semibold */
+    border-radius: 0.375rem; /* rounded-md */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#gps-btn:hover {
+    background-color: #dc2626; /* hover:bg-red-600 */
+}
+/* We can add the yellow/green states here too */
+#gps-btn.searching {
+    background-color: #eab308; /* bg-yellow-500 */
+}
+#gps-btn.success {
+    background-color: #22c55e; /* bg-green-600 */
+}
+
+#gps-error-msg {
+    text-align: center;
+    font-size: 0.875rem; /* text-sm */
+    color: #dc2626; /* text-red-600 */
+    margin-top: 0.5rem; /* mt-2 */
+}
+
+/* "Click here to type address" button */
+#show-address-btn {
+    text-align: center;
+    margin-top: 1rem; /* my-4 */
+    margin-bottom: 1rem; /* my-4 */
+    color: #374151; /* text-gray-700 */
+    cursor: pointer;
+}
+#show-address-btn:hover {
+    color: #111827; /* hover:text-gray-900 */
+}
+#show-address-btn span {
+    text-decoration: underline;
+    font-weight: 500; /* font-medium */
+}
+
+/* Sign Out Section */
+#user-display {
+    font-size: 0.875rem; /* text-sm */
+    color: #6b7281; /* text-gray-500 */
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+
+#sign-out-btn {
+    margin-top: 1rem; /* mt-4 */
+    font-size: 0.875rem; /* text-sm */
+    color: #4b5563; /* text-gray-600 */
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+#sign-out-btn:hover {
+    color: #111827; /* hover:text-gray-900 */
+}
+
+/* --- Dashboard Page Styles --- */
+
+/* Auth Container (Layout) */
+#auth-container {
+    max-width: 28rem; /* max-w-md */
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5rem; /* mt-20 */
+    margin-bottom: 5rem; /* mb-5rem from inline style */
+    padding: 2rem; /* p-8 */
+    background-color: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+    border-radius: 0.75rem; /* rounded-xl */
+    text-align: center;
+}
+
+#auth-container header {
+    background-color: var(--t4t-red);
+    padding: 1.5rem; /* p-6 */
+    margin: -2rem -2rem 2rem -2rem; /* -m-8 mb-8 */
+    border-top-left-radius: 0.75rem; /* rounded-t-xl */
+    border-top-right-radius: 0.75rem; /* rounded-t-xl */
+}
+
+#auth-container header h1 {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 800; /* font-extrabold */
+    color: white;
+    text-align: center;
+}
+
+#google-login-btn {
+    font-size: 1.125rem; /* text-lg */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+}
+
+/* --- Main Dashboard Content --- */
+.dashboard-header-container {
+    max-width: 42rem; /* max-w-2xl */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1.5rem 1rem; /* p-6 md:p-4 */
+}
+
+.dashboard-header-flex {
+    display: flex;
+    flex-direction: column; /* Mobile-first */
+    justify-content: space-between;
+}
+
+.dashboard-header-flex h1 {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700; /* font-bold */
+    color: #1f2937; /* text-gray-800 */
+    margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.dashboard-header-flex .welcome-text {
+    font-size: 1.125rem; /* text-lg */
+    color: #4b5563; /* text-gray-600 */
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+.dashboard-header-flex #volunteer-name {
+    font-weight: 600; /* font-semibold */
+}
+
+.dashboard-header-controls {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem; /* space-x-4 */
+}
+
+.dashboard-header-controls label {
+    display: block;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    color: #374151; /* text-gray-700 */
+    white-space: nowrap;
+}
+
+#view-filter {
+    display: block;
+    width: 100%;
+    font-size: 0.875rem; /* sm:text-sm */
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem; /* pl-3 pr-10 py-2 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    margin-top: 0.25rem; /* mt-1 */
+}
+
+#sign-out-btn {
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    background-color: #d1d5db; /* bg-gray-300 */
+    color: #374151; /* text-gray-700 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600; /* font-semibold */
+    border-radius: 0.375rem; /* rounded-md */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    white-space: nowrap;
+}
+#sign-out-btn:hover {
+    background-color: #9ca3af; /* hover:bg-gray-400 */
+}
+
+/* Responsive styles for header */
+@media (min-width: 640px) { /* sm: */
+    .dashboard-header-flex {
+        flex-direction: row;
+        align-items: center;
+    }
+    .dashboard-header-flex .welcome-text {
+        margin-bottom: 0;
+    }
+    .dashboard-header-controls {
+        width: auto;
+    }
+}
+
+/* --- Boxes Section --- */
+#boxes-section {
+    margin-top: 1.5rem; /* mt-6 */
+}
+
+#boxes-title {
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: 700; /* font-bold */
+    color: #1f2937; /* text-gray-800 */
+    border-bottom: 2px solid var(--t4t-red); /* border-b-2 border-tots-red */
+    padding-bottom: 0.5rem; /* pb-2 */
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+#boxes-container {
+    display: grid;
+    gap: 1rem; /* space-y-4 */
+}
+
+#loading-message {
+    text-align: center;
+    color: #6b7281; /* text-gray-500 */
+    padding: 1rem; /* p-4 */
+}
+
+/* Individual Box Card */
+.box-card {
+    background-color: white;
+    padding: 1rem; /* p-4 */
+    border-radius: 0.5rem; /* rounded-lg */
+    border: 1px solid #e5e7eb; /* border-gray-200 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+}
+
+.box-card h3 {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700; /* font-bold */
+    color: var(--t4t-red);
+}
+.box-card .address {
+    font-size: 0.875rem; /* text-sm */
+    color: #4b5563; /* text-gray-600 */
+}
+.box-card .box-id {
+    font-size: 0.75rem; /* text-xs */
+    color: #6b7281; /* text-gray-500 */
+    margin-top: 0.25rem; /* mt-1 */
+}
+.box-card .status-wrapper {
+    margin-top: 1rem; /* mt-4 */
+}
+
+/* Status: Needs Pickup */
+.status-problem {
+    padding: 0.75rem; /* p-3 */
+    background-color: #fef2f2; /* bg-red-50 */
+    border: 1px solid #fecaca; /* border-red-200 */
+    border-radius: 0.375rem; /* rounded-md */
+}
+.status-problem .status-title {
+    font-weight: 600; /* font-semibold */
+    color: var(--t4t-red);
+}
+.status-problem .status-desc {
+    font-size: 0.875rem; /* text-sm */
+    color: #4b5563; /* text-gray-600 */
+}
+
+/* Status: Good */
+.status-good {
+    padding: 0.75rem; /* p-3 */
+    background-color: #f0fdf4; /* bg-green-50 */
+    border: 1px solid #bbf7d0; /* border-green-200 */
+    border-radius: 0.375rem; /* rounded-md */
+}
+.status-good .status-title {
+    font-weight: 600; /* font-semibold */
+    color: var(--t4t-green);
+}
+.status-good .status-desc {
+    font-size: 0.875rem; /* text-sm */
+    color: #4b5563; /* text-gray-600 */
+}
+
+/* Clear Status Button */
+.clear-status-btn {
+    margin-top: 0.75rem; /* mt-3 */
+    width: 100%;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    background-color: var(--t4t-green);
+    color: white;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600; /* font-semibold */
+    border-radius: 0.375rem; /* rounded-md */
+    border: none;
+    cursor: pointer;
+}
+.clear-status-btn:hover {
+    background-color: #15803d; /* hover:bg-green-700 */
+}
+
+/* View History Button */
+.view-history-btn {
+    display: block;
+    text-align: center;
+    width: 100%;
+    margin-top: 0.75rem; /* mt-3 */
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    background-color: #4b5563; /* bg-gray-600 */
+    color: white;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600; /* font-semibold */
+    border-radius: 0.375rem; /* rounded-md */
+    text-decoration: none;
+}
+.view-history-btn:hover {
+    background-color: #374151; /* hover:bg-gray-700 */
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+/* --- Accessibility & Label Fixes --- */
+
+/* Fixes spacing for new labels in auth forms */
+#auth-email, #auth-password {
+    margin-bottom: 0.75rem; /* Re-adds the bottom margin */
+}
+/* Fixes spacing for username input on setup page */
+#auth-email {
+    margin-bottom: 0.5rem;
+}
+
+/* Styles for the problem form in box/index.html */
+.problem-contact-fieldset {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+}
+.problem-contact-fieldset legend {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    padding: 0 0.25rem;
+}
+.problem-contact-fieldset .input-wrapper {
+    margin-top: 0.5rem;
+}
+.problem-contact-fieldset input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    box-sizing: border-box; /* Good practice */
+}

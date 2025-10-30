@@ -313,14 +313,18 @@
 							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the
 								problem? <span class="text-tots-red">*</span></label>
 							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
-							<fieldset class="p-3 border rounded-md">
-								<legend class="text-sm font-medium text-gray-700 px-1">
-									<label for="problemContactEmail">Follow-up</label>
-									<label for="problemContactName">Contact</label>
-									(Optional):
-								</legend>
-								<input type="text" id="problemContactName" name="contactName" placeholder="Your Name" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
-								<input type="email" id="problemContactEmail" name="contactEmail" placeholder="Email" class="mt-2 w-full border border-gray-300 rounded-md p-2 text-sm">
+							<fieldset class="problem-contact-fieldset">
+								<legend>Follow-up Contact (Optional):</legend>
+
+								<div class="input-wrapper">
+									<label for="problemContactName" class="sr-only">Your Name</label>
+									<input type="text" id="problemContactName"  name="contactName" placeholder="Your Name">
+								</div>
+
+								<div class="input-wrapper">
+									<label for="problemContactEmail" class="sr-only">Email</label>
+									<input type="email" id="problemContactEmail"  name="contactEmail" placeholder="Email">
+								</div>
 							</fieldset>
 							<button type="button" id="problem-submit-btn" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
 								Send Full Problem Report

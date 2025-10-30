@@ -5,7 +5,88 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>My Dashboard</title>
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
+	</head>
+
+	<body class="bg-gray-100">
+
+		<div id="header-placeholder"></div>
+
+		<div id="auth-container" style="display: none;">
+			<header>
+				<h1>Volunteer Access</h1>
+			</header>
+
+			<div id="auth-buttons">
+				<div id="email-auth-section">
+					<h2 id="email-auth-title">Sign In with Email</h2>
+
+					<div>
+						<label for="auth-email" class="sr-only">Email Address</label>
+						<input type="email" id="auth-email" placeholder="Email Address">
+					</div>
+					<div>
+						<label for="auth-password" class="sr-only">Password</label>
+						<input type="password" id="auth-password" placeholder="Password">
+					</div>
+
+					<button id="email-sign-in-btn">
+						Sign In
+					</button>
+					<button id="email-sign-up-btn" class="hidden">
+						Create Account
+					</button>
+
+					<p>
+						<button id="toggle-sign-up-btn">
+							New user? <span>Create an account</span>
+						</button>
+					</p>
+				</div>
+
+				<div id="or-divider">-- OR --</div>
+
+				<p id="auth-message">Please sign in to access the dashboard.</p>
+
+				<button id="google-login-btn">
+					Sign In with Google
+				</button>
+			</div>
+		</div>
+		<div id="main-content" style="display: none;">
+
+			<div class="dashboard-header-container">
+				<div class="dashboard-header-flex">
+					<div>
+						<h1>Dashboard</h1>
+						<p class="welcome-text">Welcome,
+							<span id="volunteer-name">...</span>
+						</p>
+					</div>
+					<div class="dashboard-header-controls">
+						<label for="view-filter">Show boxes:</label>
+						<select id="view-filter">
+						</select>
+						<button id="sign-out-btn">
+							Sign Out
+						</button>
+					</div>
+				</div>
+
+				<section id="boxes-section">
+					<h2 id="boxes-title">Loading...</h2>
+					<div id="boxes-container">
+						<p id="loading-message">Loading reports...</p>
+					</div>
+				</section>
+			</div>
+		</div>
+
+		<div id="footer-placeholder"></div>
+
+		<script src="/loader.js" defer></script>
+
 		<script type="module">
+			// --- 1. IMPORTS ---
 			import { auth, db, functions, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				onAuthStateChanged,
@@ -28,76 +109,72 @@
 				httpsCallable
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
-			let isAuthorizedVolunteer;
-			const emailAuthTitle = document.getElementById( 'email-auth-title' );
-			const authEmail = document.getElementById( 'auth-email' );
-			const authPassword = document.getElementById( 'auth-password' );
-			const emailSignInBtn = document.getElementById( 'email-sign-in-btn' );
-			const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
-			const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
+			// --- 2. CONFIG & TOP-LEVEL VARS ---
+			let isAuthorizedVolunteer; // Global reference to the callable function
+
+			// --- DOM ELEMENTS ---
+			const emailAuthTitle = document.getElementById('email-auth-title');
+			const authEmail = document.getElementById('auth-email');
+			const authPassword = document.getElementById('auth-password');
+			const emailSignInBtn = document.getElementById('email-sign-in-btn');
+			const emailSignUpBtn = document.getElementById('email-sign-up-btn');
+			const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
 			const authMessage = document.getElementById( 'auth-message' );
 
-			function showAuthMessage( type, text )
-			{
-				const emailAuthSection = document.getElementById( 'email-auth-section' );
-				let msgDiv = document.getElementById( 'auth-msg' );
-				if( !msgDiv )
-				{
-					msgDiv = document.createElement( 'div' );
+
+			// --- 4. FIREBASE SETUP (Multi-Auth + Auth Check) ---
+
+			// --- Helper for Email Auth Messages ---
+			function showAuthMessage(type, text) {
+				const emailAuthSection = document.getElementById('email-auth-section');
+				let msgDiv = document.getElementById('auth-msg');
+				if (!msgDiv) {
+					msgDiv = document.createElement('div');
 					msgDiv.id = 'auth-msg';
-					emailAuthSection.insertBefore( msgDiv, emailSignInBtn );
+					emailAuthSection.insertBefore(msgDiv, emailSignInBtn);
 				}
-				msgDiv.innerHTML = `<div class="message ${ type } mt-3 mb-3">${ text }</div>`;
+				msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
 			}
 
-			function clearAuthMessage()
-			{
-				const msgDiv = document.getElementById( 'auth-msg' );
-				if( msgDiv )
-				{
+			function clearAuthMessage() {
+				const msgDiv = document.getElementById('auth-msg');
+				if (msgDiv) {
 					msgDiv.remove();
 				}
 			}
 
-			async function handleEmailSignIn()
-			{
+			// --- Email/Password Handlers ---
+			async function handleEmailSignIn() {
 				clearAuthMessage();
 				const email = authEmail.value;
 				const password = authPassword.value;
-				if( !email || !password )
-				{
-					showAuthMessage( 'error', 'Please enter both email and password.' );
+				if (!email || !password) {
+					showAuthMessage('error', 'Please enter both email and password.');
 					return;
 				}
-				try
-				{
-					await signInWithEmailAndPassword( auth, email, password );
-				}
-				catch( error )
-				{
-					console.error( 'Email Sign In Error:', error );
-					showAuthMessage( 'error', `Sign in failed: ${ error.message }` );
+				try {
+					await signInWithEmailAndPassword(auth, email, password);
+					// onAuthStateChanged handles the rest
+				} catch (error) {
+					console.error('Email Sign In Error:', error);
+					showAuthMessage('error', `Sign in failed: ${error.message}`);
 				}
 			}
 
-			async function handleEmailSignUp()
-			{
+			async function handleEmailSignUp() {
 				clearAuthMessage();
 				const email = authEmail.value;
 				const password = authPassword.value;
-				if( !email || !password || password.length < 6 )
-				{
-					showAuthMessage( 'error', 'Please enter a valid email and a password of at least 6 characters.' );
+				if (!email || !password || password.length < 6) {
+					showAuthMessage('error', 'Please enter a valid email and a password of at least 6 characters.');
 					return;
 				}
-				try
-				{
-					await createUserWithEmailAndPassword( auth, email, password );
-				}
-				catch( error )
-				{
-					console.error( 'Email Sign Up Error:', error );
-					showAuthMessage( 'error', `Sign up failed: ${ error.message }` );
+				try {
+					await createUserWithEmailAndPassword(auth, email, password);
+					// onAuthStateChanged handles the rest
+				} catch (error) {
+					console.error('Email Sign Up Error:', error);
+					showAuthMessage('error', `Sign up failed: ${error.message}`);
 				}
 			}
 
@@ -107,25 +184,30 @@
 				const isSignInMode = emailSignInBtn.classList.contains( 'hidden' );
 				if( isSignInMode )
 				{
+					// Switch to Sign In
 					emailAuthTitle.textContent = 'Sign In with Email';
 					emailSignInBtn.classList.remove( 'hidden' );
 					emailSignUpBtn.classList.add( 'hidden' );
-					toggleSignUpBtn.textContent = 'New user? Create an account';
+					toggleSignUpBtn.innerHTML = 'New user? <span>Create an account</span>';
 				}
 				else
 				{
+					// Switch to Sign Up
 					emailAuthTitle.textContent = 'Create Account with Email';
 					emailSignInBtn.classList.add( 'hidden' );
 					emailSignUpBtn.classList.remove( 'hidden' );
-					toggleSignUpBtn.textContent = 'Already have an account? Sign In';
+					toggleSignUpBtn.innerHTML = 'Already have an account? <span>Sign In</span>';
 				}
-			}
+			} // <-- This is the curly brace we fixed!
+
+			// --- END HANDLERS ---
 
 			const setupFirebase = () =>
 			{
 				try
 				{
 					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
+
 					onAuthStateChanged( auth, async( user ) =>
 					{
 						if( user && !user.isAnonymous )
@@ -170,6 +252,7 @@
 							}
 						}
 					} );
+
 					getRedirectResult( auth ).catch( ( error ) =>
 					{
 						console.error( 'Redirect login failed:', error );
@@ -189,6 +272,8 @@
 					console.error( 'Firebase Initialization Error:', error );
 				}
 			};
+
+			// --- 5. HELPER FUNCTIONS (Uses new CSS classes) ---
 			const renderBoxCard = ( box ) =>
 			{
 				let statusHtml;
@@ -196,14 +281,16 @@
 				{
 					const report = box.latestPendingReport;
 					const isProblem = report.reportType.includes( 'problem' );
+					// Note: The 'text-yellow-700' class no longer does anything, which is fine.
+					// We'd need a new CSS rule for it if you want that color.
 					statusHtml = `
-                    <div class="p-3 bg-red-50 border border-red-200 rounded-md">
-                        <p class="font-semibold ${ isProblem ? 'text-tots-red' : 'text-yellow-700' }">
+                    <div class="status-problem">
+                        <p class="status-title ${ isProblem ? '' : 'text-yellow-700' }">
                             Status: ${ report.reportType.replace( /_/g, ' ' ) }
                         </p>
-                        <p class="text-sm text-gray-600">${ report.description || report.notes || 'No details provided.' }</p>
+                        <p class="status-desc">${ report.description || report.notes || 'No details provided.' }</p>
                         <button
-                            class="clear-status-btn mt-3 w-full py-2 px-3 bg-tots-green hover:bg-green-700 text-white text-sm font-semibold rounded-md transition duration-200"
+                            class="clear-status-btn"
                             data-report-id="${ report.id }">
                             Mark as Cleared
                         </button>
@@ -213,30 +300,34 @@
 				else
 				{
 					statusHtml = `
-                    <div class="p-3 bg-green-50 border border-green-200 rounded-md">
-                        <p class="font-semibold text-tots-green">Status: Good</p>
-                        <p class="text-sm text-gray-600">All reports are cleared.</p>
+                    <div class="status-good">
+                        <p class="status-title">Status: Good</p>
+                        <p class="status-desc">All reports are cleared.</p>
                     </div>
                 `;
 				}
+
 				return `
-                <div class="box-card bg-white p-4 rounded-lg border border-gray-200 shadow-md">
+                <div class="box-card">
                     <div>
-                        <h3 class="text-lg font-bold text-tots-red">${ box.label }</h3>
-                        <p class="text-sm text-gray-600">${ box.address }, ${ box.city }</p>
-                        <p class="text-xs text-gray-500 mt-1">ID: ${ box.boxId }</p>
+                        <h3>${ box.label }</h3>
+                        <p class="address">${ box.address }, ${ box.city }</p>
+                        <p class="box-id">ID: ${ box.boxId }</p>
                     </div>
-                    <div class="mt-4">
+                    <div class="status-wrapper">
                         ${ statusHtml }
                     </div>
-                    <a href="/status/?id=${ box.boxId }" class="block text-center w-full mt-3 py-2 px-3 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-md transition duration-200">
+                    <a href="/status/?id=${ box.boxId }" class="view-history-btn">
                         View Full History
                     </a>
                 </div>
             `;
 			};
+
+			// --- 6. MAIN APP LOGIC ---
 			let allBoxesMap = new Map();
 			let currentUserId = null;
+
 			const renderDashboard = ( filterKey ) =>
 			{
 				const boxesContainer = document.getElementById( 'boxes-container' );
@@ -261,7 +352,7 @@
 				}
 				if( boxesToRender.length === 0 )
 				{
-					boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No boxes found for this filter.</p>';
+					boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No boxes found for this filter.</p>';
 					return;
 				}
 				let html = '';
@@ -272,6 +363,7 @@
 				} );
 				boxesContainer.innerHTML = html;
 			};
+
 			window.initApp = async( user, displayName ) =>
 			{
 				currentUserId = user.uid;
@@ -289,7 +381,7 @@
 					loadingMessage.remove();
 					if( querySnapshot.empty )
 					{
-						boxesContainer.innerHTML = '<p class="text-gray-600 text-center p-4">No reports have been filed for any boxes yet.</p>';
+						boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No reports have been filed for any boxes yet.</p>';
 						return;
 					}
 					const volunteerNames = new Set();
@@ -342,9 +434,11 @@
 				catch( error )
 				{
 					console.error( 'Error fetching reports:', error );
-					loadingMessage.innerHTML = `<p class="text-center text-tots-red font-bold p-4">Error loading reports: ${ error.message }</p>`;
+					loadingMessage.innerHTML = `<p style="text-align: center; color: var(--t4t-red); font-weight: 700; padding: 1rem;">Error loading reports: ${ error.message }</p>`;
 				}
 			};
+
+			// --- 7. Event listener for "Clear Status" buttons ---
 			document.getElementById( 'main-content' ).addEventListener( 'click', async( e ) =>
 			{
 				if( e.target && e.target.classList.contains( 'clear-status-btn' ) )
@@ -370,109 +464,11 @@
 					}
 				}
 			} );
-			window.setupFirebase = setupFirebase;
+
+			// --- 8. CALL THE SETUP FUNCTION ---
 			setupFirebase();
 		</script>
-		<script src="https://cdn.tailwindcss.com"></script>
-		<script>
-			tailwind.config = {
-				theme: {
-					extend: {
-						fontFamily: { sans: [ 'Inter', 'sans-serif' ] },
-						colors: {
-							'tots-red': '#cc0000',
-							'tots-green': '#008000',
-							'tots-light': '#fcebeb',
-							'marine-blue': '#003366'
-						}
-					}
-				}
-			};
-		</script>
-	</head>
-	<body class="bg-gray-100">
-		<header>
-			<div class="header-content">
-				<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
-					<img src="/images/t4t-logo.png" height="60" alt="Toys for Tots Logo" class="logo t4t-logo">
-				</a>
-				<div class="header-text">
-					<a href="https://toysfortots.mcl1311.com/" rel="noopener noreferrer" style="color: var(--marine-blue);">
-						<h1>Toys for Tots Drop-Off Locations</h1>
-					</a>
-					<a href="https://northatlanta.toysfortots.org/" target="_blank" rel="noopener noreferrer" style="color: var(--t4t-red);">
-						<h2>North Metro Atlanta Area</h2>
-					</a>
-					<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
-				</div>
-				<a href="/" id="mclLogoLink'">
-					<img id="" src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
-				</a>
-			</div>
-		</header>
-		<div id="auth-container" class="max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-xl text-center" style="display: none; margin-bottom:5rem;">
-			<header class="bg-tots-red p-6 -m-8 mb-8 rounded-t-xl">
-				<h1 class="text-3xl font-extrabold text-white text-center">Volunteer Access</h1>
-			</header>
-			<div id="auth-buttons">
-				<div id="email-auth-section" class="mt-8 p-4 border rounded-lg bg-gray-50">
-					<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">
-						<label for="auth-password">Sign In</label>
-						with
-						<label for="auth-email">Email</label>
-					</h2>
-					<input type="email" id="auth-email" placeholder="Email Address" class="w-full p-2 mb-3 border rounded">
-					<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-4 border rounded">
-					<button id="email-sign-in-btn" class="w-full py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition">
-						Sign In
-					</button>
-					<button id="email-sign-up-btn" class="w-full py-3 bg-tots-green text-white rounded-lg font-semibold hover:bg-green-700 transition hidden">
-						Create Account
-					</button>
-					<p class="text-sm mt-3">
-						<button id="toggle-sign-up-btn" class="text-marine-blue hover:text-red-700 font-medium">
-							New user? Create an account
-						</button>
-					</p>
-				</div>
-				<div class="my-4 text-gray-500 font-semibold">-- OR --</div>
-				<p id="auth-message" class="text-gray-700 mb-6">Please sign in to access the dashboard.</p>
-				<button id="google-login-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200">
-					Sign In with Google
-				</button>
-			</div>
-		</div>
-		<div id="main-content" style="display: none;">
-			<div class="max-w-2xl mx-auto p-4 md:p-6">
-				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<h1 class="text-3xl font-bold text-gray-800 mb-2">Status Dashboard</h1>
-						<p class="text-lg text-gray-600 mb-4 sm:mb-0">Welcome,
-							<span id="volunteer-name" class="font-semibold">...</span></p>
-					</div>
-					<div class="w-full sm:w-auto flex items-center justify-end space-x-4">
-						<label for="view-filter" class="block text-sm font-medium text-gray-700 whitespace-nowrap">Show
-							boxes:
-						</label>
-						<select id="view-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-tots-red focus:border-tots-red sm:text-sm rounded-md shadow-sm">
-						</select>
-						<p id="user-display" class="text-sm text-gray-500 mb-2"></p>
-						<button id="sign-out-btn" class="py-2 px-4 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm font-semibold rounded-md transition duration-200 shadow-sm">
-							Sign Out
-						</button>
-					</div>
-				</div>
-				<section id="boxes-section" class="mt-6">
-					<h2 id="boxes-title" class="text-2xl font-bold text-gray-800 border-b-2 border-tots-red pb-2 mb-4">
-						Loading...
-					</h2>
-					<div id="boxes-container" class="space-y-4">
-						<p id="loading-message" class="text-center text-gray-500 p-4">Loading reports...</p>
-					</div>
-				</section>
-			</div>
-		</div>
-		<div id="footer-placeholder"></div>
-		<script src="/loader.js" defer></script>
+
 	</body>
+
 </html>

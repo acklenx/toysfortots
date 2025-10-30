@@ -4,46 +4,54 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width-width, initial-scale=1.0">
 		<title>Set Up New Location</title>
-		<script src="https://cdn.tailwindcss.com"></script>
 		<link rel="stylesheet" href="/style.css?v=1.0.7">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
 		<div class="form-wrapper">
 			<div class="form-container">
-				<h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Set Up New Box Location</h1>
+				<h1>Set Up New Box Location</h1>
+
 				<div id="auth-container">
-					<p class="mb-4">You must be signed in to set up a new location.</p>
-					<button id="sign-in-btn" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+					<p>You must be signed in to set up a new location.</p>
+
+					<button id="sign-in-btn">
 						Sign In with Google
 					</button>
-					<button id="show-email-setup-btn" class="text-sm text-gray-600 hover:text-gray-900 mt-3">
-						... or click <span class="text-blue-600 underline">here</span> to setup without Google
+
+					<button id="show-email-setup-btn">
+						... or click <span>here</span> to setup without Google
 					</button>
-					<div id="or-divider" class="my-4 text-gray-500 font-semibold hidden">-- OR --</div>
-					<div id="email-auth-section" class="mt-4 p-4 border rounded-lg bg-gray-50 hidden">
-						<h2 class="text-xl font-bold mb-4 text-gray-700" id="email-auth-title">Create
-							<label for="auth-email">Account</label>
-							with
-							<label for="auth-password">Username</label>
-						</h2>
-						<input type="text" id="auth-email" placeholder="Username" class="w-full p-2 mb-2 border rounded">
-						<p id="password-hint" class="text-xs text-gray-500 mb-4">
+
+					<div id="or-divider" class="hidden">-- OR --</div>
+
+					<div id="email-auth-section" class="hidden">
+
+						<h2 id="email-auth-title">Create Account with Username</h2>
+
+						<div>
+							<label for="auth-email" class="sr-only">Username</label>
+							<input type="text" id="auth-email" placeholder="Username">
+						</div>
+
+						<p id="password-hint">
 							Please pick a new password.
 						</p>
-						<input type="password" id="auth-password" placeholder="Password" class="w-full p-2 mb-3 border rounded">
-						<span id="toggle-password" class="block text-right text-sm text-blue-600 hover:underline cursor-pointer -mt-2 mb-3" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer; margin-top: -0.5rem; margin-bottom: 0.75rem;">
-    show password
-</span>
-						<button id="email-sign-in-btn" class="w-full px-6 py-3 bg-marine-blue text-white rounded-lg font-semibold hover:bg-blue-800 transition hidden">
+
+						<input type="password" id="auth-password" placeholder="Password">
+
+						<span id="toggle-password">show password</span>
+
+						<button id="email-sign-in-btn" class="hidden">
 							Sign In
 						</button>
-						<button id="email-sign-up-btn" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
+						<button id="email-sign-up-btn">
 							Create Account
 						</button>
-						<p class="text-sm mt-3">
-							<button id="toggle-sign-up-btn" class="font-medium"> Already have an account?
-								<span class="text-marine-blue underline">Sign In</span>
+
+						<p>
+							<button id="toggle-sign-up-btn">
+								Already have an account? <span>Sign In</span>
 							</button>
 						</p>
 					</div>
@@ -56,19 +64,16 @@
 					<div class="form-group">
 						<label for="passcode">Setup Code</label>
 						<input type="password" id="passcode" name="passcode" required>
-						<span id="toggle-passcode" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer;  margin-bottom: 0.75rem;">
-       show code
-   </span>
+						<span id="toggle-passcode" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer;  margin-bottom: 0.75rem;">show code</span>
 					</div>
-					<div class="my-6 h-1 bg-gray-300"></div>
-					<div class="mb-5">
-						<button id="gps-btn" type="button" class="w-3/4 block mx-auto py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition duration-200">
-							Use My GPS Location
-						</button>
-						<div id="gps-error-msg" class="text-center text-sm text-red-600 mt-2"></div>
+					<div class="hr-divider"></div>
+					<div style="margin-bottom: 1.25rem;"> <button id="gps-btn" type="button">
+						Use My GPS Location
+					</button>
+						<div id="gps-error-msg"></div>
 					</div>
-					<div id="show-address-btn" class="text-center my-4 text-gray-700 cursor-pointer hover:text-gray-900">
-						Click <span class="underline font-medium">here</span> to type in the address
+					<div id="show-address-btn">
+						Click <span>here</span> to type in the address
 					</div>
 					<input type="hidden" id="lat" name="lat">
 					<input type="hidden" id="lon" name="lon">
@@ -92,7 +97,7 @@
 						<label for="boxes">Number of Boxes</label>
 						<input type="number" id="boxes" name="boxes" value="1" min="1">
 					</div>
-					<div class="my-6 h-1 bg-gray-300"></div>
+					<div class="hr-divider"></div>
 					<div class="form-group">
 						<label for="label">Location Name (Label)</label>
 						<input type="text" id="label" name="label" required>
@@ -113,9 +118,8 @@
 						<button id="submit-btn" type="submit">Submit Location</button>
 					</div>
 					<div id="message-container"></div>
-					<div class="text-center">
-						<p id="user-display" class="text-sm text-gray-500 mb-2"></p>
-						<button id="sign-out-btn" type="button" class="mt-4 text-sm text-gray-600 hover:text-gray-900">
+					<div style="text-align: center;"> <p id="user-display"></p>
+						<button id="sign-out-btn" type="button">
 							Sign Out
 						</button>
 					</div>
