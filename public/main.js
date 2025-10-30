@@ -1,31 +1,15 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { db, auth, locationsCollectionPath } from '/js/firebase-init.js';
 import {
-	getAuth,
 	signInAnonymously,
 	onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import {
-	getFirestore,
 	collection,
 	getDocs,
 	query,
 	orderBy
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-const firebaseConfig = {
-	apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-	authDomain: 'toysfortots.mcl1311.com',
-	projectId: 'toysfortots-eae4d',
-	storageBucket: 'toysfortots-eae4d.firebasestorage.app',
-	messagingSenderId: '505039956655',
-	appId: '1:505039956655:web:c750c66b28f7facd82025a',
-	measurementId: 'G-XKQYPK0GLC'
-};
-const appId = firebaseConfig.projectId;
-let db;
-const publicDocumentId = '01';
-const dataDocumentId = '01';
-const locationsCollectionPath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }/locations`;
 document.addEventListener( 'DOMContentLoaded', () =>
 {
 	const map = L.map( 'map' ).setView( [ 34.05, -84.60 ], 11 );
@@ -96,9 +80,6 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	{
 		try
 		{
-			const app = initializeApp( firebaseConfig );
-			db = getFirestore( app );
-			const auth = getAuth( app );
 			onAuthStateChanged( auth, ( user ) =>
 			{
 				if( user )
