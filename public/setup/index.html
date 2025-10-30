@@ -182,8 +182,8 @@
 						</button>
 
 						<p class="text-sm mt-3">
-							<button id="toggle-sign-up-btn" class="text-marine-blue hover:underline font-medium">
-								Already have an account? Sign In
+							<button id="toggle-sign-up-btn" class="font-medium"> Already have an account?
+								<span class="text-marine-blue underline">Sign In</span>
 							</button>
 						</p>
 					</div>
@@ -592,18 +592,17 @@
 					const isSignUpMode = emailSignInBtn.classList.contains('hidden');
 
 					if (isSignUpMode) {
-						// Switch to Sign In
 						emailAuthTitle.textContent = 'Sign In with Username';
 						emailSignInBtn.classList.remove('hidden');
 						emailSignUpBtn.classList.add('hidden');
-						passwordHint.classList.add('hidden'); // Hide hint
-						toggleSignUpBtn.textContent = 'New user? Create an account';
+						passwordHint.classList.add('hidden');
+						toggleSignUpBtn.innerHTML = 'New user? <span class="text-marine-blue underline">Create an account</span>';
 					} else {
 						emailAuthTitle.textContent = 'Create Account with Username';
 						emailSignInBtn.classList.add('hidden');
 						emailSignUpBtn.classList.remove('hidden');
 						passwordHint.classList.remove('hidden');
-						toggleSignUpBtn.textContent = 'Already have an account? Sign In';
+						toggleSignUpBtn.innerHTML = 'Already have an account? <span class="text-marine-blue underline">Sign In</span>';
 					}
 				}
 
