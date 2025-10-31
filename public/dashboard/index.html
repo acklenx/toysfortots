@@ -15,25 +15,28 @@
 			<div id="auth-buttons">
 				<div id="email-auth-section">
 					<h2 id="email-auth-title">Sign In with Username</h2>
-					<div>
-						<label for="auth-email" class="sr-only">Username</label>
-						<input type="text" id="auth-email" placeholder="Username">
-					</div>
-					<div>
-						<label for="auth-password" class="sr-only">Password</label>
-						<input type="password" id="auth-password" placeholder="Password">
-					</div>
-					<button id="email-sign-in-btn">
-						Sign In
-					</button>
-					<button id="email-sign-up-btn" class="hidden">
-						Create Account
-					</button>
-					<p>
-						<button id="toggle-sign-up-btn">
-							New user? <span>Create an account</span>
+
+					<form id="email-auth-form">
+						<div>
+							<label for="auth-email" class="sr-only">Username</label>
+							<input type="text" id="auth-email" placeholder="Username" autocomplete="username">
+						</div>
+						<div>
+							<label for="auth-password" class="sr-only">Password</label>
+							<input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+						</div>
+
+						<button id="email-sign-in-btn" type="submit">
+							Sign In
 						</button>
-					</p>
+						<button id="email-sign-up-btn" class="hidden" type="submit">
+							Create Account
+						</button>
+					</form> <p>
+					<button id="toggle-sign-up-btn">
+						New user? <span>Create an account</span>
+					</button>
+				</p>
 				</div>
 				<div id="or-divider">-- OR --</div>
 				<p id="auth-message">Please sign in to access the dashboard.</p>
@@ -92,7 +95,7 @@
 			import {
 				httpsCallable
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
-
+			import {  showAuthMessage, clearAuthMessage } from '../js/utils.js';
 			let isAuthorizedVolunteer;
 			const emailAuthTitle = document.getElementById( 'email-auth-title' );
 			const authEmail = document.getElementById( 'auth-email' );
@@ -101,28 +104,6 @@
 			const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
 			const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
 			const authMessage = document.getElementById( 'auth-message' );
-
-			function showAuthMessage( type, text )
-			{
-				const emailAuthSection = document.getElementById( 'email-auth-section' );
-				let msgDiv = document.getElementById( 'auth-msg' );
-				if( !msgDiv )
-				{
-					msgDiv = document.createElement( 'div' );
-					msgDiv.id = 'auth-msg';
-					emailAuthSection.insertBefore( msgDiv, emailSignInBtn );
-				}
-				msgDiv.innerHTML = `<div class="message ${ type } mt-3 mb-3">${ text }</div>`;
-			}
-
-			function clearAuthMessage()
-			{
-				const msgDiv = document.getElementById( 'auth-msg' );
-				if( msgDiv )
-				{
-					msgDiv.remove();
-				}
-			}
 
 			async function handleEmailSignIn()
 			{

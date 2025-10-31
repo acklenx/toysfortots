@@ -22,7 +22,7 @@
 				where,
 				orderBy
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-
+			import { formatDate } from '../js/utils.js';
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			// Config is now imported
 
@@ -52,17 +52,6 @@
 				{
 					console.error( 'Firebase Initialization Error:', error );
 				}
-			};
-
-			// --- 4. HELPER FUNCTIONS ---
-			const formatDate = ( isoString ) =>
-			{
-				if( !isoString )
-				{
-					return 'No date';
-				}
-				const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-				return new Date( isoString ).toLocaleString( undefined, options );
 			};
 
 			// --- MODIFIED: Uses new CSS classes ---

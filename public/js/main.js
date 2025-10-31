@@ -1,4 +1,4 @@
-import { db, auth, locationsCollectionPath } from '/public/js/firebase-init.js';
+import { db, auth, locationsCollectionPath } from '../js/firebase-init.js';
 import {
 	signInAnonymously,
 	onAuthStateChanged

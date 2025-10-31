@@ -28,27 +28,27 @@
 					<div id="email-auth-section" class="hidden">
 
 						<h2 id="email-auth-title">Create Account with Username</h2>
+						<form id="email-auth-form">
+							<div>
+								<label for="auth-email" class="sr-only">Username</label>
+								<input type="text" id="auth-email" placeholder="Username" autocomplete="username">
+							</div>
 
-						<div>
-							<label for="auth-email" class="sr-only">Username</label>
-							<input type="text" id="auth-email" placeholder="Username">
-						</div>
+							<p id="password-hint">
+								<label for="auth-password">Please pick a new password.</label>
+							</p>
 
-						<p id="password-hint">
-							<label for="auth-password">Please pick a new password.</label>
-						</p>
+							<input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
 
-						<input type="password" id="auth-password" placeholder="Password">
+							<span id="toggle-password">show password</span>
 
-						<span id="toggle-password">show password</span>
-
-						<button id="email-sign-in-btn" class="hidden">
-							Sign In
-						</button>
-						<button id="email-sign-up-btn">
-							Create Account
-						</button>
-
+							<button id="email-sign-in-btn" class="hidden" type="submit">
+								Sign In
+							</button>
+							<button id="email-sign-up-btn" type="submit">
+								Create Account
+							</button>
+						</form>
 						<p>
 							<button id="toggle-sign-up-btn">
 								Already have an account? <span>Sign In</span>
@@ -67,9 +67,10 @@
 						<span id="toggle-passcode" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer;  margin-bottom: 0.75rem;">show code</span>
 					</div>
 					<div class="hr-divider"></div>
-					<div style="margin-bottom: 1.25rem;"> <button id="gps-btn" type="button">
-						Use My GPS Location
-					</button>
+					<div style="margin-bottom: 1.25rem;">
+						<button id="gps-btn" type="button">
+							Use My GPS Location
+						</button>
 						<div id="gps-error-msg"></div>
 					</div>
 					<div id="show-address-btn">
@@ -118,7 +119,7 @@
 						<button id="submit-btn" type="submit">Submit Location</button>
 					</div>
 					<div id="message-container"></div>
-					<div style="text-align: center;"> <p id="user-display"></p>
+					<div style="text-align: center;"><p id="user-display"></p>
 						<button id="sign-out-btn" type="button">
 							Sign Out
 						</button>
@@ -127,6 +128,7 @@
 			</div>
 			<script type="module">
 				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
+				import { showMessage, showAuthMessage, clearAuthMessage } from '../js/utils.js';
 				import {
 					onAuthStateChanged,
 					GoogleAuthProvider,
@@ -180,10 +182,6 @@
 				const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
 				const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
 
-				function showMessage( type, text )
-				{
-					messageContainer.innerHTML = `<div class="message ${ type }">${ text }</div>`;
-				}
 
 				async function getGeoLocation()
 				{
@@ -279,27 +277,6 @@
 					} );
 				}
 
-				function showAuthMessage( type, text )
-				{
-					const emailAuthSection = document.getElementById( 'email-auth-section' );
-					let msgDiv = document.getElementById( 'auth-msg' );
-					if( !msgDiv )
-					{
-						msgDiv = document.createElement( 'div' );
-						msgDiv.id = 'auth-msg';
-						emailAuthSection.insertBefore( msgDiv, authEmail );
-					}
-					msgDiv.innerHTML = `<div class="message ${ type } mt-3 mb-3">${ text }</div>`;
-				}
-
-				function clearAuthMessage()
-				{
-					const msgDiv = document.getElementById( 'auth-msg' );
-					if( msgDiv )
-					{
-						msgDiv.remove();
-					}
-				}
 
 				async function handleEmailSignIn()
 				{
