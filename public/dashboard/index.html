@@ -4,56 +4,45 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>My Dashboard</title>
-		<link rel="stylesheet" href="/style.css?v=1.0.7">
+		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
 	</head>
-
 	<body class="bg-gray-100">
-
 		<div id="header-placeholder"></div>
-
 		<div id="auth-container" style="display: none;">
 			<header>
 				<h1>Volunteer Access</h1>
 			</header>
-
 			<div id="auth-buttons">
 				<div id="email-auth-section">
-					<h2 id="email-auth-title">Sign In with Email</h2>
-
+					<h2 id="email-auth-title">Sign In with Username</h2>
 					<div>
-						<label for="auth-email" class="sr-only">Email Address</label>
-						<input type="email" id="auth-email" placeholder="Email Address">
+						<label for="auth-email" class="sr-only">Username</label>
+						<input type="text" id="auth-email" placeholder="Username">
 					</div>
 					<div>
 						<label for="auth-password" class="sr-only">Password</label>
 						<input type="password" id="auth-password" placeholder="Password">
 					</div>
-
 					<button id="email-sign-in-btn">
 						Sign In
 					</button>
 					<button id="email-sign-up-btn" class="hidden">
 						Create Account
 					</button>
-
 					<p>
 						<button id="toggle-sign-up-btn">
 							New user? <span>Create an account</span>
 						</button>
 					</p>
 				</div>
-
 				<div id="or-divider">-- OR --</div>
-
 				<p id="auth-message">Please sign in to access the dashboard.</p>
-
 				<button id="google-login-btn">
 					Sign In with Google
 				</button>
 			</div>
 		</div>
 		<div id="main-content" style="display: none;">
-
 			<div class="dashboard-header-container">
 				<div class="dashboard-header-flex">
 					<div>
@@ -71,7 +60,6 @@
 						</button>
 					</div>
 				</div>
-
 				<section id="boxes-section">
 					<h2 id="boxes-title">Loading...</h2>
 					<div id="boxes-container">
@@ -80,13 +68,9 @@
 				</section>
 			</div>
 		</div>
-
 		<div id="footer-placeholder"></div>
-
-		<script src="/loader.js" defer></script>
-
+		<script src="/js/loader.js" defer></script>
 		<script type="module">
-			// --- 1. IMPORTS ---
 			import { auth, db, functions, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				onAuthStateChanged,
@@ -109,72 +93,102 @@
 				httpsCallable
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
-			// --- 2. CONFIG & TOP-LEVEL VARS ---
-			let isAuthorizedVolunteer; // Global reference to the callable function
-
-			// --- DOM ELEMENTS ---
-			const emailAuthTitle = document.getElementById('email-auth-title');
-			const authEmail = document.getElementById('auth-email');
-			const authPassword = document.getElementById('auth-password');
-			const emailSignInBtn = document.getElementById('email-sign-in-btn');
-			const emailSignUpBtn = document.getElementById('email-sign-up-btn');
-			const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
+			let isAuthorizedVolunteer;
+			const emailAuthTitle = document.getElementById( 'email-auth-title' );
+			const authEmail = document.getElementById( 'auth-email' );
+			const authPassword = document.getElementById( 'auth-password' );
+			const emailSignInBtn = document.getElementById( 'email-sign-in-btn' );
+			const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
+			const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
 			const authMessage = document.getElementById( 'auth-message' );
 
-
-			// --- 4. FIREBASE SETUP (Multi-Auth + Auth Check) ---
-
-			// --- Helper for Email Auth Messages ---
-			function showAuthMessage(type, text) {
-				const emailAuthSection = document.getElementById('email-auth-section');
-				let msgDiv = document.getElementById('auth-msg');
-				if (!msgDiv) {
-					msgDiv = document.createElement('div');
+			function showAuthMessage( type, text )
+			{
+				const emailAuthSection = document.getElementById( 'email-auth-section' );
+				let msgDiv = document.getElementById( 'auth-msg' );
+				if( !msgDiv )
+				{
+					msgDiv = document.createElement( 'div' );
 					msgDiv.id = 'auth-msg';
-					emailAuthSection.insertBefore(msgDiv, emailSignInBtn);
+					emailAuthSection.insertBefore( msgDiv, emailSignInBtn );
 				}
-				msgDiv.innerHTML = `<div class="message ${type} mt-3 mb-3">${text}</div>`;
+				msgDiv.innerHTML = `<div class="message ${ type } mt-3 mb-3">${ text }</div>`;
 			}
 
-			function clearAuthMessage() {
-				const msgDiv = document.getElementById('auth-msg');
-				if (msgDiv) {
+			function clearAuthMessage()
+			{
+				const msgDiv = document.getElementById( 'auth-msg' );
+				if( msgDiv )
+				{
 					msgDiv.remove();
 				}
 			}
 
-			// --- Email/Password Handlers ---
-			async function handleEmailSignIn() {
+			async function handleEmailSignIn()
+			{
 				clearAuthMessage();
-				const email = authEmail.value;
+				const username = authEmail.value;
 				const password = authPassword.value;
-				if (!email || !password) {
-					showAuthMessage('error', 'Please enter both email and password.');
+				if( !username || !password )
+				{
+					showAuthMessage( 'error', 'Please enter both username and password.' );
 					return;
 				}
-				try {
-					await signInWithEmailAndPassword(auth, email, password);
-					// onAuthStateChanged handles the rest
-				} catch (error) {
-					console.error('Email Sign In Error:', error);
-					showAuthMessage('error', `Sign in failed: ${error.message}`);
+				if( username.includes( '@' ) )
+				{
+					showAuthMessage( 'error', 'Username cannot contain "@" symbol. Just enter the username.' );
+					return;
+				}
+				const email = `${ username }@toysfortots.mcl1311.com`;
+				try
+				{
+					await signInWithEmailAndPassword( auth, email, password );
+				}
+				catch( error )
+				{
+					console.error( 'Email Sign In Error:', error );
+					if( error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' )
+					{
+						showAuthMessage( 'error', 'Sign in failed: Invalid username or password.' );
+					}
+					else
+					{
+						showAuthMessage( 'error', `Sign in failed: ${ error.message }` );
+					}
 				}
 			}
 
-			async function handleEmailSignUp() {
+			async function handleEmailSignUp()
+			{
 				clearAuthMessage();
-				const email = authEmail.value;
+				const username = authEmail.value;
 				const password = authPassword.value;
-				if (!email || !password || password.length < 6) {
-					showAuthMessage('error', 'Please enter a valid email and a password of at least 6 characters.');
+				if( !username || !password || password.length < 6 )
+				{
+					showAuthMessage( 'error', 'Please enter a username and a password of at least 6 characters.' );
 					return;
 				}
-				try {
-					await createUserWithEmailAndPassword(auth, email, password);
-					// onAuthStateChanged handles the rest
-				} catch (error) {
-					console.error('Email Sign Up Error:', error);
-					showAuthMessage('error', `Sign up failed: ${error.message}`);
+				if( username.includes( '@' ) )
+				{
+					showAuthMessage( 'error', 'Username cannot contain "@" symbol.' );
+					return;
+				}
+				const email = `${ username }@toysfortots.mcl1311.com`;
+				try
+				{
+					await createUserWithEmailAndPassword( auth, email, password );
+				}
+				catch( error )
+				{
+					console.error( 'Email Sign Up Error:', error );
+					if( error.code === 'auth/email-already-in-use' )
+					{
+						showAuthMessage( 'error', 'Sign up failed: This username is already taken.' );
+					}
+					else
+					{
+						showAuthMessage( 'error', `Sign up failed: ${ error.message }` );
+					}
 				}
 			}
 
@@ -184,30 +198,25 @@
 				const isSignInMode = emailSignInBtn.classList.contains( 'hidden' );
 				if( isSignInMode )
 				{
-					// Switch to Sign In
-					emailAuthTitle.textContent = 'Sign In with Email';
+					emailAuthTitle.textContent = 'Sign In with Username';
 					emailSignInBtn.classList.remove( 'hidden' );
 					emailSignUpBtn.classList.add( 'hidden' );
 					toggleSignUpBtn.innerHTML = 'New user? <span>Create an account</span>';
 				}
 				else
 				{
-					// Switch to Sign Up
-					emailAuthTitle.textContent = 'Create Account with Email';
+					emailAuthTitle.textContent = 'Create Account with Username';
 					emailSignInBtn.classList.add( 'hidden' );
 					emailSignUpBtn.classList.remove( 'hidden' );
 					toggleSignUpBtn.innerHTML = 'Already have an account? <span>Sign In</span>';
 				}
-			} // <-- This is the curly brace we fixed!
-
-			// --- END HANDLERS ---
+			}
 
 			const setupFirebase = () =>
 			{
 				try
 				{
 					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
-
 					onAuthStateChanged( auth, async( user ) =>
 					{
 						if( user && !user.isAnonymous )
@@ -252,7 +261,6 @@
 							}
 						}
 					} );
-
 					getRedirectResult( auth ).catch( ( error ) =>
 					{
 						console.error( 'Redirect login failed:', error );
@@ -272,8 +280,6 @@
 					console.error( 'Firebase Initialization Error:', error );
 				}
 			};
-
-			// --- 5. HELPER FUNCTIONS (Uses new CSS classes) ---
 			const renderBoxCard = ( box ) =>
 			{
 				let statusHtml;
@@ -281,8 +287,6 @@
 				{
 					const report = box.latestPendingReport;
 					const isProblem = report.reportType.includes( 'problem' );
-					// Note: The 'text-yellow-700' class no longer does anything, which is fine.
-					// We'd need a new CSS rule for it if you want that color.
 					statusHtml = `
                     <div class="status-problem">
                         <p class="status-title ${ isProblem ? '' : 'text-yellow-700' }">
@@ -306,7 +310,6 @@
                     </div>
                 `;
 				}
-
 				return `
                 <div class="box-card">
                     <div>
@@ -323,11 +326,8 @@
                 </div>
             `;
 			};
-
-			// --- 6. MAIN APP LOGIC ---
 			let allBoxesMap = new Map();
 			let currentUserId = null;
-
 			const renderDashboard = ( filterKey ) =>
 			{
 				const boxesContainer = document.getElementById( 'boxes-container' );
@@ -363,7 +363,6 @@
 				} );
 				boxesContainer.innerHTML = html;
 			};
-
 			window.initApp = async( user, displayName ) =>
 			{
 				currentUserId = user.uid;
@@ -437,8 +436,6 @@
 					loadingMessage.innerHTML = `<p style="text-align: center; color: var(--t4t-red); font-weight: 700; padding: 1rem;">Error loading reports: ${ error.message }</p>`;
 				}
 			};
-
-			// --- 7. Event listener for "Clear Status" buttons ---
 			document.getElementById( 'main-content' ).addEventListener( 'click', async( e ) =>
 			{
 				if( e.target && e.target.classList.contains( 'clear-status-btn' ) )
@@ -464,11 +461,7 @@
 					}
 				}
 			} );
-
-			// --- 8. CALL THE SETUP FUNCTION ---
 			setupFirebase();
 		</script>
-
 	</body>
-
 </html>
