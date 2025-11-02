@@ -12,9 +12,15 @@
   },
   "main": "tailwind.config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "firebase emulators:start --only hosting,auth,firestore,functions",
+    "test": "npx playwright test"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.9.2",
+    "live-server": "^1.2.2"
+  }
 }
