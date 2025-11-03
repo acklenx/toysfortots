@@ -12,7 +12,8 @@
         ]
       },
       {
-        "source": "**/*.@(css|js|html)",
+        "source":
+        "**/*.@(css|js|html)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -21,7 +22,8 @@
         ]
       },
       {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|eot|otf|ttf|ttc|woff|woff2|font.css)",
+        "source":
+        "**/*.@(jpg|jpeg|gif|png|svg|webp|eot|otf|ttf|ttc|woff|woff2|font.css)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -55,23 +57,5 @@
         "*.local"
       ]
     }
-  ],
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "firestore": {
-      "port": 8081
-    },
-    "functions": {
-      "port": 5001
-    },
-    "hosting": {
-      "port": 5000
-    },
-    "ui": {
-      "enabled": true,
-      "port": 4000
-    }
-  }
+  ]
 }
