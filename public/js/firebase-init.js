@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-import { getFunctions } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { getFunctions, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
@@ -15,6 +15,14 @@ export const app = initializeApp( firebaseConfig );
 export const auth = getAuth( app );
 export const db = getFirestore( app );
 export const functions = getFunctions( app, 'us-central1' );
+
+// Connect to emulators if running locally
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+	connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+	connectFirestoreEmulator(db, 'localhost', 8080);
+	connectFunctionsEmulator(functions, 'localhost', 5001);
+	console.log('Connected to Firebase emulators');
+}
 const appId = firebaseConfig.projectId;
 const publicDocumentId = '01';
 const dataDocumentId = '01';
