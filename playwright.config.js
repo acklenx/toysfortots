@@ -16,6 +16,16 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    actionTimeout: 3000, // 3 seconds for actions like click, fill, etc.
+    navigationTimeout: 3000, // 3 seconds for page navigations
+  },
+
+  // Global timeout for each test
+  timeout: 30 * 1000, // 30 seconds total per test (reasonable for sequential tests with multiple actions)
+
+  // Timeout for assertions (expect calls)
+  expect: {
+    timeout: 3000, // 3 seconds for assertions
   },
 
   projects: [
