@@ -232,12 +232,13 @@
 						showMessage( 'error', 'Please provide either a Contact Email or a Contact Phone.' );
 						return; // Stop the submission
 					}
-					if( !auth.currentUser || auth.currentUser.isAnonymous )
+					if( !auth.currentUser )
 					{
 						showMessage( 'error', 'You must be signed in to submit this form.' );
-						console.error( 'Client Error: Submission attempted while user is logged out or anonymous.' );
+						console.error( 'Client Error: Submission attempted while user is logged out.' );
 						return;
 					}
+					// Anonymous users are allowed - they will be authorized via passcode
 					if( !scannedBoxId )
 					{
 						return;
@@ -329,7 +330,7 @@
 					form.onsubmit = handleFormSubmit;
 					onAuthStateChanged( auth, async( user ) =>
 					{
-						if( user && !user.isAnonymous )
+						if( user )
 						{
 							if( !scannedBoxId )
 							{
@@ -349,7 +350,9 @@
 									return;
 								}
 								form.classList.remove( 'hidden' );
-								if( user.email )
+
+								// Only show user info if not anonymous
+								if( user.email && !user.isAnonymous )
 								{
 									let displayName = user.email;
 									const atIndex = displayName.indexOf( '@' );
@@ -359,27 +362,42 @@
 									}
 									userDisplay.textContent = `Signed in as: ${ displayName }`;
 									userDisplay.classList.remove( 'hidden' );
+									signOutBtn.classList.remove( 'hidden' );
 								}
 								else
 								{
 									userDisplay.classList.add( 'hidden' );
+									signOutBtn.classList.add( 'hidden' );
 								}
+
 								const passcodeGroup = passcode.parentElement;
 								const passcodeLabel = passcodeGroup.querySelector( 'label' );
-								passcodeLabel.textContent = 'Verifying authorization...';
-								const result = await isAuthorizedVolunteer();
-								if( result.data.isAuthorized )
+
+								// Check authorization only for authenticated (non-anonymous) users
+								if( !user.isAnonymous )
 								{
-									passcodeGroup.classList.add( 'hidden' );
-									passcode.required = false;
-									passcode.value = '';
-									passcodeLabel.textContent = 'Password (Authorized)';
+									passcodeLabel.textContent = 'Verifying authorization...';
+									const result = await isAuthorizedVolunteer();
+									if( result.data.isAuthorized )
+									{
+										passcodeGroup.classList.add( 'hidden' );
+										passcode.required = false;
+										passcode.value = '';
+										passcodeLabel.textContent = 'Password (Authorized)';
+									}
+									else
+									{
+										passcodeGroup.classList.remove( 'hidden' );
+										passcode.required = true;
+										passcodeLabel.textContent = 'One time setup code';
+									}
 								}
 								else
 								{
+									// Anonymous users must use passcode
 									passcodeGroup.classList.remove( 'hidden' );
 									passcode.required = true;
-									passcodeLabel.textContent = 'One time setup code';
+									passcodeLabel.textContent = 'Setup Code';
 								}
 							}
 							catch( error )
@@ -390,9 +408,13 @@
 						}
 						else
 						{
-							// User is not authenticated - redirect to login with return URL
-							const currentUrl = window.location.pathname + window.location.search;
-							window.location.href = '/login?returnUrl=' + encodeURIComponent( currentUrl );
+							// No user - sign in anonymously to allow access to setup page
+							console.log( 'No user found. Signing in anonymously for setup page access...' );
+							const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+							await signInAnonymously( auth ).catch( error => {
+								console.error( 'Anonymous sign-in failed:', error );
+								showMessage( 'error', `Authentication failed: ${ error.message }` );
+							});
 						}
 					} );
 				}
