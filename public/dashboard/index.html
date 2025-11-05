@@ -8,43 +8,6 @@
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
-		<div id="auth-container" style="display: none;">
-			<header>
-				<h1>Volunteer Access</h1>
-			</header>
-			<div id="auth-buttons">
-				<div id="email-auth-section">
-					<h2 id="email-auth-title">Sign In with Username</h2>
-
-					<form id="email-auth-form">
-						<div>
-							<label for="auth-email" class="sr-only">Username</label>
-							<input type="text" id="auth-email" placeholder="Username" autocomplete="username">
-						</div>
-						<div>
-							<label for="auth-password" class="sr-only">Password</label>
-							<input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
-						</div>
-
-						<button id="email-sign-in-btn" type="submit">
-							Sign In
-						</button>
-						<button id="email-sign-up-btn" class="hidden" type="submit">
-							Create Account
-						</button>
-					</form> <p>
-					<button id="toggle-sign-up-btn">
-						New user? <span>Create an account</span>
-					</button>
-				</p>
-				</div>
-				<div id="or-divider">-- OR --</div>
-				<p id="auth-message">Please sign in to access the dashboard.</p>
-				<button id="google-login-btn">
-					Sign In with Google
-				</button>
-			</div>
-		</div>
 		<div id="main-content" style="display: none;">
 			<div class="dashboard-header-container">
 				<div class="dashboard-header-flex">
@@ -77,12 +40,7 @@
 			import { auth, db, functions, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				onAuthStateChanged,
-				GoogleAuthProvider,
-				getRedirectResult,
-				signOut,
-				signInWithPopup,
-				createUserWithEmailAndPassword,
-				signInWithEmailAndPassword
+				signOut
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
 				collection,
@@ -95,103 +53,7 @@
 			import {
 				httpsCallable
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
-			import {  showAuthMessage, clearAuthMessage } from '/js/utils.js';
 			let isAuthorizedVolunteer;
-			const emailAuthTitle = document.getElementById( 'email-auth-title' );
-			const authEmail = document.getElementById( 'auth-email' );
-			const authPassword = document.getElementById( 'auth-password' );
-			const emailSignInBtn = document.getElementById( 'email-sign-in-btn' );
-			const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
-			const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
-			const authMessage = document.getElementById( 'auth-message' );
-
-			async function handleEmailSignIn()
-			{
-				clearAuthMessage();
-				const username = authEmail.value;
-				const password = authPassword.value;
-				if( !username || !password )
-				{
-					showAuthMessage( 'error', 'Please enter both username and password.' );
-					return;
-				}
-				if( username.includes( '@' ) )
-				{
-					showAuthMessage( 'error', 'Username cannot contain "@" symbol. Just enter the username.' );
-					return;
-				}
-				const email = `${ username }@toysfortots.mcl1311.com`;
-				try
-				{
-					await signInWithEmailAndPassword( auth, email, password );
-				}
-				catch( error )
-				{
-					console.error( 'Email Sign In Error:', error );
-					if( error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' )
-					{
-						showAuthMessage( 'error', 'Sign in failed: Invalid username or password.' );
-					}
-					else
-					{
-						showAuthMessage( 'error', `Sign in failed: ${ error.message }` );
-					}
-				}
-			}
-
-			async function handleEmailSignUp()
-			{
-				clearAuthMessage();
-				const username = authEmail.value;
-				const password = authPassword.value;
-				if( !username || !password || password.length < 6 )
-				{
-					showAuthMessage( 'error', 'Please enter a username and a password of at least 6 characters.' );
-					return;
-				}
-				if( username.includes( '@' ) )
-				{
-					showAuthMessage( 'error', 'Username cannot contain "@" symbol.' );
-					return;
-				}
-				const email = `${ username }@toysfortots.mcl1311.com`;
-				try
-				{
-					await createUserWithEmailAndPassword( auth, email, password );
-				}
-				catch( error )
-				{
-					console.error( 'Email Sign Up Error:', error );
-					if( error.code === 'auth/email-already-in-use' )
-					{
-						showAuthMessage( 'error', 'Sign up failed: This username is already taken.' );
-					}
-					else
-					{
-						showAuthMessage( 'error', `Sign up failed: ${ error.message }` );
-					}
-				}
-			}
-
-			function toggleEmailAuthMode()
-			{
-				clearAuthMessage();
-				const isSignInMode = emailSignInBtn.classList.contains( 'hidden' );
-				if( isSignInMode )
-				{
-					emailAuthTitle.textContent = 'Sign In with Username';
-					emailSignInBtn.classList.remove( 'hidden' );
-					emailSignUpBtn.classList.add( 'hidden' );
-					toggleSignUpBtn.innerHTML = 'New user? <span>Create an account</span>';
-				}
-				else
-				{
-					emailAuthTitle.textContent = 'Create Account with Username';
-					emailSignInBtn.classList.add( 'hidden' );
-					emailSignUpBtn.classList.remove( 'hidden' );
-					toggleSignUpBtn.innerHTML = 'Already have an account? <span>Sign In</span>';
-				}
-			}
 
 			const setupFirebase = () =>
 			{
@@ -202,14 +64,12 @@
 					{
 						if( user && !user.isAnonymous )
 						{
-							clearAuthMessage();
 							try
 							{
 								const result = await isAuthorizedVolunteer( { uid: user.uid } );
 								if( result.data.isAuthorized )
 								{
 									const displayName = result.data.displayName || user.email;
-									document.getElementById( 'auth-container' ).style.display = 'none';
 									document.getElementById( 'main-content' ).style.display = 'block';
 									document.getElementById( 'volunteer-name' ).textContent = displayName;
 									document.getElementById( 'sign-out-btn' ).onclick = () => signOut( auth );
@@ -217,44 +77,23 @@
 								}
 								else
 								{
-									document.getElementById( 'main-content' ).style.display = 'none';
-									document.getElementById( 'auth-container' ).style.display = 'block';
-									authMessage.textContent = 'You are signed in but not authorized. Please complete the setup form or contact an administrator.';
-									document.getElementById( 'auth-buttons' ).style.display = 'none';
+									// User is signed in but not authorized - redirect to login
+									window.location.href = '/login?returnUrl=' + encodeURIComponent( window.location.pathname );
 								}
 							}
 							catch( err )
 							{
 								console.error( 'Authorization check failed:', err );
-								authMessage.textContent = `An error occurred during authorization check: ${ err.message }`;
-								document.getElementById( 'auth-buttons' ).style.display = 'none';
+								// Redirect to login on error
+								window.location.href = '/login?returnUrl=' + encodeURIComponent( window.location.pathname );
 							}
 						}
 						else
 						{
-							document.getElementById( 'main-content' ).style.display = 'none';
-							document.getElementById( 'auth-container' ).style.display = 'block';
-							document.getElementById( 'auth-buttons' ).style.display = 'block';
-							authMessage.textContent = 'Please sign in to access the dashboard.';
-							if( emailSignInBtn.classList.contains( 'hidden' ) )
-							{
-								toggleEmailAuthMode();
-							}
+							// User is not authenticated - redirect to login
+							window.location.href = '/login?returnUrl=' + encodeURIComponent( window.location.pathname );
 						}
 					} );
-					getRedirectResult( auth ).catch( ( error ) =>
-					{
-						console.error( 'Redirect login failed:', error );
-						authMessage.textContent = `Login failed: ${ error.message }`;
-					} );
-					document.getElementById( 'google-login-btn' ).addEventListener( 'click', () =>
-					{
-						const provider = new GoogleAuthProvider();
-						signInWithPopup( auth, provider );
-					} );
-					emailSignInBtn.onclick = handleEmailSignIn;
-					emailSignUpBtn.onclick = handleEmailSignUp;
-					toggleSignUpBtn.onclick = toggleEmailAuthMode;
 				}
 				catch( error )
 				{

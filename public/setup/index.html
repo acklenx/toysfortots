@@ -12,50 +12,6 @@
 			<div class="form-container">
 				<h1>Set Up New Box Location</h1>
 
-				<div id="auth-container">
-					<p>You must be signed in to set up a new location.</p>
-
-					<button id="sign-in-btn">
-						Sign In with Google
-					</button>
-
-					<button id="show-email-setup-btn">
-						... or click <span>here</span> to setup without Google
-					</button>
-
-					<div id="or-divider" class="hidden">-- OR --</div>
-
-					<div id="email-auth-section" class="hidden">
-
-						<h2 id="email-auth-title">Create Account with Username</h2>
-						<form id="email-auth-form">
-							<div>
-								<label for="auth-email" class="sr-only">Username</label>
-								<input type="text" id="auth-email" placeholder="Username" autocomplete="username">
-							</div>
-
-							<p id="password-hint">
-								<label for="auth-password">Please pick a new password.</label>
-							</p>
-
-							<input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
-
-							<span id="toggle-password">show password</span>
-
-							<button id="email-sign-in-btn" class="hidden" type="submit">
-								Sign In
-							</button>
-							<button id="email-sign-up-btn" type="submit">
-								Create Account
-							</button>
-						</form>
-						<p>
-							<button id="toggle-sign-up-btn">
-								Already have an account? <span>Sign In</span>
-							</button>
-						</p>
-					</div>
-				</div>
 				<form id="new-location-form" class="hidden">
 					<div class="form-group">
 						<label>Box ID to Set Up</label>
@@ -128,29 +84,21 @@
 			</div>
 			<script type="module">
 				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
-				import { showMessage, showAuthMessage, clearAuthMessage } from '/js/utils.js';
+				import { showMessage } from '/js/utils.js';
 				import {
 					onAuthStateChanged,
-					GoogleAuthProvider,
-					signInWithPopup,
-					signOut,
-					createUserWithEmailAndPassword,
-					signInWithEmailAndPassword
+					signOut
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 				import {
-					getFirestore,
 					doc,
 					getDoc
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 				import {
-					getFunctions,
 					httpsCallable
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 				let scannedBoxId = null;
-				let provisionBox, isAuthorizedVolunteer; // Firebase function refs
-				const authContainer = document.getElementById( 'auth-container' );
-				const signInBtn = document.getElementById( 'sign-in-btn' );
+				let isAuthorizedVolunteer; // Firebase function ref
 				const signOutBtn = document.getElementById( 'sign-out-btn' );
 				const userDisplay = document.getElementById( 'user-display' );
 				const form = document.getElementById( 'new-location-form' );
@@ -170,17 +118,6 @@
 				const gpsErrorMsg = document.getElementById( 'gps-error-msg' );
 				const passcode = document.getElementById( 'passcode' );
 				const togglePasscode = document.getElementById( 'toggle-passcode' );
-				const showEmailSetupBtn = document.getElementById( 'show-email-setup-btn' );
-				const orDivider = document.getElementById( 'or-divider' );
-				const emailAuthSection = document.getElementById( 'email-auth-section' );
-				const emailAuthTitle = document.getElementById( 'email-auth-title' );
-				const authEmail = document.getElementById( 'auth-email' );
-				const authPassword = document.getElementById( 'auth-password' );
-				const togglePassword = document.getElementById( 'toggle-password' );
-				const passwordHint = document.getElementById( 'password-hint' ); // New
-				const emailSignInBtn = document.getElementById( 'email-sign-in-btn' );
-				const emailSignUpBtn = document.getElementById( 'email-sign-up-btn' );
-				const toggleSignUpBtn = document.getElementById( 'toggle-sign-up-btn' );
 
 
 				async function getGeoLocation()
@@ -278,108 +215,6 @@
 				}
 
 
-				async function handleEmailSignIn()
-				{
-					clearAuthMessage();
-					const username = authEmail.value; // Get username
-					const password = authPassword.value;
-					if( !username || !password )
-					{
-						showAuthMessage( 'error', 'Please enter both username and password.' );
-						return;
-					}
-					if( username.includes( '@' ) )
-					{
-						showAuthMessage( 'error', 'Username cannot contain "@" symbol. Just enter the username.' );
-						return;
-					}
-					const email = `${ username }@toysfortots.mcl1311.com`;
-					try
-					{
-						await signInWithEmailAndPassword( auth, email, password );
-					}
-					catch( error )
-					{
-						console.error( 'Email Sign In Error:', error );
-						if( error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' )
-						{
-							showAuthMessage( 'error', 'Sign in failed: Invalid username or password.' );
-						}
-						else
-						{
-							showAuthMessage( 'error', `Sign in failed: ${ error.message }` );
-						}
-					}
-				}
-
-				async function handleEmailSignUp()
-				{
-					clearAuthMessage();
-					const username = authEmail.value; // Get username
-					const password = authPassword.value;
-					if( !username || !password )
-					{ // <-- MODIFIED (removed retypePassword)
-						showAuthMessage( 'error', 'Please fill out all fields.' );
-						return;
-					}
-					if( username.includes( '@' ) )
-					{
-						showAuthMessage( 'error', 'Username cannot contain "@" symbol.' );
-						return;
-					}
-					if( password.length < 6 )
-					{
-						showAuthMessage( 'error', 'Password must be at least 6 characters.' );
-						return;
-					}
-					const email = `${ username }@toysfortots.mcl1311.com`;
-					try
-					{
-						await createUserWithEmailAndPassword( auth, email, password );
-					}
-					catch( error )
-					{
-						if( error.code === 'auth/email-already-in-use' )
-						{
-							showAuthMessage( 'error', 'Sign up failed: This username is already taken.' );
-						}
-						else
-						{
-							showAuthMessage( 'error', `Sign up failed: ${ error.message }` );
-						}
-					}
-				}
-
-				function toggleEmailAuthMode()
-				{
-					clearAuthMessage();
-					authPassword.value = '';
-					const isSignUpMode = emailSignInBtn.classList.contains( 'hidden' );
-					if( isSignUpMode )
-					{
-						emailAuthTitle.textContent = 'Sign In with Username';
-						emailSignInBtn.classList.remove( 'hidden' );
-						emailSignUpBtn.classList.add( 'hidden' );
-						passwordHint.classList.add( 'hidden' );
-						toggleSignUpBtn.innerHTML = 'New user? <span class="text-marine-blue underline">Create an account</span>';
-					}
-					else
-					{
-						emailAuthTitle.textContent = 'Create Account with Username';
-						emailSignInBtn.classList.add( 'hidden' );
-						emailSignUpBtn.classList.remove( 'hidden' );
-						passwordHint.classList.remove( 'hidden' );
-						toggleSignUpBtn.innerHTML = 'Already have an account? <span class="text-marine-blue underline">Sign In</span>';
-					}
-				}
-
-				function showEmailSetup()
-				{
-					emailAuthSection.classList.remove( 'hidden' );
-					orDivider.classList.remove( 'hidden' );
-					showEmailSetupBtn.classList.add( 'hidden' ); // Hide the button after clicking
-				}
-
 				async function handleFormSubmit( e )
 				{
 					e.preventDefault();
@@ -475,20 +310,8 @@
 					{
 						boxIdDisplay.textContent = scannedBoxId;
 					}
-					provisionBox = httpsCallable( functions, 'provisionBoxV2' );
 					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
-					const provider = new GoogleAuthProvider();
-					showEmailSetupBtn.onclick = showEmailSetup;
-					emailSignInBtn.onclick = handleEmailSignIn;
-					emailSignUpBtn.onclick = handleEmailSignUp;
-					toggleSignUpBtn.onclick = toggleEmailAuthMode;
 					gpsBtn.onclick = getGeoLocation;
-					togglePassword.onclick = function()
-					{
-						const type = authPassword.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
-						authPassword.setAttribute( 'type', type );
-						this.textContent = ( type === 'password' ) ? 'show password' : 'hide password';
-					};
 					togglePasscode.onclick = function()
 					{
 						const type = passcode.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
@@ -502,17 +325,14 @@
 						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
 					};
-					signInBtn.onclick = () => signInWithPopup( auth, provider );
 					signOutBtn.onclick = () => signOut( auth );
 					form.onsubmit = handleFormSubmit;
 					onAuthStateChanged( auth, async( user ) =>
 					{
 						if( user && !user.isAnonymous )
 						{
-							clearAuthMessage();
 							if( !scannedBoxId )
 							{
-								authContainer.classList.add( 'hidden' );
 								form.classList.add( 'hidden' );
 								showMessage( 'error', 'No Box ID found in URL. Cannot check status.' );
 								return;
@@ -523,13 +343,11 @@
 								const locSnap = await getDoc( locRef );
 								if( locSnap.exists() )
 								{
-									authContainer.classList.add( 'hidden' );
 									form.classList.add( 'hidden' );
 									showMessage( 'success', 'This box is already set up. Redirecting to status page...' );
 									window.location.href = `/status/?id=${ scannedBoxId }`;
 									return;
 								}
-								authContainer.classList.add( 'hidden' );
 								form.classList.remove( 'hidden' );
 								if( user.email )
 								{
@@ -546,7 +364,6 @@
 								{
 									userDisplay.classList.add( 'hidden' );
 								}
-								showEmailSetupBtn.classList.remove( 'hidden' ); // Ensure this is visible on auth -> form transition
 								const passcodeGroup = passcode.parentElement;
 								const passcodeLabel = passcodeGroup.querySelector( 'label' );
 								passcodeLabel.textContent = 'Verifying authorization...';
@@ -567,31 +384,15 @@
 							}
 							catch( error )
 							{
-								authContainer.classList.add( 'hidden' );
 								form.classList.add( 'hidden' );
 								showMessage( 'error', `An error occurred: ${ error.message }` );
 							}
 						}
 						else
 						{
-							authContainer.classList.remove( 'hidden' );
-							form.classList.add( 'hidden' );
-							clearAuthMessage();
-							userDisplay.textContent = '';
-							userDisplay.classList.add( 'hidden' );
-							showEmailSetupBtn.classList.remove( 'hidden' );
-							emailAuthSection.classList.add( 'hidden' );
-							orDivider.classList.add( 'hidden' );
-							if( !emailSignInBtn.classList.contains( 'hidden' ) )
-							{
-								toggleEmailAuthMode(); // Toggle it back to Sign Up
-							}
-							document.getElementById( 'passcode' ).parentElement.classList.remove( 'hidden' );
-							document.getElementById( 'passcode' ).required = true;
-							if( user && user.isAnonymous )
-							{
-								signOut( auth );
-							}
+							// User is not authenticated - redirect to login with return URL
+							const currentUrl = window.location.pathname + window.location.search;
+							window.location.href = '/login?returnUrl=' + encodeURIComponent( currentUrl );
 						}
 					} );
 				}

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Sign In - Toys for Tots</title>
+		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
+	</head>
+	<body class="bg-gray-100">
+		<div id="header-placeholder"></div>
+		<div id="auth-container">
+			<header>
+				<h1>Volunteer Access</h1>
+			</header>
+			<div id="auth-buttons">
+				<div id="email-auth-section">
+					<h2 id="email-auth-title">Sign In with Username</h2>
+
+					<form id="email-auth-form">
+						<div>
+							<label for="auth-email" class="sr-only">Username</label>
+							<input type="text" id="auth-email" placeholder="Username" autocomplete="username">
+						</div>
+						<div>
+							<label for="auth-password" class="sr-only">Password</label>
+							<input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+						</div>
+
+						<button id="email-sign-in-btn" type="submit">
+							Sign In
+						</button>
+						<button id="email-sign-up-btn" class="hidden" type="submit">
+							Create Account
+						</button>
+					</form>
+					<p>
+						<button id="toggle-sign-up-btn">
+							New user? <span>Create an account</span>
+						</button>
+					</p>
+				</div>
+				<div id="or-divider">-- OR --</div>
+				<p id="auth-message">Please sign in to continue.</p>
+				<button id="google-login-btn">
+					Sign In with Google
+				</button>
+			</div>
+		</div>
+		<div id="footer-placeholder"></div>
+		<script src="/js/loader.js" defer></script>
+		<script type="module">
+			import { auth, functions } from '../js/firebase-init.js';
+			import {
+				onAuthStateChanged,
+				GoogleAuthProvider,
+				getRedirectResult,
+				signInWithPopup,
+				createUserWithEmailAndPassword,
+				signInWithEmailAndPassword
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import {
+				httpsCallable
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+			import { showAuthMessage, clearAuthMessage } from '/js/utils.js';
+
+			let isAuthorizedVolunteer;
+			const emailAuthTitle = document.getElementById('email-auth-title');
+			const authEmail = document.getElementById('auth-email');
+			const authPassword = document.getElementById('auth-password');
+			const emailSignInBtn = document.getElementById('email-sign-in-btn');
+			const emailSignUpBtn = document.getElementById('email-sign-up-btn');
+			const toggleSignUpBtn = document.getElementById('toggle-sign-up-btn');
+			const authMessage = document.getElementById('auth-message');
+
+			// Get return URL from query parameters
+			const urlParams = new URLSearchParams(window.location.search);
+			const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+
+			async function handleEmailSignIn() {
+				clearAuthMessage();
+				const username = authEmail.value;
+				const password = authPassword.value;
+				if (!username || !password) {
+					showAuthMessage('error', 'Please enter both username and password.');
+					return;
+				}
+				if (username.includes('@')) {
+					showAuthMessage('error', 'Username cannot contain "@" symbol. Just enter the username.');
+					return;
+				}
+				const email = `${username}@toysfortots.mcl1311.com`;
+				try {
+					await signInWithEmailAndPassword(auth, email, password);
+				} catch (error) {
+					console.error('Email Sign In Error:', error);
+					if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+						showAuthMessage('error', 'Sign in failed: Invalid username or password.');
+					} else {
+						showAuthMessage('error', `Sign in failed: ${error.message}`);
+					}
+				}
+			}
+
+			async function handleEmailSignUp() {
+				clearAuthMessage();
+				const username = authEmail.value;
+				const password = authPassword.value;
+				if (!username || !password || password.length < 6) {
+					showAuthMessage('error', 'Please enter a username and a password of at least 6 characters.');
+					return;
+				}
+				if (username.includes('@')) {
+					showAuthMessage('error', 'Username cannot contain "@" symbol.');
+					return;
+				}
+				const email = `${username}@toysfortots.mcl1311.com`;
+				try {
+					await createUserWithEmailAndPassword(auth, email, password);
+				} catch (error) {
+					console.error('Email Sign Up Error:', error);
+					if (error.code === 'auth/email-already-in-use') {
+						showAuthMessage('error', 'Sign up failed: This username is already taken.');
+					} else {
+						showAuthMessage('error', `Sign up failed: ${error.message}`);
+					}
+				}
+			}
+
+			function toggleEmailAuthMode() {
+				clearAuthMessage();
+				const isSignInMode = emailSignInBtn.classList.contains('hidden');
+				if (isSignInMode) {
+					emailAuthTitle.textContent = 'Sign In with Username';
+					emailSignInBtn.classList.remove('hidden');
+					emailSignUpBtn.classList.add('hidden');
+					toggleSignUpBtn.innerHTML = 'New user? <span>Create an account</span>';
+				} else {
+					emailAuthTitle.textContent = 'Create Account with Username';
+					emailSignInBtn.classList.add('hidden');
+					emailSignUpBtn.classList.remove('hidden');
+					toggleSignUpBtn.innerHTML = 'Already have an account? <span>Sign In</span>';
+				}
+			}
+
+			const setupFirebase = () => {
+				try {
+					isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteerV2');
+					onAuthStateChanged(auth, async (user) => {
+						if (user && !user.isAnonymous) {
+							clearAuthMessage();
+							showAuthMessage('success', 'Checking authorization...');
+							try {
+								const result = await isAuthorizedVolunteer({ uid: user.uid });
+								if (result.data.isAuthorized) {
+									// Successful login and authorization - redirect to return URL
+									window.location.href = returnUrl;
+								} else {
+									showAuthMessage('error', 'You are signed in but not authorized. Please complete the setup form or contact an administrator.');
+								}
+							} catch (err) {
+								console.error('Authorization check failed:', err);
+								showAuthMessage('error', `An error occurred during authorization check: ${err.message}`);
+							}
+						}
+					});
+
+					getRedirectResult(auth).catch((error) => {
+						console.error('Redirect login failed:', error);
+						showAuthMessage('error', `Login failed: ${error.message}`);
+					});
+
+					document.getElementById('google-login-btn').addEventListener('click', () => {
+						const provider = new GoogleAuthProvider();
+						signInWithPopup(auth, provider);
+					});
+
+					emailSignInBtn.onclick = handleEmailSignIn;
+					emailSignUpBtn.onclick = handleEmailSignUp;
+					toggleSignUpBtn.onclick = toggleEmailAuthMode;
+
+					// Handle form submission
+					document.getElementById('email-auth-form').addEventListener('submit', (e) => {
+						e.preventDefault();
+						if (!emailSignInBtn.classList.contains('hidden')) {
+							handleEmailSignIn();
+						} else {
+							handleEmailSignUp();
+						}
+					});
+				} catch (error) {
+					console.error('Firebase Initialization Error:', error);
+				}
+			};
+
+			setupFirebase();
+		</script>
+	</body>
+</html>
