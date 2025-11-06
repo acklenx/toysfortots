@@ -1,11 +1,11 @@
-const { test, expect } = require('@playwright/test');
-const {
+import { test, expect } from '@playwright/test';
+import {
   clearTestData,
   seedTestConfig,
   authorizeVolunteer,
   createTestLocation,
   createTestReport
-} = require('../fixtures/firebase-helpers');
+} from '../fixtures/firebase-helpers.js';
 
 test.describe('Dashboard Page', () => {
   let testUser = null;

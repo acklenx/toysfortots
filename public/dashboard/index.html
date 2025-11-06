@@ -199,6 +199,7 @@
 					loadingMessage.remove();
 					if( locationsSnapshot.empty )
 					{
+						document.getElementById( 'boxes-title' ).textContent = 'Box Statuses';
 						boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No reports have been filed for any boxes yet.</p>';
 						return;
 					}

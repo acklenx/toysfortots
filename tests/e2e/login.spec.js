@@ -1,5 +1,5 @@
-const { test, expect } = require('@playwright/test');
-const { clearTestData, seedTestConfig, authorizeVolunteer } = require('../fixtures/firebase-helpers');
+import { test, expect } from '@playwright/test';
+import { clearTestData, seedTestConfig, authorizeVolunteer } from '../fixtures/firebase-helpers.js';
 
 test.describe('Login Page', () => {
   test.beforeEach(async () => {

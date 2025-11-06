@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for i in 1 2 3)",
+      "Bash(do echo \"=== Run $i: Box display test ===\")",
+      "Bash(done)",
+      "Bash(do echo \"=== Run $i: Dashboard pickup alert ===\")",
+      "Bash(npx playwright test*)",
+      "Bash(do echo \"=== Run $i ===\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

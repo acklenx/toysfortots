@@ -1,9 +1,9 @@
-const { test as base } = require('@playwright/test');
+import { test as base } from '@playwright/test';
 
 /**
  * Test fixtures for authentication and common operations
  */
-exports.test = base.extend({
+export const test = base.extend({
   /**
    * Create an authenticated user context with email/username
    */
@@ -63,7 +63,7 @@ exports.test = base.extend({
 /**
  * Helper function to create a test user
  */
-exports.createTestUser = async (page, username, password) => {
+export async function createTestUser(page, username, password) {
   await page.goto('/login');
   await page.fill('#auth-email', username);
   await page.fill('#auth-password', password);
@@ -76,12 +76,12 @@ exports.createTestUser = async (page, username, password) => {
 
   await signUpButton.click();
   await page.waitForTimeout(2000);
-};
+}
 
 /**
  * Helper function to sign in
  */
-exports.signIn = async (page, username, password) => {
+export async function signIn(page, username, password) {
   await page.goto('/login');
   await page.fill('#auth-email', username);
   await page.fill('#auth-password', password);
@@ -94,15 +94,15 @@ exports.signIn = async (page, username, password) => {
 
   await signInButton.click();
   await page.waitForTimeout(2000);
-};
+}
 
 /**
  * Helper function to sign out
  */
-exports.signOut = async (page) => {
+export async function signOut(page) {
   const signOutButton = page.locator('#sign-out-btn');
   if (await signOutButton.isVisible()) {
     await signOutButton.click();
     await page.waitForTimeout(1000);
   }
-};
+}

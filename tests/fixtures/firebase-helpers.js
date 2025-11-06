@@ -2,7 +2,7 @@
  * Firebase Emulator Helpers for E2E Tests
  */
 
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 let initialized = false;
 let db = null;
@@ -45,10 +45,17 @@ function initializeFirebaseAdmin() {
 async function seedTestConfig(passcode = 'TEST_PASSCODE') {
   const firestore = initializeFirebaseAdmin();
 
-  await firestore.doc(CONFIG_PATH).set({
+  const configRef = firestore.doc(CONFIG_PATH);
+  await configRef.set({
     sharedPasscode: passcode,
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });
+
+  // Verify write
+  const verifyDoc = await configRef.get();
+  if (!verifyDoc.exists) {
+    throw new Error('Failed to verify config was created');
+  }
 
   return passcode;
 }
@@ -59,11 +66,18 @@ async function seedTestConfig(passcode = 'TEST_PASSCODE') {
 async function authorizeVolunteer(uid, email, displayName) {
   const firestore = initializeFirebaseAdmin();
 
-  await firestore.doc(`${AUTH_VOLUNTEERS_PATH}/${uid}`).set({
+  const volunteerRef = firestore.doc(`${AUTH_VOLUNTEERS_PATH}/${uid}`);
+  await volunteerRef.set({
     email: email,
     displayName: displayName || email,
     authorizedAt: admin.firestore.FieldValue.serverTimestamp()
   });
+
+  // Verify write
+  const verifyDoc = await volunteerRef.get();
+  if (!verifyDoc.exists) {
+    throw new Error(`Failed to verify volunteer ${uid} was authorized`);
+  }
 }
 
 /**
@@ -90,7 +104,8 @@ async function createTestLocation(boxId, data = {}) {
     ...data
   };
 
-  await firestore.doc(`${LOCATIONS_PATH}/${boxId}`).set(locationData);
+  const locationRef = firestore.doc(`${LOCATIONS_PATH}/${boxId}`);
+  await locationRef.set(locationData);
 
   // Create initial report
   const reportRef = firestore.collection(REPORTS_PATH).doc();
@@ -103,6 +118,12 @@ async function createTestLocation(boxId, data = {}) {
     status: 'cleared',
     reporterId: locationData.provisionedBy
   });
+
+  // Verify data is readable (ensures emulator has committed the write)
+  const verifyDoc = await locationRef.get();
+  if (!verifyDoc.exists) {
+    throw new Error(`Failed to verify location ${boxId} was created`);
+  }
 
   return locationData;
 }
@@ -140,6 +161,12 @@ async function createTestReport(boxId, reportData = {}) {
   const reportRef = firestore.collection(REPORTS_PATH).doc();
   await reportRef.set(report);
 
+  // Verify data is readable (ensures emulator has committed the write)
+  const verifyDoc = await reportRef.get();
+  if (!verifyDoc.exists) {
+    throw new Error(`Failed to verify report was created`);
+  }
+
   return { id: reportRef.id, ...report };
 }
 
@@ -168,6 +195,9 @@ async function clearTestData() {
 
     // Clear config
     await firestore.doc(CONFIG_PATH).delete().catch(() => {});
+
+    // Small delay to ensure emulator processes all deletes
+    await new Promise(resolve => setTimeout(resolve, 50));
   } catch (error) {
     console.error('Error clearing test data:', error);
   }
@@ -187,18 +217,19 @@ async function getReportsForBox(boxId) {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-module.exports = {
+export {
   initializeFirebaseAdmin,
   seedTestConfig,
   authorizeVolunteer,
   createTestLocation,
   createTestReport,
   clearTestData,
-  getReportsForBox,
-  PATHS: {
-    AUTH_VOLUNTEERS: AUTH_VOLUNTEERS_PATH,
-    CONFIG: CONFIG_PATH,
-    LOCATIONS: LOCATIONS_PATH,
-    REPORTS: REPORTS_PATH
-  }
+  getReportsForBox
+};
+
+export const PATHS = {
+  AUTH_VOLUNTEERS: AUTH_VOLUNTEERS_PATH,
+  CONFIG: CONFIG_PATH,
+  LOCATIONS: LOCATIONS_PATH,
+  REPORTS: REPORTS_PATH
 };

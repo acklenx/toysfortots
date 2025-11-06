@@ -1,6 +1,6 @@
-const { defineConfig, devices } = require('@playwright/test');
+import { defineConfig, devices } from '@playwright/test';
 
-module.exports = defineConfig({
+export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false, // Tests within describe blocks run sequentially
   forbidOnly: !!process.env.CI,
@@ -8,7 +8,8 @@ module.exports = defineConfig({
   workers: 4, // Run tests with 4 parallel workers
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['list']
+    ['list'],
+    ['./flakiness-reporter.js']
   ],
 
   use: {
