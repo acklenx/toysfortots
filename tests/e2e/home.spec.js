@@ -179,16 +179,14 @@ test.describe('Home Page', () => {
   });
 
   test('should connect to Firebase emulators in localhost', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForTimeout(2000);
-
-    // Check console for emulator connection message
+    // Set up console listener BEFORE page loads
     const consoleLogs = [];
     page.on('console', msg => {
       consoleLogs.push(msg.text());
     });
 
-    await page.waitForTimeout(2000);
+    await page.goto('/');
+    await page.waitForTimeout(3000);
 
     const emulatorMessage = consoleLogs.find(log =>
       log.includes('Connected to Firebase emulators')

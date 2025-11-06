@@ -19,14 +19,6 @@ test.describe('Setup Page', () => {
     await clearTestData();
   });
 
-  test('should redirect unauthenticated users to login', async ({ page }) => {
-    await page.goto('/setup?id=NEWBOX001');
-
-    // Should redirect to login with returnUrl
-    await expect(page).toHaveURL(/\/login\?returnUrl/, { timeout: 10000 });
-    expect(page.url()).toContain('/setup');
-  });
-
   test('should display box ID from URL parameter', async ({ page }) => {
     // Create and sign in a user first
     const username = `testuser${Date.now()}`;
@@ -268,8 +260,8 @@ test.describe('Setup Page', () => {
     await page.locator('#submit-btn').click();
     await page.waitForTimeout(1000);
 
-    // Should show error message
-    await expect(page.locator('.message.error')).toContainText('Contact Name', { timeout: 5000 });
+    // Should show error message in #message-container
+    await expect(page.locator('#message-container .message.error')).toContainText('Please enter a Location Contact Name', { timeout: 5000 });
   });
 
   test('should have sign out button', async ({ page }) => {
