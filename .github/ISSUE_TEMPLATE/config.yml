@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/acklenx/toysfortots/tree/main/docs
+    about: Check the documentation for guides and help
+  - name: 📋 Project Roadmap
+    url: https://github.com/acklenx/toysfortots/blob/main/PROJECT_TODO.md
+    about: View the project roadmap and planned features
+  - name: 💬 Discussion
+    url: https://github.com/acklenx/toysfortots/discussions
+    about: Ask questions and discuss ideas with the community

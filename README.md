@@ -1,5 +1,23 @@
 # Project: Toys for Tots Box Locator
 
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/acklenx/toysfortots)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+> 🎄 Helping Marine Corps League Detachment #1311 manage Toys for Tots donation boxes in North Metro Atlanta
+
+---
+
+## 📋 Project Status & Roadmap
+
+See **[PROJECT_TODO.md](PROJECT_TODO.md)** for the complete roadmap, priorities, and progress tracking.
+
+**Quick Links:**
+- [🐛 Report Issues](https://github.com/acklenx/toysfortots/issues)
+- [📊 View Project Board](https://github.com/acklenx/toysfortots/projects)
+- [📚 Documentation](docs/)
+
+---
+
 ## Quick Start: Running Tests
 
 **Recommended:** Use the smart test runner for best results:
