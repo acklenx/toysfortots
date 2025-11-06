@@ -15,7 +15,7 @@ test.describe('Login Page', () => {
     await page.goto('/login');
 
     // Check that login form elements are visible
-    await expect(page.locator('h1')).toContainText('Volunteer Access');
+    await expect(page.locator('#auth-container h1')).toContainText('Volunteer Access');
     await expect(page.locator('#auth-email')).toBeVisible();
     await expect(page.locator('#auth-password')).toBeVisible();
     await expect(page.locator('#email-sign-in-btn')).toBeVisible();
@@ -50,11 +50,14 @@ test.describe('Login Page', () => {
   test('should show error for empty credentials', async ({ page }) => {
     await page.goto('/login');
 
+    // Wait for auth to be initialized
+    await page.waitForFunction(() => window.auth !== undefined);
+
     // Try to sign in without filling fields
     await page.locator('#email-sign-in-btn').click();
 
-    // Should show error message
-    await expect(page.locator('#auth-message.error')).toContainText('Please enter both username and password');
+    // Should show error message in the dynamically created #auth-msg element
+    await expect(page.locator('#auth-msg')).toContainText('Please enter both username and password');
   });
 
   test('should show error for username with @ symbol', async ({ page }) => {
