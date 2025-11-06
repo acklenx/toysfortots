@@ -91,14 +91,18 @@ if [ $EXIT_CODE_SEQ -eq 0 ]; then
   echo "Result: ✅ All ($TOTAL_TESTS) tests passed after sequential retry!"
   echo ""
   echo "Three-Tier Strategy Performance:"
-  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed"
-  echo "  • Tier 2 (4 workers, built-in retry): $TIER2_PASSED passed, $TIER2_FAILED failed"
+  echo "  • Tier 1 (4 workers, first attempt): ❌ $TIER1_FAILURES test(s) failed"
+  if [ $TIER2_FAILED -gt 0 ]; then
+    echo "  • Tier 2 (4 workers, built-in retry): ⚠️  $TIER2_PASSED passed, $TIER2_FAILED failed"
+  else
+    echo "  • Tier 2 (4 workers, built-in retry): ✅ $TIER2_PASSED passed, $TIER2_FAILED failed"
+  fi
   if [ $TIER2_FAILED -gt 0 ]; then
     echo ""
     echo "Tests that failed on BOTH attempts in Tier 2 (failed twice with 4 workers):"
     echo "$TIER2_FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
   fi
-  echo "  • Tier 3 (1 worker, sequential): All $TIER3_TESTS test(s) passed - 100% recovery"
+  echo "  • Tier 3 (1 worker, sequential): ✅ All $TIER3_TESTS test(s) passed - 100% recovery"
   echo ""
   echo "Tests that failed on Tier 1 but passed on Tier 3:"
   echo "$TIER1_FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
@@ -120,14 +124,18 @@ else
   echo "Result: ❌ Some tests still failing"
   echo ""
   echo "Three-Tier Strategy Performance:"
-  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed"
-  echo "  • Tier 2 (4 workers, built-in retry): $TIER2_PASSED passed, $TIER2_FAILED failed"
+  echo "  • Tier 1 (4 workers, first attempt): ❌ $TIER1_FAILURES test(s) failed"
+  if [ $TIER2_FAILED -gt 0 ]; then
+    echo "  • Tier 2 (4 workers, built-in retry): ⚠️  $TIER2_PASSED passed, $TIER2_FAILED failed"
+  else
+    echo "  • Tier 2 (4 workers, built-in retry): ✅ $TIER2_PASSED passed, $TIER2_FAILED failed"
+  fi
   if [ $TIER2_FAILED -gt 0 ]; then
     echo ""
     echo "Tests that failed on BOTH attempts in Tier 2 (failed twice with 4 workers):"
     echo "$TIER2_FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
   fi
-  echo "  • Tier 3 (1 worker, sequential): $TIER3_FAILED test(s) STILL FAILING"
+  echo "  • Tier 3 (1 worker, sequential): ❌ $TIER3_FAILED test(s) STILL FAILING"
   echo ""
   echo "Tests that fail even in sequential execution (REAL BUGS):"
   grep "✘" test-run-sequential.log | sed -E 's/.*›\s+(.+)\s+\((.+):([0-9]+):.+\)$/  - \1 (\2:\3)/'
