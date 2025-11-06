@@ -12,7 +12,7 @@ test.describe('Dashboard Page', () => {
 
   test.beforeEach(async ({ page }) => {
     await clearTestData();
-    await seedTestConfig('TEST_PASSCODE');
+    await seedTestConfig('semperfi'); // Use the real passcode
 
     // Create and authorize a test user
     const username = `testvolunteer${Date.now()}`;
@@ -28,25 +28,28 @@ test.describe('Dashboard Page', () => {
     await page.locator('#email-sign-up-btn').click();
     await page.waitForTimeout(3000);
 
-    // Get the user's UID from the page context
-    const uid = await page.evaluate(() => {
-      return new Promise((resolve) => {
-        const auth = window.auth;
-        if (auth && auth.currentUser) {
-          resolve(auth.currentUser.uid);
-        } else {
-          const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-              resolve(user.uid);
-              unsubscribe();
-            }
-          });
-        }
-      });
-    });
+    // Authorize user by provisioning a box with the passcode (real flow)
+    // This calls provisionBoxV2 which validates passcode and adds to authorizedVolunteers
+    await page.goto('/setup?id=TEST_BOX_001');
+    await page.waitForTimeout(2000);
 
-    // Authorize the user
-    await authorizeVolunteer(uid, `${username}@toysfortots.mcl1311.com`, username);
+    // Fill in the passcode
+    await page.fill('#passcode', 'semperfi');
+    await page.fill('#label', 'Test Location');
+
+    // Show manual address fields
+    await page.locator('#show-address-btn').click();
+    await page.waitForTimeout(500);
+
+    // Fill in address fields
+    await page.fill('#address', '123 Test St');
+    await page.fill('#city', 'Atlanta');
+    await page.fill('#contactName', 'Test Contact');
+    await page.fill('#contactEmail', 'test@example.com');
+    await page.locator('#submit-btn').click();
+
+    // Wait for redirect to status page (indicates success)
+    await page.waitForURL(/\/status/);
   });
 
   test.afterEach(async () => {
@@ -54,47 +57,37 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should redirect unauthenticated users to login', async ({ page }) => {
+    // This test doesn't need the user created in beforeEach
+    // Clear data first to ensure clean state
+    await clearTestData();
+
     // Navigate to dashboard without being logged in
     await page.goto('/dashboard');
 
     // Should redirect to login page
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('should display dashboard for authorized user', async ({ page }) => {
-    // Sign in
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-
-    // Wait for redirect to dashboard
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    // User is already logged in from beforeEach, just navigate to dashboard
+    await page.goto('/dashboard');
 
     // Check dashboard elements are visible
-    await expect(page.locator('h1')).toContainText('Dashboard');
+    await expect(page.locator('#main-content h1')).toContainText('Dashboard');
     await expect(page.locator('#volunteer-name')).toBeVisible();
     await expect(page.locator('#sign-out-btn')).toBeVisible();
     await expect(page.locator('#view-filter')).toBeVisible();
   });
 
   test('should display volunteer name', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.goto('/dashboard');
 
     const volunteerName = page.locator('#volunteer-name');
     await expect(volunteerName).toContainText(testUser.username);
   });
 
   test('should sign out user when sign out button clicked', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.goto('/dashboard');
 
     // Click sign out
     await page.locator('#sign-out-btn').click();
@@ -109,7 +102,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
 
     // Wait for data to load
     await page.waitForTimeout(2000);
@@ -131,7 +124,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
 
     // Wait for boxes to load
     await page.waitForTimeout(3000);
@@ -163,7 +156,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
 
     // Wait for boxes to load
     await page.waitForTimeout(3000);
@@ -191,7 +184,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toContainText('pickup_alert');
@@ -214,7 +207,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     // Should have clear status button
@@ -232,7 +225,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     const historyLink = page.locator('.view-history-btn').first();
@@ -257,7 +250,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     // Initially should show "My Boxes"
@@ -282,7 +275,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     const boxCards = page.locator('.box-card');
@@ -310,7 +303,7 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', testUser.username);
     await page.fill('#auth-password', testUser.password);
     await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    await page.waitForURL(/\/dashboard/);
     await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toContainText('789 Main St, Decatur');
