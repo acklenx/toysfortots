@@ -19,7 +19,8 @@ export default defineConfig({
     '**/setup.spec.js',          // Medium: Auth + provisioning
     '**/box-and-status.spec.js', // Medium: Box and status ops
     '**/home.spec.js',           // Light: Minimal data
-    '**/login.spec.js'           // Light: Auth only
+    '**/login.spec.js',          // Light: Auth only
+    '**/user-journeys.spec.js'   // Real-world user scenarios (run last, sequential)
   ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
