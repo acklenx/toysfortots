@@ -214,8 +214,8 @@ header {
     /* --- NATIVE CSS FIX: Added '&' --- */
     & #map {
         height: 500px; /* Explicit height for Leaflet */
-        flex: 2;
-        min-width: 400px; /* Ensure minimum width on desktop */
+        flex: 4;
+        min-width: 800px; /* Ensure minimum width on desktop */
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
