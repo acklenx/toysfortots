@@ -21,7 +21,6 @@ test.describe('Box Action Center and Status Pages', () => {
   test.describe('Box Action Center (/box)', () => {
     test('should redirect to setup if box does not exist', async ({ page }) => {
       await page.goto('/box?id=NONEXISTENT');
-      await page.waitForTimeout(3000);
 
       // Should redirect to setup page
       await expect(page).toHaveURL(/\/setup\/\?id=NONEXISTENT/, { timeout: 10000 });
@@ -36,7 +35,6 @@ test.describe('Box Action Center and Status Pages', () => {
       });
 
       await page.goto('/box?id=BOX001');
-      await page.waitForTimeout(3000);
 
       // Should display box details
       await expect(page.locator('#location-display')).toContainText('Test Market');
@@ -50,7 +48,6 @@ test.describe('Box Action Center and Status Pages', () => {
       });
 
       await page.goto('/box?id=BOX002');
-      await page.waitForTimeout(3000);
 
       await expect(page.locator('#location-display')).toContainText('John Doe');
     });
@@ -61,7 +58,6 @@ test.describe('Box Action Center and Status Pages', () => {
       });
 
       await page.goto('/box?id=BOX003');
-      await page.waitForTimeout(3000);
 
       await expect(page.locator('#pickup-btn')).toBeVisible();
       await expect(page.locator('#problem-btn')).toBeVisible();
@@ -69,7 +65,6 @@ test.describe('Box Action Center and Status Pages', () => {
 
     test('should show error when no box ID provided', async ({ page }) => {
       await page.goto('/box');
-      await page.waitForTimeout(2000);
 
       await expect(page.locator('#loading-message')).toContainText('ID missing');
     });
@@ -78,7 +73,6 @@ test.describe('Box Action Center and Status Pages', () => {
   test.describe('Status/History Page (/status)', () => {
     test('should redirect to setup if box does not exist', async ({ page }) => {
       await page.goto('/status?id=NONEXISTENT');
-      await page.waitForTimeout(3000);
 
       // Should redirect to setup page
       await expect(page).toHaveURL(/\/setup\/\?id=NONEXISTENT/, { timeout: 10000 });
@@ -93,7 +87,6 @@ test.describe('Box Action Center and Status Pages', () => {
       });
 
       await page.goto('/status?id=BOX101');
-      await page.waitForTimeout(3000);
 
       // Should display box details
       await expect(page.locator('#location-display')).toContainText('Test Market');
@@ -103,7 +96,6 @@ test.describe('Box Action Center and Status Pages', () => {
 
     test('should show error when no box ID provided', async ({ page }) => {
       await page.goto('/status');
-      await page.waitForTimeout(2000);
 
       await expect(page.locator('#loading-message')).toContainText('ID missing');
     });
@@ -117,7 +109,6 @@ test.describe('Box Action Center and Status Pages', () => {
       });
 
       await page.goto('/status?id=BOX110');
-      await page.waitForTimeout(3000);
 
       // Should display contact info
       await expect(page.locator('#location-display')).toContainText('Store Manager');
@@ -138,7 +129,6 @@ test.describe('Box Action Center and Status Pages', () => {
         await page.fill('#auth-email', username);
         await page.fill('#auth-password', password);
         await page.locator('#email-sign-up-btn').click();
-        await page.waitForTimeout(3000);
 
         // Get user UID and authorize directly
         const userRecord = await page.evaluate(async () => {
@@ -157,7 +147,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX102');
-        await page.waitForTimeout(3000);
 
         // Should show the initial "box registered" report
         await expect(page.locator('.report-item')).toBeVisible();
@@ -186,7 +175,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX103');
-        await page.waitForTimeout(3000);
 
         const reportItems = page.locator('.report-item');
         await expect(reportItems).toHaveCount(3); // Initial + 2 created
@@ -208,7 +196,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX104');
-        await page.waitForTimeout(3000);
 
         const problemReport = page.locator('.report-item.is-problem').first();
         await expect(problemReport).toBeVisible();
@@ -227,7 +214,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX105');
-        await page.waitForTimeout(3000);
 
         const pickupReport = page.locator('.report-item').filter({ hasText: 'pickup alert' });
         await expect(pickupReport).toBeVisible();
@@ -252,7 +238,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX106');
-        await page.waitForTimeout(3000);
 
         // Check for status badges
         const newStatus = page.locator('.report-status.is-new');
@@ -276,7 +261,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX107');
-        await page.waitForTimeout(3000);
 
         // Should display timestamp
         await expect(page.locator('.report-timestamp').first()).toBeVisible();
@@ -297,7 +281,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX108');
-        await page.waitForTimeout(3000);
 
         // Should display reporter info
         await expect(page.locator('.report-reporter-info')).toBeVisible();
@@ -317,7 +300,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX109');
-        await page.waitForTimeout(3000);
 
         // Should display default message - filter to get the problem report without description
         await expect(page.locator('.report-item').filter({ hasText: 'No details provided' })).toBeVisible();
@@ -335,7 +317,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX112');
-        await page.waitForTimeout(3000);
 
         // Should replace underscores with spaces - use filter to get the specific report
         await expect(page.locator('.report-item').filter({ hasText: 'problem alert' })).toBeVisible();
@@ -365,7 +346,6 @@ test.describe('Box Action Center and Status Pages', () => {
         });
 
         await page.goto('/status?id=BOX113');
-        await page.waitForTimeout(3000);
 
         // Should have multiple different report types visible
         await expect(page.locator('text=problem report')).toBeVisible();

@@ -25,7 +25,9 @@ test.describe('Dashboard Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(3000);
+
+    // Wait for authentication to complete by checking for current user
+    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
 
     // Get user UID and authorize directly
     const userRecord = await page.evaluate(async () => {
@@ -74,9 +76,9 @@ test.describe('Dashboard Page', () => {
   test('should sign out user when sign out button clicked', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // Click sign out
+    // Wait for sign-out button to be visible before clicking
+    await expect(page.locator('#sign-out-btn')).toBeVisible();
     await page.locator('#sign-out-btn').click();
-    await page.waitForTimeout(2000);
 
     // Should redirect to login
     await expect(page).toHaveURL(/\/login/);
@@ -86,7 +88,6 @@ test.describe('Dashboard Page', () => {
     await page.goto('/dashboard');
 
     // Wait for data to load
-    await page.waitForTimeout(2000);
 
     // Should show "no reports" message
     await expect(page.locator('#boxes-container')).toContainText('No reports');
@@ -106,7 +107,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toBeVisible();
     await expect(page.locator('.box-card')).toContainText('Test Market');
@@ -138,7 +138,6 @@ test.describe('Dashboard Page', () => {
     await page.goto('/dashboard');
 
     // Wait for boxes to load
-    await page.waitForTimeout(3000);
 
     // Should display the box with problem status
     await expect(page.locator('.box-card')).toContainText('Test Store');
@@ -165,7 +164,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toContainText('pickup alert');
     await expect(page.locator('.box-card')).toContainText('Box is full');
@@ -189,7 +187,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     // Should have clear status button
     await expect(page.locator('.clear-status-btn')).toBeVisible();
@@ -208,7 +205,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     const historyLink = page.locator('.view-history-btn').first();
     await expect(historyLink).toBeVisible();
@@ -234,7 +230,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     // Initially should show "My Boxes"
     await expect(page.locator('#boxes-title')).toContainText(`Boxes Assigned to ${displayName}`);
@@ -243,7 +238,6 @@ test.describe('Dashboard Page', () => {
 
     // Switch to "All Boxes"
     await page.locator('#view-filter').selectOption('all_boxes');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('#boxes-title')).toContainText('All Box Statuses');
     await expect(page.locator('.box-card')).toHaveCount(2);
@@ -260,7 +254,6 @@ test.describe('Dashboard Page', () => {
     await createTestLocation('BOX010', { label: 'M Store', volunteer: displayName });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     const boxCards = page.locator('.box-card');
     await expect(boxCards).toHaveCount(3);
@@ -289,7 +282,6 @@ test.describe('Dashboard Page', () => {
     });
 
     await page.goto('/dashboard');
-    await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toContainText('789 Main St, Decatur');
   });

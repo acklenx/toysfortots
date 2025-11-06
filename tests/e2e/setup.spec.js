@@ -29,11 +29,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     // Navigate to setup with box ID
     await page.goto('/setup?id=TESTBOX123');
-    await page.waitForTimeout(2000);
 
     // Check that box ID is displayed
     await expect(page.locator('#box-id-display')).toContainText('TESTBOX123');
@@ -48,11 +46,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     // Navigate without box ID
     await page.goto('/setup');
-    await page.waitForTimeout(2000);
 
     await expect(page.locator('#box-id-display')).toContainText('ID NOT FOUND');
     await expect(page.locator('.message.error')).toContainText('No Box ID found');
@@ -72,7 +68,6 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     // Try to setup existing box
     await page.goto('/setup?id=EXISTING001');
@@ -91,7 +86,6 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     // Get UID and authorize
     const uid = await page.evaluate(() => {
@@ -104,7 +98,6 @@ test.describe('Setup Page', () => {
 
     // Navigate to setup
     await page.goto('/setup?id=NEWBOX001');
-    await page.waitForTimeout(3000);
 
     // Passcode field should be hidden
     const passcodeGroup = page.locator('#passcode').locator('..');
@@ -120,11 +113,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     // Navigate to setup (user is NOT authorized)
     await page.goto('/setup?id=NEWBOX002');
-    await page.waitForTimeout(3000);
 
     // Passcode field should be visible
     const passcodeGroup = page.locator('#passcode').locator('..');
@@ -141,10 +132,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX003');
-    await page.waitForTimeout(2000);
 
     const passcodeInput = page.locator('#passcode');
 
@@ -173,10 +162,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX004');
-    await page.waitForTimeout(2000);
 
     // Should show signed in message
     await expect(page.locator('#user-display')).toContainText(`Signed in as: ${username}`);
@@ -191,10 +178,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX005');
-    await page.waitForTimeout(2000);
 
     // Manual address fields should be hidden initially
     await expect(page.locator('#manual-address-fields')).toBeHidden();
@@ -218,10 +203,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX006');
-    await page.waitForTimeout(2000);
 
     // Show address fields
     await page.locator('#show-address-btn').click();
@@ -242,10 +225,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX007');
-    await page.waitForTimeout(3000);
 
     // Fill in all required fields except contact info
     await page.locator('#show-address-btn').click();
@@ -262,7 +243,6 @@ test.describe('Setup Page', () => {
     await page.fill('#passcode', TEST_PASSCODE);
 
     await page.locator('#submit-btn').click();
-    await page.waitForTimeout(1000);
 
     // Should show JavaScript validation error message
     await expect(page.locator('#message-container .message.error')).toContainText('Please enter a Location Contact Name', { timeout: 5000 });
@@ -277,10 +257,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX008');
-    await page.waitForTimeout(2000);
 
     await expect(page.locator('#sign-out-btn')).toBeVisible();
   });
@@ -294,10 +272,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX009');
-    await page.waitForTimeout(2000);
 
     await expect(page.locator('#gps-btn')).toBeVisible();
     await expect(page.locator('#gps-btn')).toContainText('Use My GPS Location');
@@ -312,10 +288,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX010');
-    await page.waitForTimeout(2000);
 
     await page.locator('#show-address-btn').click();
 
@@ -332,10 +306,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
-    await page.waitForTimeout(2000);
 
     await page.goto('/setup?id=NEWBOX011');
-    await page.waitForTimeout(2000);
 
     await page.locator('#show-address-btn').click();
 
