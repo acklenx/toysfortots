@@ -1,0 +1,208 @@
+# 🎄 Toys for Tots - Project TODO List
+
+## 🚨 **Top Priority**
+
+### 🔗 QR Code → Google Sheets Integration
+- [ ] **Link QR codes to Google Sheets entries**
+  - Import location data and contact info from existing spreadsheet
+  - Auto-populate setup form when QR code has associated spreadsheet data
+  - Skip manual entry for pre-registered locations
+  - Handle updates when spreadsheet data changes
+
+### 🎨 **UI/UX Consistency & Polish**
+- [ ] **Fix page appearance inconsistencies** ⚠️ **HIGH PRIORITY**
+  - Audit all pages for visual consistency
+  - Standardize header/footer styling across pages
+  - Ensure consistent spacing, fonts, and colors
+  - Fix footer positioning (should always be at bottom)
+
+- [ ] **Add hamburger menu for authenticated users**
+  - Replace hidden icon navigation with proper menu
+  - Include: Dashboard, Setup New Box, View All Boxes, Sign Out
+  - Mobile-friendly slide-out design
+  - Use appropriate icons for menu items
+
+---
+
+## 🔐 **Admin & Management**
+
+### 👨‍💼 Admin Dashboard
+- [ ] **Create true admin page** (`/admin/`)
+  - View all locations with search/filter
+  - Edit location details (address, contact info, label)
+  - Delete locations (with confirmation)
+  - View all submitted reports
+  - Delete reports (with confirmation)
+  - Manage authorized volunteers
+  - Remove volunteer access
+  - View system statistics (total boxes, reports, volunteers)
+
+### 🔒 Admin Authorization
+- [ ] Add admin role/permission system
+- [ ] Protect admin routes with authorization check
+- [ ] Create admin-only Cloud Function for deletions
+
+---
+
+## 🧪 **Testing**
+
+### ✅ **Completed**
+- [x] ✅ **Smart test runner with 3-tier retry strategy**
+  - Tier 1: Fast parallel execution (4 workers)
+  - Tier 2: Automatic retry for transient failures
+  - Tier 3: Sequential retry to distinguish real bugs
+
+- [x] ✅ **Comprehensive unit test infrastructure**
+  - Jest configuration for Cloud Functions
+  - Test fixtures and helpers
+  - Unit tests for all Cloud Functions
+
+- [x] ✅ **E2E test suite reliability improvements**
+  - Fixed data race conditions
+  - Implemented unique test ID generation
+  - Fixed loading state handling
+  - Achieved stable parallel execution
+
+- [x] ✅ **User journey tests**
+  - 5 complete real-world user scenarios
+  - Anonymous user flows (pickup, problem reporting, navigation)
+  - Volunteer workflows (signup, provisioning, management)
+  - Production-ready with 100% pass rate
+
+### 🌐 Production E2E Tests
+- [ ] **Create production test suite**
+  - Run against https://toysfortots.mcl1311.com
+  - Use themed test data (North Pole address, "Buddy the Elf" volunteer)
+  - Graceful cleanup that won't leave test data in production
+  - Separate test file: `tests/e2e-production/`
+  - Can be run safely without affecting real data
+  - Scheduled daily runs with notifications
+
+---
+
+## 📱 **Progressive Web App (PWA)**
+
+- [ ] **Convert to PWA**
+  - Add `manifest.json` with app metadata
+  - Include app icons (multiple sizes)
+  - Add service worker for offline support
+  - Enable "Add to Home Screen" functionality
+  - Cache critical assets for offline viewing
+  - Test installation on iOS and Android
+
+---
+
+## 🏗️ **Architecture Improvements**
+
+### 🎯 Single Page Application (SPA)
+- [ ] **Migrate to SPA architecture**
+  - Replace directory-based routing (`/dashboard/index.html`) with client-side routing
+  - Use History API for navigation
+  - Centralize page templates
+  - Reduce duplicate header/footer loading
+  - Improve load times and navigation smoothness
+  - Consider framework: Vanilla JS router, or lightweight option (Preact, Alpine.js)
+
+---
+
+## 📚 **Documentation**
+
+### 📖 Volunteer Instructions
+- [ ] **Create comprehensive volunteer guide** (`/docs/volunteer-guide.md`)
+  - Step-by-step instructions with screenshots
+  - How to provision a new box
+  - How to check box status
+  - How to respond to pickup requests
+  - How to handle problem reports
+  - Best practices and tips
+
+- [ ] **Review print page** (`/print/index.html`)
+  - Ensure it generates proper QR codes
+  - Include instructions on printed materials
+  - Test print layout on various paper sizes
+  - Add setup instructions on printout
+
+---
+
+## 🔒 **Security & Best Practices**
+
+### 🛡️ Security Review
+- [ ] **Conduct security audit**
+  - Review Firestore security rules
+  - Check for XSS vulnerabilities
+  - Validate all user inputs
+  - Review authentication flows
+  - Ensure no sensitive data in client code
+  - Check for CSRF protections
+  - Review Cloud Function permissions
+  - Audit API key exposure
+
+### ⚡ Performance & Best Practices
+- [ ] **Lighthouse audit**
+  - Run Lighthouse tests on all pages
+  - Achieve 90+ scores across all categories
+  - Fix performance bottlenecks
+  - Optimize images
+  - Minimize JavaScript
+  - Improve accessibility scores
+
+- [ ] **Code cleanup**
+  - Remove console.logs from production code
+  - Standardize code formatting
+  - Add JSDoc comments
+  - Remove unused code/imports
+  - Consolidate duplicate functions
+  - Improve error handling consistency
+
+---
+
+## 🎨 **Visual & UX Polish**
+
+### 📐 Layout & Styling
+- [ ] Fix footer positioning (sticky/fixed at bottom)
+- [ ] Ensure responsive design works on all screen sizes
+- [ ] Test on multiple browsers (Chrome, Firefox, Safari, Edge)
+- [ ] Add loading spinners for async operations
+- [ ] Improve button states (disabled, hover, active)
+- [ ] Add success/error animations for form submissions
+
+### ♿ Accessibility
+- [ ] Add ARIA labels where needed
+- [ ] Ensure proper heading hierarchy
+- [ ] Test with screen readers
+- [ ] Verify keyboard navigation
+- [ ] Check color contrast ratios
+- [ ] Add focus indicators
+
+---
+
+## 📊 **Additional Features**
+
+- [ ] **Analytics integration** (optional)
+  - Track box provisioning trends
+  - Monitor pickup request frequency
+  - Volunteer activity metrics
+
+- [ ] **Email notifications** (enhancement)
+  - Improve email templates
+  - Add volunteer preferences for notifications
+  - Summary emails for daily activity
+
+- [ ] **Export functionality**
+  - Export box data to CSV
+  - Export reports for record-keeping
+  - Generate printable status reports
+
+---
+
+## 📝 **Notes**
+
+- All completed items marked with ✅
+- Top priorities marked with ⚠️
+- Items can be broken into smaller subtasks as needed
+- Review and update this list regularly
+
+---
+
+*Last Updated: November 6, 2025*
+*Maintained with ❤️ for Marine Corps League Detachment #1311*
