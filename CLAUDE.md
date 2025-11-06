@@ -15,8 +15,14 @@ This is a Firebase-based web application for tracking Toys for Tots donation box
 # OR manually:
 npx firebase emulators:start --only hosting,auth,firestore,functions
 
-# Run all tests (uses 4 workers by default)
-npx playwright test
+# Run all tests (recommended: 2 workers for best reliability)
+npx playwright test --workers=2
+
+# Run with 1 worker (100% reliable, slower)
+npx playwright test --workers=1
+
+# Run with 4 workers (faster, ~90% reliable)
+npx playwright test --workers=4
 
 # Run specific test file
 npx playwright test tests/e2e/dashboard.spec.js
@@ -30,6 +36,28 @@ npx playwright test --ui
 # View test report
 npx playwright show-report
 ```
+
+### Test Writing and Debugging
+
+**IMPORTANT**: Before writing new tests or debugging flaky tests, read these guides:
+
+- **[Test Writing Guide](docs/TEST_WRITING_GUIDE.md)** - How to write reliable tests from the start
+  - Unique test data generation
+  - Avoiding data race conditions
+  - Proper loading state handling
+  - Parallel execution best practices
+
+- **[Test Debugging Guide](docs/TEST_DEBUGGING_GUIDE.md)** - How to diagnose and fix flaky tests
+  - Systematic debugging process
+  - Common failure patterns and fixes
+  - Decision trees for categorizing issues
+  - Validation checklist
+
+Key principles:
+1. **Always use unique test IDs**: `generateBoxId()`, `generateUsername()`
+2. **Never clear data in beforeEach**: Use global setup/teardown
+3. **Wait for loading states**: Don't assert before data loads
+4. **Test independently**: No dependencies on other tests
 
 ### Firebase Functions
 ```bash
