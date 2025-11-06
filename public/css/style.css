@@ -1158,6 +1158,28 @@ footer {
     flex: 1; /* Grow to fill space and push footer down */
 }
 
+/* --- Main Content Layout --- */
+.main-content {
+    padding: 2rem 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.content-box {
+    background-color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--marine-blue);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
 /* Override inline styles for box page card */
 .box-action-card {
     margin-top: 0 !important;
@@ -1165,9 +1187,9 @@ footer {
 }
 /* --- Box Action Page Styles --- */
 .action-box {
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
     text-align: center;
 }
 
@@ -1177,25 +1199,24 @@ footer {
 
 .action-button {
     width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     background: none;
-    border: 3px solid white;
+    border: 2px solid white;
     color: white;
-    font-size: 1.25rem;
-    font-weight: bold;
-    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .action-button:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .action-button:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
