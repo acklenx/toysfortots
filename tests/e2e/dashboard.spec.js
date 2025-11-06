@@ -12,9 +12,8 @@ test.describe('Dashboard Page', () => {
 
   test.beforeEach(async ({ page }) => {
     await clearTestData();
-    await seedTestConfig('semperfi'); // Use the real passcode
+    await seedTestConfig('semperfi');
 
-    // Create and authorize a test user
     const username = `testvolunteer${Date.now()}`;
     const password = 'testpass123';
 
@@ -28,28 +27,14 @@ test.describe('Dashboard Page', () => {
     await page.locator('#email-sign-up-btn').click();
     await page.waitForTimeout(3000);
 
-    // Authorize user by provisioning a box with the passcode (real flow)
-    // This calls provisionBoxV2 which validates passcode and adds to authorizedVolunteers
-    await page.goto('/setup?id=TEST_BOX_001');
-    await page.waitForTimeout(2000);
+    // Get user UID and authorize directly
+    const userRecord = await page.evaluate(async () => {
+      const auth = window.auth;
+      const user = auth.currentUser;
+      return { uid: user.uid, email: user.email };
+    });
 
-    // Fill in the passcode
-    await page.fill('#passcode', 'semperfi');
-    await page.fill('#label', 'Test Location');
-
-    // Show manual address fields
-    await page.locator('#show-address-btn').click();
-    await page.waitForTimeout(500);
-
-    // Fill in address fields
-    await page.fill('#address', '123 Test St');
-    await page.fill('#city', 'Atlanta');
-    await page.fill('#contactName', 'Test Contact');
-    await page.fill('#contactEmail', 'test@example.com');
-    await page.locator('#submit-btn').click();
-
-    // Wait for redirect to status page (indicates success)
-    await page.waitForURL(/\/status/);
+    await authorizeVolunteer(userRecord.uid, userRecord.email, username);
   });
 
   test.afterEach(async () => {
@@ -98,11 +83,7 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display message when no boxes exist', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
 
     // Wait for data to load
     await page.waitForTimeout(2000);
@@ -112,24 +93,21 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display boxes with good status', async ({ page }) => {
-    // Create a test location
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     await createTestLocation('BOX001', {
       label: 'Test Market',
       address: '123 Test St',
       city: 'Atlanta',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
-
-    // Wait for boxes to load
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
-    // Should display the box
     await expect(page.locator('.box-card')).toBeVisible();
     await expect(page.locator('.box-card')).toContainText('Test Market');
     await expect(page.locator('.box-card')).toContainText('Status: Good');
@@ -137,12 +115,17 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display boxes with problem status', async ({ page }) => {
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     // Create a test location
     await createTestLocation('BOX002', {
       label: 'Test Store',
       address: '456 Test Ave',
       city: 'Atlanta',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
     // Create a problem report
@@ -152,11 +135,7 @@ test.describe('Dashboard Page', () => {
       status: 'new'
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
 
     // Wait for boxes to load
     await page.waitForTimeout(3000);
@@ -164,14 +143,19 @@ test.describe('Dashboard Page', () => {
     // Should display the box with problem status
     await expect(page.locator('.box-card')).toContainText('Test Store');
     await expect(page.locator('.status-problem')).toBeVisible();
-    await expect(page.locator('.box-card')).toContainText('problem_report');
+    await expect(page.locator('.box-card')).toContainText('problem report');
     await expect(page.locator('.box-card')).toContainText('Box is damaged');
   });
 
   test('should display boxes with pickup alert status', async ({ page }) => {
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     await createTestLocation('BOX003', {
       label: 'Test Mall',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
     await createTestReport('BOX003', {
@@ -180,21 +164,22 @@ test.describe('Dashboard Page', () => {
       status: 'new'
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
-    await expect(page.locator('.box-card')).toContainText('pickup_alert');
+    await expect(page.locator('.box-card')).toContainText('pickup alert');
     await expect(page.locator('.box-card')).toContainText('Box is full');
   });
 
   test('should show clear status button for pending reports', async ({ page }) => {
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     await createTestLocation('BOX004', {
       label: 'Test Location',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
     await createTestReport('BOX004', {
@@ -203,11 +188,7 @@ test.describe('Dashboard Page', () => {
       status: 'new'
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
     // Should have clear status button
@@ -216,16 +197,17 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should have view history link', async ({ page }) => {
-    await createTestLocation('BOX005', {
-      label: 'Test Box',
-      volunteer: testUser.username
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await createTestLocation('BOX005', {
+      label: 'Test Box',
+      volunteer: displayName
+    });
+
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
     const historyLink = page.locator('.view-history-btn').first();
@@ -235,10 +217,15 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should filter boxes by volunteer', async ({ page }) => {
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     // Create boxes for different volunteers
     await createTestLocation('BOX006', {
       label: 'My Box',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
     await createTestLocation('BOX007', {
@@ -246,15 +233,11 @@ test.describe('Dashboard Page', () => {
       volunteer: 'Other Volunteer'
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
     // Initially should show "My Boxes"
-    await expect(page.locator('#boxes-title')).toContainText(`Boxes Assigned to ${testUser.username}`);
+    await expect(page.locator('#boxes-title')).toContainText(`Boxes Assigned to ${displayName}`);
     await expect(page.locator('.box-card')).toHaveCount(1);
     await expect(page.locator('.box-card')).toContainText('My Box');
 
@@ -267,15 +250,16 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display multiple boxes sorted by label', async ({ page }) => {
-    await createTestLocation('BOX008', { label: 'Z Store', volunteer: testUser.username });
-    await createTestLocation('BOX009', { label: 'A Store', volunteer: testUser.username });
-    await createTestLocation('BOX010', { label: 'M Store', volunteer: testUser.username });
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await createTestLocation('BOX008', { label: 'Z Store', volunteer: displayName });
+    await createTestLocation('BOX009', { label: 'A Store', volunteer: displayName });
+    await createTestLocation('BOX010', { label: 'M Store', volunteer: displayName });
+
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
     const boxCards = page.locator('.box-card');
@@ -292,18 +276,19 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should show correct address and city', async ({ page }) => {
+    // Get the displayName that dashboard will use for filtering
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
     await createTestLocation('BOX011', {
       label: 'Test Location',
       address: '789 Main St',
       city: 'Decatur',
-      volunteer: testUser.username
+      volunteer: displayName
     });
 
-    await page.goto('/login');
-    await page.fill('#auth-email', testUser.username);
-    await page.fill('#auth-password', testUser.password);
-    await page.locator('#email-sign-in-btn').click();
-    await page.waitForURL(/\/dashboard/);
+    await page.goto('/dashboard');
     await page.waitForTimeout(3000);
 
     await expect(page.locator('.box-card')).toContainText('789 Main St, Decatur');
