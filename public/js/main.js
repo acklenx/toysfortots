@@ -45,13 +45,9 @@ document.addEventListener( 'DOMContentLoaded', () =>
 				{
 					const marker = L.marker( [ location.lat, location.lon ], { icon: customIcon } ).addTo( map );
 					let popupContent = `<b>${ location.label }</b><br>${ location.address }`;
-					if( location.contactName )
+					if( location.city && location.state )
 					{
-						popupContent += `<br><small>Contact: ${ location.contactName }</small>`;
-					}
-					if( location.contactPhone )
-					{
-						popupContent += `<br><small>Phone: ${ location.contactPhone }</small>`;
+						popupContent += `<br><small>${ location.city }, ${ location.state }</small>`;
 					}
 					marker.bindPopup( popupContent );
 					const listItem = document.createElement( 'div' );
@@ -59,7 +55,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 					listItem.innerHTML = `
                             <h4>${ location.label }</h4>
                             <p>${ location.address }</p>
-                            ${ location.contactName ? `<p class="contact-info">Contact: ${ location.contactName }</p>` : '' }
+                            ${ location.city && location.state ? `<p class="contact-info">${ location.city }, ${ location.state }</p>` : '' }
                         `;
 					listItem.addEventListener( 'click', () =>
 					{
