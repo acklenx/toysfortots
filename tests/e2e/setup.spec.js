@@ -76,10 +76,9 @@ test.describe('Setup Page', () => {
 
     // Try to setup existing box
     await page.goto('/setup?id=EXISTING001');
-    await page.waitForTimeout(3000);
 
-    // Should redirect to status page
-    await expect(page).toHaveURL(/\/status\/\?id=EXISTING001/, { timeout: 10000 });
+    // Wait for redirect to happen
+    await page.waitForURL(/\/status\/\?id=EXISTING001/, { timeout: 10000 });
   });
 
   test('should hide passcode field for authorized volunteers', async ({ page }) => {
@@ -254,13 +253,18 @@ test.describe('Setup Page', () => {
     await page.fill('#city', 'Atlanta');
     await page.fill('#state', 'GA');
     await page.fill('#label', 'Test Location');
+
+    // Leave contactName empty and remove required to test JS validation
+    await page.evaluate(() => {
+      document.getElementById('contactName').removeAttribute('required');
+    });
     await page.fill('#contactName', ''); // Empty name
     await page.fill('#passcode', TEST_PASSCODE);
 
     await page.locator('#submit-btn').click();
     await page.waitForTimeout(1000);
 
-    // Should show error message in #message-container
+    // Should show JavaScript validation error message
     await expect(page.locator('#message-container .message.error')).toContainText('Please enter a Location Contact Name', { timeout: 5000 });
   });
 
