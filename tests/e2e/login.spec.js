@@ -63,12 +63,15 @@ test.describe('Login Page', () => {
   test('should show error for username with @ symbol', async ({ page }) => {
     await page.goto('/login');
 
+    // Wait for auth to be initialized
+    await page.waitForFunction(() => window.auth !== undefined);
+
     await page.fill('#auth-email', 'user@example.com');
     await page.fill('#auth-password', 'password123');
     await page.locator('#email-sign-in-btn').click();
 
     // Should show error about @ symbol
-    await expect(page.locator('#auth-message.error')).toContainText('Username cannot contain "@" symbol');
+    await expect(page.locator('#auth-msg')).toContainText('Username cannot contain "@" symbol');
   });
 
   test('should create new user account', async ({ page }) => {
