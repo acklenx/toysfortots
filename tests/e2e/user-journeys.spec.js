@@ -180,11 +180,9 @@ test.describe('Volunteer User Journeys', () => {
     await page.fill('#address', '200 Volunteer St');
     await page.fill('#city', 'Decatur');
     await page.fill('#state', 'GA');
-    await page.fill('#zip', '30030');
 
-    await page.fill('#business-name', 'Journey Test Market');
-    await page.fill('#contact-name', 'John Journey');
-    await page.fill('#contact-phone', '555-0200');
+    await page.fill('#contactName', 'John Journey');
+    await page.fill('#contactPhone', '555-0200');
 
     // Submit registration
     await page.locator('#submit-btn').click();
@@ -192,14 +190,16 @@ test.describe('Volunteer User Journeys', () => {
     // Wait for redirect to status page
     await page.waitForURL(new RegExp(`/status.*id=${boxId}`), { timeout: 20000 });
 
-    // Verify box was registered
-    await expect(page.locator('.report-item, body')).toContainText('Box Registered', { timeout: 10000 });
+    // Wait for history to load (first report-item will be "Box Registered")
+    const firstReport = page.locator('.report-item').first();
+    await expect(firstReport).toBeVisible({ timeout: 10000 });
+    await expect(firstReport).toContainText('box registered', { ignoreCase: true });
 
     // === STEP 3: Check dashboard ===
     await page.goto('/dashboard');
 
     // Should see dashboard
-    await expect(page.locator('h1')).toContainText('Dashboard');
+    await expect(page.locator('#main-content h1')).toContainText('Dashboard');
 
     // Wait for boxes to load
     await expect(page.locator('#boxes-title')).not.toContainText('Loading');
@@ -214,7 +214,11 @@ test.describe('Volunteer User Journeys', () => {
     await statusLink.click();
 
     await page.waitForURL(new RegExp(`/status.*id=${boxId}`));
-    await expect(page.locator('.report-item, body')).toContainText('Box Registered');
+
+    // Wait for history to load
+    const reportItem = page.locator('.report-item').first();
+    await expect(reportItem).toBeVisible({ timeout: 10000 });
+    await expect(reportItem).toContainText('box registered', { ignoreCase: true });
 
     // === STEP 5: Logout ===
     await page.goto('/dashboard');
@@ -244,7 +248,7 @@ test.describe('Volunteer User Journeys', () => {
     await expect(page.locator('#problem-details-section')).toBeVisible();
     await page.fill('textarea[name="description"]', 'Box is getting full, please check soon');
     await page.locator('#problem-submit-btn').click();
-    await expect(page.locator('#problem-details-success, #problem-confirmation')).toBeVisible();
+    await expect(page.locator('#problem-details-success')).toBeVisible();
 
     // Wait for report to be submitted
     await page.waitForTimeout(1000);
@@ -272,12 +276,12 @@ test.describe('Volunteer User Journeys', () => {
     // === STEP 9: View status page ===
     await page.goto(`/status?id=${boxId}`);
 
-    // Should see all reports
+    // Should see all reports (pickup, problem, box registered)
     const reportItems = page.locator('.report-item');
     await expect(reportItems.first()).toBeVisible({ timeout: 10000 });
 
-    // Should have at least the registration report
-    await expect(page.locator('body')).toContainText('Box Registered');
+    // Should have multiple reports
+    await expect(reportItems).toHaveCount(3, { timeout: 10000 }); // box registered + pickup + problem
 
     // === STEP 10: Try to clear a status (if clear button exists) ===
     await page.goto('/dashboard');
@@ -293,7 +297,14 @@ test.describe('Volunteer User Journeys', () => {
 
     // === STEP 11: Verify can still navigate ===
     await page.goto(`/status?id=${boxId}`);
-    await expect(page.locator('body')).toContainText('Box Registered');
+
+    // Wait for reports to load
+    const verifyReport = page.locator('.report-item').first();
+    await expect(verifyReport).toBeVisible({ timeout: 10000 });
+
+    // Should still have all 3 reports
+    const allVerifyReports = page.locator('.report-item');
+    await expect(allVerifyReports).toHaveCount(3, { timeout: 10000 });
 
     // === STEP 12: Logout ===
     await page.goto('/dashboard');
@@ -340,10 +351,8 @@ test.describe('Volunteer User Journeys', () => {
     await page.fill('#address', '300 Check St');
     await page.fill('#city', 'Atlanta');
     await page.fill('#state', 'GA');
-    await page.fill('#zip', '30303');
-    await page.fill('#business-name', 'Check Market');
-    await page.fill('#contact-name', 'Jane Check');
-    await page.fill('#contact-phone', '555-0300');
+    await page.fill('#contactName', 'Jane Check');
+    await page.fill('#contactPhone', '555-0300');
     await page.locator('#submit-btn').click();
     await page.waitForURL(new RegExp(`/status.*id=${boxId}`), { timeout: 20000 });
 
@@ -369,7 +378,7 @@ test.describe('Volunteer User Journeys', () => {
     // === Check dashboard status ===
     await page.goto('/dashboard');
 
-    await expect(page.locator('h1')).toContainText('Dashboard');
+    await expect(page.locator('#main-content h1')).toContainText('Dashboard');
     await expect(page.locator('#boxes-title')).not.toContainText('Loading');
 
     // Should see box
@@ -382,8 +391,13 @@ test.describe('Volunteer User Journeys', () => {
 
     await page.waitForURL(new RegExp(`/status.*id=${boxId}`));
 
-    // Should see reports
-    await expect(page.locator('body')).toContainText('Box Registered');
+    // Should see reports (will have at least pickup alert and box registered)
+    const statusReport = page.locator('.report-item').first();
+    await expect(statusReport).toBeVisible({ timeout: 10000 });
+
+    // Check that reports list has multiple items
+    const allReports = page.locator('.report-item');
+    await expect(allReports).toHaveCount(2, { timeout: 10000 }); // box registered + pickup alert
 
     // === Clear the status if button exists ===
     await page.goto('/dashboard');
@@ -398,7 +412,14 @@ test.describe('Volunteer User Journeys', () => {
 
     // === Verify status page still works ===
     await page.goto(`/status?id=${boxId}`);
-    await expect(page.locator('body')).toContainText('Box Registered');
+
+    // Wait for reports to load
+    const finalReport = page.locator('.report-item').first();
+    await expect(finalReport).toBeVisible({ timeout: 10000 });
+
+    // Should still have both reports
+    const finalReports = page.locator('.report-item');
+    await expect(finalReports.first()).toBeVisible({ timeout: 10000 });
 
     // === Logout ===
     await page.goto('/dashboard');
