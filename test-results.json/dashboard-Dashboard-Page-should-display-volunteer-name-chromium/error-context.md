@@ -18,27 +18,19 @@
       - link "Marine Corps League Logo" [ref=e13] [cursor=pointer]:
         - /url: /dashboard
         - img "Marine Corps League Logo" [ref=e14]
-  - generic [ref=e15]:
-    - banner [ref=e16]:
-      - heading "Volunteer Access" [level=1] [ref=e17]
-    - generic [ref=e18]:
-      - generic [ref=e19]:
-        - heading "Sign In with Username" [level=2] [ref=e20]
-        - generic [ref=e21]:
-          - generic [ref=e22]:
-            - generic [ref=e23]: Username
-            - textbox "Username" [ref=e24]
-          - generic [ref=e25]:
-            - generic [ref=e26]: Password
-            - textbox "Password" [ref=e27]
-          - button "Sign In" [ref=e28] [cursor=pointer]
-        - paragraph [ref=e29]:
-          - button "New user? Create an account" [ref=e30] [cursor=pointer]
-        - generic [ref=e32]: You are signed in but not authorized. Please complete the setup form or contact an administrator.
-      - generic [ref=e33]: "-- OR --"
-      - paragraph [ref=e34]: Please sign in to continue.
-      - button "Sign In with Google" [ref=e35] [cursor=pointer]
-  - contentinfo [ref=e37]:
-    - paragraph [ref=e38]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
-    - img "Marine Bear Mascot" [ref=e39]
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "Dashboard" [level=1] [ref=e19]
+        - paragraph [ref=e20]: Welcome, testvolunteerw1_1762439388191_5_9182@toysfortots.mcl1311.com
+      - generic [ref=e21]:
+        - generic [ref=e22]: "Show boxes:"
+        - combobox "Show boxes:" [ref=e23]
+        - button "Sign Out" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]:
+      - heading "Loading..." [level=2] [ref=e26]
+      - paragraph [ref=e28]: Loading reports...
+  - contentinfo [ref=e30]:
+    - paragraph [ref=e31]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
+    - img "Marine Bear Mascot" [ref=e32]
 ```

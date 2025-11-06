@@ -19,14 +19,36 @@ if [ $EXIT_CODE -eq 0 ]; then
   echo ""
   echo "✅ All tests passed! No sequential retry needed."
   echo ""
-  echo "📊 Test Results:"
-  echo "  - All 75 tests passed after Tier 1 or Tier 2"
-  echo "  - No Tier 3 sequential retry needed"
+
+  # Generate summary from test results
+  TOTAL_TESTS=$(grep -c "✓\|✘" test-run.log | head -1)
+  TIER1_FAILURES=$(grep "✘" test-run.log | grep -v "retry #1" | wc -l)
+  TIER2_RECOVERIES=$(grep "✓.*retry #1" test-run.log | wc -l)
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📊 TEST RUN SUMMARY"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
-  # Keep logs for analysis
-  echo "Logs preserved:"
+  echo "Result: ✅ All $TOTAL_TESTS tests passed!"
+  echo ""
+  echo "Three-Tier Strategy Performance:"
+  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed initially"
+  echo "  • Tier 2 (4 workers, built-in retry): All $TIER1_FAILURES failure(s) recovered - 100% pass rate"
+  echo "  • Tier 3 (1 worker, sequential): Not needed!"
+  echo ""
+
+  if [ $TIER1_FAILURES -gt 0 ]; then
+    echo "Tests that failed on Tier 1 but passed on Tier 2:"
+    grep "✘" test-run.log | grep -v "retry #1" | sed -E 's/.*›\s+(.+)\s+\(.+\)$/  - \1/' | nl -w2 -s'. '
+    echo ""
+  fi
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Logs preserved for analysis:"
   echo "  - test-run.log (full test output)"
   echo "  - test-flakiness.log (if any failures occurred)"
+  echo "  - test-flakiness-stats.json (cumulative failure tracking)"
   exit 0
 fi
 
@@ -96,18 +118,29 @@ npx playwright test --workers=1 --retries=0 --grep "$GREP_PATTERN" --reporter=li
 EXIT_CODE_SEQ=$?
 
 echo ""
-echo "📊 Three-Tier Test Summary:"
-echo "════════════════════════════════════════════"
-echo "  Tier 1: Initial run (4 workers)"
-echo "  Tier 2: Built-in retry (4 workers)"
-echo "  Tier 3: Sequential retry (1 worker)"
-echo ""
-echo "  Result: $([ $EXIT_CODE_SEQ -eq 0 ] && echo '✅ All tests passed' || echo '❌ Some tests still failing')"
-echo "════════════════════════════════════════════"
+
+# Generate Tier 3 summary
+TIER3_TESTS=$(echo "$FAILED_TESTS" | wc -l)
+TIER3_PASSED=$(grep -c "✓" test-run-sequential.log 2>/dev/null || echo "0")
+TIER3_FAILED=$(grep -c "✘" test-run-sequential.log 2>/dev/null || echo "0")
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📊 TEST RUN SUMMARY"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
 if [ $EXIT_CODE_SEQ -eq 0 ]; then
-  echo "✅ SUCCESS: All tests passed after sequential retry!"
+  echo "Result: ✅ All tests passed after sequential retry!"
+  echo ""
+  echo "Three-Tier Strategy Performance:"
+  echo "  • Tier 1 (4 workers, first attempt): Some tests failed"
+  echo "  • Tier 2 (4 workers, built-in retry): $TIER3_TESTS test(s) still failing"
+  echo "  • Tier 3 (1 worker, sequential): All $TIER3_TESTS test(s) passed - 100% recovery"
+  echo ""
+  echo "Tests recovered by sequential execution:"
+  echo "$FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "📋 Diagnosis:"
   echo "  - Tests work correctly in isolation (1 worker)"
@@ -121,7 +154,17 @@ if [ $EXIT_CODE_SEQ -eq 0 ]; then
   echo "  - test-flakiness.log (failure tracking)"
   exit 0
 else
-  echo "❌ FAILURE: Tests still fail even with sequential execution"
+  echo "Result: ❌ Some tests still failing"
+  echo ""
+  echo "Three-Tier Strategy Performance:"
+  echo "  • Tier 1 (4 workers, first attempt): Some tests failed"
+  echo "  • Tier 2 (4 workers, built-in retry): $TIER3_TESTS test(s) still failing"
+  echo "  • Tier 3 (1 worker, sequential): $TIER3_FAILED test(s) STILL FAILING"
+  echo ""
+  echo "Tests that fail even in sequential execution (REAL BUGS):"
+  grep "✘" test-run-sequential.log | sed -E 's/.*›\s+(.+)\s+\(.+\)$/  - \1/' | nl -w2 -s'. '
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
   echo "📋 Diagnosis:"
   echo "  - These are REAL BUGS, not flakiness"

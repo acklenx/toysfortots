@@ -22,13 +22,15 @@
     - generic [ref=e17]:
       - generic [ref=e18]:
         - heading "Dashboard" [level=1] [ref=e19]
-        - paragraph [ref=e20]: Welcome, testvolunteerw11_1762439006397_6_1915@toysfortots.mcl1311.com
+        - paragraph [ref=e20]: Welcome, testvolunteerw9_1762439427311_6_5573@toysfortots.mcl1311.com
       - generic [ref=e21]:
         - generic [ref=e22]: "Show boxes:"
         - combobox "Show boxes:" [ref=e23]
         - button "Sign Out" [ref=e24] [cursor=pointer]
-    - heading "Loading..." [level=2] [ref=e26]
-  - contentinfo [ref=e28]:
-    - paragraph [ref=e29]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
-    - img "Marine Bear Mascot" [ref=e30]
+    - generic [ref=e25]:
+      - heading "Box Statuses" [level=2] [ref=e26]
+      - paragraph [ref=e28]: No reports have been filed for any boxes yet.
+  - contentinfo [ref=e30]:
+    - paragraph [ref=e31]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
+    - img "Marine Bear Mascot" [ref=e32]
 ```

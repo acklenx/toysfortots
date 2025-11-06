@@ -23,7 +23,7 @@
     - generic [ref=e18]:
       - generic [ref=e19]:
         - generic [ref=e20]: Box ID to Set Up
-        - generic [ref=e21]: BOX_W12_1762439010389_8_5288
+        - generic [ref=e21]: BOX_W8_1762439416243_1_3901
       - generic [ref=e22]:
         - generic [ref=e23]: Setup Code
         - textbox "Setup Code" [ref=e24]
@@ -43,10 +43,7 @@
         - generic [ref=e41]: Contact Phone
         - textbox "Contact Phone" [ref=e42]
       - button "Submit Location" [ref=e44] [cursor=pointer]
-      - generic [ref=e45]:
-        - paragraph [ref=e46]: "Signed in as: testvolunteerw12_1762439009973_7_5926"
-        - button "Sign Out" [ref=e47] [cursor=pointer]
-  - contentinfo [ref=e49]:
-    - paragraph [ref=e50]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
-    - img "Marine Bear Mascot" [ref=e51]
+  - contentinfo [ref=e46]:
+    - paragraph [ref=e47]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
+    - img "Marine Bear Mascot" [ref=e48]
 ```

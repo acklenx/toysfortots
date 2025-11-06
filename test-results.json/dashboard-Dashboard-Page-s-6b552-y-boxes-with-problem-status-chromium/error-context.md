@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
+- generic [active] [ref=e1]:
   - banner [ref=e3]:
     - generic [ref=e4]:
       - link "Toys for Tots Logo" [ref=e5] [cursor=pointer]:
@@ -23,17 +23,17 @@
       - heading "Volunteer Access" [level=1] [ref=e17]
     - generic [ref=e18]:
       - generic [ref=e19]:
-        - heading "Create Account with Username" [level=2] [ref=e20]
+        - heading "Sign In with Username" [level=2] [ref=e20]
         - generic [ref=e21]:
           - generic [ref=e22]:
             - generic [ref=e23]: Username
-            - textbox "Username" [ref=e24]: testvolunteerW8_1762438996790_5_5959
+            - textbox "Username" [ref=e24]
           - generic [ref=e25]:
             - generic [ref=e26]: Password
-            - textbox "Password" [ref=e27]: testpass123
-          - button "Create Account" [active] [ref=e28] [cursor=pointer]
+            - textbox "Password" [ref=e27]
+          - button "Sign In" [ref=e28] [cursor=pointer]
         - paragraph [ref=e29]:
-          - button "Already have an account? Sign In" [ref=e30] [cursor=pointer]
+          - button "New user? Create an account" [ref=e30] [cursor=pointer]
         - generic [ref=e32]: You are signed in but not authorized. Please complete the setup form or contact an administrator.
       - generic [ref=e33]: "-- OR --"
       - paragraph [ref=e34]: Please sign in to continue.
