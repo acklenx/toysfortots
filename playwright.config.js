@@ -5,7 +5,7 @@ module.exports = defineConfig({
   fullyParallel: false, // Tests within describe blocks run sequentially
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 2, // Run 2 tests in parallel (reduced for Firebase emulator stability)
+  workers: 4, // Run tests with 4 parallel workers
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list']

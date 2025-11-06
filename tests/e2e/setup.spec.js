@@ -120,7 +120,7 @@ test.describe('Setup Page', () => {
     // Passcode field should be visible
     const passcodeGroup = page.locator('#passcode').locator('..');
     await expect(passcodeGroup).toBeVisible();
-    await expect(page.locator('label[for="passcode"]')).toContainText('One time setup code');
+    await expect(page.locator('label[for="passcode"]')).toContainText('Setup Code');
   });
 
   test('should show/hide passcode when toggle clicked', async ({ page }) => {
@@ -162,6 +162,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
+
+    // Wait for auth to complete
+    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
 
     await page.goto('/setup?id=NEWBOX004');
 
@@ -257,6 +260,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
+
+    // Wait for auth to complete
+    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
 
     await page.goto('/setup?id=NEWBOX008');
 

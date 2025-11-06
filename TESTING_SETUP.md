@@ -1,5 +1,7 @@
 # Testing Setup Guide
 
+> **Note**: For recent test fixes and progress updates, see [TESTING_PROGRESS.md](./TESTING_PROGRESS.md)
+
 ## Installing Java for Firebase Emulators
 
 Firebase emulators require Java Runtime Environment (JRE) to be installed.

@@ -57,7 +57,7 @@ test.describe('Dashboard Page', () => {
 
   test('should display dashboard for authorized user', async ({ page }) => {
     // User is already logged in from beforeEach, just navigate to dashboard
-    await page.goto('/dashboard');
+    await page.goto('/dashboard/');
 
     // Check dashboard elements are visible
     await expect(page.locator('#main-content h1')).toContainText('Dashboard');
@@ -67,14 +67,14 @@ test.describe('Dashboard Page', () => {
   });
 
   test('should display volunteer name', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/dashboard/');
 
     const volunteerName = page.locator('#volunteer-name');
     await expect(volunteerName).toContainText(testUser.username);
   });
 
   test('should sign out user when sign out button clicked', async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/dashboard/');
 
     // Wait for sign-out button to be visible before clicking
     await expect(page.locator('#sign-out-btn')).toBeVisible();
@@ -204,7 +204,7 @@ test.describe('Dashboard Page', () => {
       volunteer: displayName
     });
 
-    await page.goto('/dashboard');
+    await page.goto('/dashboard/');
 
     const historyLink = page.locator('.view-history-btn').first();
     await expect(historyLink).toBeVisible();
