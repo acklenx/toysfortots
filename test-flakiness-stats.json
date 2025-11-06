@@ -1,46 +1,46 @@
 {
   "Login Page > should display login form": {
     "totalFailures": 2,
-    "totalSuccesses": 13,
+    "totalSuccesses": 17,
     "firstSuccess": "2025-11-06T07:36:49.290Z",
     "lastFailure": "2025-11-06T13:25:17.510Z"
   },
   "Box Action Center (/box) > should redirect to setup if box does not exist": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:36:49.604Z",
     "lastFailure": "2025-11-06T13:20:52.271Z"
   },
   "Login Page > should toggle between sign-in and sign-up modes": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:49.924Z"
   },
   "Login Page > should show error for empty credentials": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:36:50.597Z",
     "lastFailure": "2025-11-06T13:19:30.503Z"
   },
   "Login Page > should show error for username with @ symbol": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:51.306Z"
   },
   "Home Page > should load home page successfully": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:51.848Z"
   },
   "Dashboard Page > should redirect unauthenticated users to login": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:52.836Z"
   },
   "Dashboard Page > should display dashboard for authorized user": {
-    "totalFailures": 5,
+    "totalFailures": 7,
     "firstFailure": "2025-11-06T07:36:53.551Z",
-    "lastFailure": "2025-11-06T13:40:14.622Z",
+    "lastFailure": "2025-11-06T13:53:33.915Z",
     "failures": [
       {
         "timestamp": "2025-11-06T07:36:53.551Z",
@@ -76,70 +76,85 @@
         "duration": 602,
         "retry": 0,
         "workerIndex": 0
+      },
+      {
+        "timestamp": "2025-11-06T13:52:14.401Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#volunteer-name')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#volunteer-name')\u001b[22m\n\u001b[2m    2 × locator resolved to <span id=\"volunteer-name\">...</span>\u001b[22m\n\u001b[2m      - unexpected value \"hidden\"\u001b[22m\n",
+        "duration": 11337,
+        "retry": 0,
+        "workerIndex": 1
+      },
+      {
+        "timestamp": "2025-11-06T13:53:33.915Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#volunteer-name')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#volunteer-name')\u001b[22m\n\u001b[2m    2 × locator resolved to <span id=\"volunteer-name\">...</span>\u001b[22m\n\u001b[2m      - unexpected value \"hidden\"\u001b[22m\n",
+        "duration": 11757,
+        "retry": 0,
+        "workerIndex": 1
       }
     ],
-    "totalSuccesses": 10
+    "totalSuccesses": 12
   },
   "Login Page > should create new user account": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:54.085Z"
   },
   "Login Page > should show error for invalid sign-in credentials": {
-    "totalFailures": 0,
-    "totalSuccesses": 15,
-    "firstSuccess": "2025-11-06T07:36:54.695Z"
+    "totalFailures": 1,
+    "totalSuccesses": 18,
+    "firstSuccess": "2025-11-06T07:36:54.695Z",
+    "lastFailure": "2025-11-06T13:52:22.804Z"
   },
   "Home Page > should display page title": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:36:54.822Z"
   },
   "Dashboard Page > should display volunteer name": {
-    "totalFailures": 11,
-    "totalSuccesses": 4,
+    "totalFailures": 12,
+    "totalSuccesses": 7,
     "firstSuccess": "2025-11-06T07:36:55.880Z",
-    "lastFailure": "2025-11-06T13:42:53.674Z"
+    "lastFailure": "2025-11-06T13:52:26.873Z"
   },
   "Dashboard Page > should sign out user when sign out button clicked": {
     "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalSuccesses": 15,
     "firstSuccess": "2025-11-06T07:36:56.818Z",
     "lastFailure": "2025-11-06T13:22:38.451Z"
   },
   "Dashboard Page > should display message when no boxes exist": {
     "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalSuccesses": 15,
     "firstSuccess": "2025-11-06T07:36:57.527Z",
     "lastFailure": "2025-11-06T13:25:45.960Z"
   },
   "Home Page > should have header placeholder": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:36:57.783Z",
     "lastFailure": "2025-11-06T13:22:17.158Z"
   },
   "Dashboard Page > should display boxes with good status": {
-    "totalFailures": 5,
-    "totalSuccesses": 10,
+    "totalFailures": 8,
+    "totalSuccesses": 11,
     "firstSuccess": "2025-11-06T07:36:58.831Z",
-    "lastFailure": "2025-11-06T13:27:14.357Z"
+    "lastFailure": "2025-11-06T13:53:50.796Z"
   },
   "Dashboard Page > should display boxes with problem status": {
-    "totalFailures": 7,
-    "totalSuccesses": 8,
+    "totalFailures": 10,
+    "totalSuccesses": 9,
     "firstSuccess": "2025-11-06T07:37:00.033Z",
-    "lastFailure": "2025-11-06T13:27:16.427Z"
+    "lastFailure": "2025-11-06T13:53:53.449Z"
   },
   "Home Page > should have footer placeholder": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:00.715Z"
   },
   "Box Action Center (/box) > should display box information": {
-    "totalFailures": 10,
+    "totalFailures": 13,
     "firstFailure": "2025-11-06T07:37:00.731Z",
-    "lastFailure": "2025-11-06T13:26:45.193Z",
+    "lastFailure": "2025-11-06T13:53:32.804Z",
     "failures": [
       {
         "timestamp": "2025-11-06T07:37:00.731Z",
@@ -210,81 +225,103 @@
         "duration": 11109,
         "retry": 0,
         "workerIndex": 0
+      },
+      {
+        "timestamp": "2025-11-06T13:48:12.767Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#location-display')\nExpected substring: \u001b[32m\"Test Market\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#location-display')\u001b[22m\n\u001b[2m    2 × locator resolved to <div class=\"mb-6\" id=\"location-display\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m\t\t\t\t\tLoading location data...\u001b[22m\n\u001b[2m\t\t\t\t\"\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:5000/setup/?id=BOX_W0_1762436882008_2_9725\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:5000/setup/?id=BOX_W0_1762436882008_2_9725\"\u001b[22m\n",
+        "duration": 10818,
+        "retry": 0,
+        "workerIndex": 0
+      },
+      {
+        "timestamp": "2025-11-06T13:52:13.622Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#location-display')\nExpected substring: \u001b[32m\"Test Market\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#location-display')\u001b[22m\n\u001b[2m    2 × locator resolved to <div class=\"mb-6\" id=\"location-display\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m\t\t\t\t\tLoading location data...\u001b[22m\n\u001b[2m\t\t\t\t\"\u001b[22m\n",
+        "duration": 10961,
+        "retry": 0,
+        "workerIndex": 0
+      },
+      {
+        "timestamp": "2025-11-06T13:53:32.804Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#location-display')\nExpected substring: \u001b[32m\"Test Market\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#location-display')\u001b[22m\n\u001b[2m    2 × locator resolved to <div class=\"mb-6\" id=\"location-display\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m\t\t\t\t\tLoading location data...\u001b[22m\n\u001b[2m\t\t\t\t\"\u001b[22m\n",
+        "duration": 11223,
+        "retry": 0,
+        "workerIndex": 0
       }
     ],
-    "totalSuccesses": 8
+    "totalSuccesses": 9
   },
   "Login Page > should sign in existing user": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:01.903Z"
   },
   "Box Action Center (/box) > should display volunteer name": {
-    "totalFailures": 4,
-    "totalSuccesses": 12,
+    "totalFailures": 5,
+    "totalSuccesses": 15,
     "firstSuccess": "2025-11-06T07:37:03.277Z",
-    "lastFailure": "2025-11-06T13:26:57.694Z"
+    "lastFailure": "2025-11-06T13:48:14.354Z"
   },
   "Box Action Center (/box) > should have pickup and problem buttons": {
-    "totalFailures": 0,
-    "totalSuccesses": 15,
-    "firstSuccess": "2025-11-06T07:37:03.867Z"
+    "totalFailures": 1,
+    "totalSuccesses": 18,
+    "firstSuccess": "2025-11-06T07:37:03.867Z",
+    "lastFailure": "2025-11-06T13:53:35.998Z"
   },
   "Box Action Center (/box) > should show error when no box ID provided": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:04.348Z"
   },
   "Home Page > should initialize without authentication errors": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:04.785Z"
   },
   "Login Page > should show error when trying to create account with existing username": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:04.816Z"
   },
   "Status/History Page (/status) > should redirect to setup if box does not exist": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:07.726Z"
   },
   "Status/History Page (/status) > should display box information": {
     "totalFailures": 3,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:08.291Z",
     "lastFailure": "2025-11-06T13:25:47.356Z"
   },
   "Home Page > should load without box locations showing message": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:08.688Z"
   },
   "Status/History Page (/status) > should show error when no box ID provided": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:08.858Z"
   },
   "Status/History Page (/status) > should display contact information": {
-    "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalFailures": 5,
+    "totalSuccesses": 14,
     "firstSuccess": "2025-11-06T07:37:09.517Z",
-    "lastFailure": "2025-11-06T13:26:01.802Z"
+    "lastFailure": "2025-11-06T13:52:32.735Z"
   },
   "Authenticated View > should display initial box registration report": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:10.595Z"
   },
   "Login Page > should redirect to returnUrl after successful login": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:10.955Z"
   },
   "Login Page > should validate password length on signup": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:11.802Z"
   },
   "Dashboard Page > should display boxes with pickup alert status": {
@@ -328,48 +365,48 @@
         "workerIndex": 12
       }
     ],
-    "totalSuccesses": 14
+    "totalSuccesses": 18
   },
   "Authenticated View > should display multiple reports in chronological order": {
-    "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalFailures": 5,
+    "totalSuccesses": 14,
     "firstSuccess": "2025-11-06T07:37:11.944Z",
-    "lastFailure": "2025-11-06T13:21:41.954Z"
+    "lastFailure": "2025-11-06T13:48:34.841Z"
   },
   "Home Page > should work with anonymous authentication": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:12.728Z"
   },
   "Login Page > should handle form submission via Enter key": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:14.493Z"
   },
   "Login Page > should show not authorized message for non-authorized user": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:18.359Z"
   },
   "Setup Page > should display box ID from URL parameter": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:37:19.041Z",
     "lastFailure": "2025-11-06T13:27:03.828Z"
   },
   "Setup Page > should show error when no box ID in URL": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:19.776Z"
   },
   "Home Page > should load locations when they exist": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:20.054Z"
   },
   "Home Page > should have valid meta viewport for mobile": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:20.874Z"
   },
   "Authenticated View > should display problem reports with correct styling": {
@@ -399,18 +436,18 @@
         "workerIndex": 4
       }
     ],
-    "totalSuccesses": 12
+    "totalSuccesses": 16
   },
   "Home Page > should load CSS stylesheets": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:23.650Z"
   },
   "Authenticated View > should display pickup alerts correctly": {
-    "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalFailures": 5,
+    "totalSuccesses": 14,
     "firstSuccess": "2025-11-06T07:37:25.273Z",
-    "lastFailure": "2025-11-06T13:26:19.469Z"
+    "lastFailure": "2025-11-06T13:48:49.716Z"
   },
   "Dashboard Page > should show clear status button for pending reports": {
     "totalFailures": 3,
@@ -439,45 +476,47 @@
         "workerIndex": 8
       }
     ],
-    "totalSuccesses": 12
+    "totalSuccesses": 16
   },
   "Authenticated View > should show report status as New or Cleared": {
-    "totalFailures": 0,
-    "totalSuccesses": 15,
-    "firstSuccess": "2025-11-06T07:37:26.311Z"
+    "totalFailures": 1,
+    "totalSuccesses": 18,
+    "firstSuccess": "2025-11-06T07:37:26.311Z",
+    "lastFailure": "2025-11-06T13:49:02.468Z"
   },
   "Authenticated View > should display report timestamps": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:37:27.593Z",
     "lastFailure": "2025-11-06T13:22:47.911Z"
   },
   "Home Page > should load Firebase scripts without errors": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:37:27.615Z",
     "lastFailure": "2025-11-06T13:21:27.422Z"
   },
   "Authenticated View > should display reporter information if available": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:28.632Z"
   },
   "Authenticated View > should handle reports without description gracefully": {
-    "totalFailures": 0,
-    "totalSuccesses": 15,
-    "firstSuccess": "2025-11-06T07:37:29.427Z"
+    "totalFailures": 2,
+    "totalSuccesses": 17,
+    "firstSuccess": "2025-11-06T07:37:29.427Z",
+    "lastFailure": "2025-11-06T13:54:02.589Z"
   },
   "Authenticated View > should format report types correctly": {
     "totalFailures": 3,
-    "totalSuccesses": 12,
+    "totalSuccesses": 16,
     "firstSuccess": "2025-11-06T07:37:30.205Z",
     "lastFailure": "2025-11-06T13:27:15.207Z"
   },
   "Setup Page > should redirect to status page if box already exists": {
-    "totalFailures": 8,
+    "totalFailures": 10,
     "firstFailure": "2025-11-06T07:37:31.156Z",
-    "lastFailure": "2025-11-06T13:27:18.310Z",
+    "lastFailure": "2025-11-06T13:54:03.866Z",
     "failures": [
       {
         "timestamp": "2025-11-06T07:37:31.156Z",
@@ -534,67 +573,81 @@
         "duration": 11870,
         "retry": 0,
         "workerIndex": 8
+      },
+      {
+        "timestamp": "2025-11-06T13:53:00.033Z",
+        "error": "TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================",
+        "duration": 10936,
+        "retry": 0,
+        "workerIndex": 6
+      },
+      {
+        "timestamp": "2025-11-06T13:54:03.866Z",
+        "error": "TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================",
+        "duration": 11206,
+        "retry": 0,
+        "workerIndex": 3
       }
     ],
-    "totalSuccesses": 10
+    "totalSuccesses": 12
   },
   "Authenticated View > should display multiple report types": {
     "totalFailures": 1,
-    "totalSuccesses": 12,
+    "totalSuccesses": 16,
     "firstSuccess": "2025-11-06T07:37:31.455Z",
     "lastFailure": "2025-11-06T13:24:53.065Z"
   },
   "Home Page > should connect to Firebase emulators in localhost": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:31.564Z"
   },
   "Setup Page > should hide passcode field for authorized volunteers": {
     "totalFailures": 1,
-    "totalSuccesses": 14,
+    "totalSuccesses": 18,
     "firstSuccess": "2025-11-06T07:37:33.251Z",
     "lastFailure": "2025-11-06T13:27:21.099Z"
   },
   "Setup Page > should show passcode field for non-authorized users": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:33.941Z"
   },
   "Setup Page > should show/hide passcode when toggle clicked": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:34.633Z"
   },
   "Setup Page > should display signed in user name": {
     "totalFailures": 10,
-    "totalSuccesses": 5,
+    "totalSuccesses": 9,
     "firstSuccess": "2025-11-06T07:37:35.342Z",
     "lastFailure": "2025-11-06T13:44:36.895Z"
   },
   "Setup Page > should show/hide manual address fields": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:36.034Z"
   },
   "Setup Page > should validate required fields on form submission": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:36.704Z"
   },
   "Setup Page > should require contact info on submission": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:37.504Z"
   },
   "Home Page > should handle multiple locations without errors": {
     "totalFailures": 2,
-    "totalSuccesses": 13,
+    "totalSuccesses": 17,
     "firstSuccess": "2025-11-06T07:37:37.915Z",
     "lastFailure": "2025-11-06T13:27:16.316Z"
   },
   "Setup Page > should have sign out button": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:38.496Z"
   },
   "Dashboard Page > should have view history link": {
@@ -617,47 +670,47 @@
         "workerIndex": 14
       }
     ],
-    "totalSuccesses": 13
+    "totalSuccesses": 17
   },
   "Home Page > should be accessible via root URL": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:38.819Z"
   },
   "Setup Page > should have GPS location button": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:39.436Z"
   },
   "Home Page > should load within reasonable time": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:39.663Z"
   },
   "Setup Page > should have default state value of GA": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:40.428Z"
   },
   "Setup Page > should display form fields correctly": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:41.427Z"
   },
   "Home Page > should not redirect to login page": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:43.450Z"
   },
   "Home Page > should work without user interaction": {
     "totalFailures": 0,
-    "totalSuccesses": 15,
+    "totalSuccesses": 19,
     "firstSuccess": "2025-11-06T07:37:48.098Z"
   },
   "Dashboard Page > should filter boxes by volunteer": {
-    "totalFailures": 5,
+    "totalFailures": 7,
     "firstFailure": "2025-11-06T07:37:51.810Z",
-    "lastFailure": "2025-11-06T13:40:34.572Z",
+    "lastFailure": "2025-11-06T13:52:49.218Z",
     "failures": [
       {
         "timestamp": "2025-11-06T07:37:51.810Z",
@@ -693,19 +746,33 @@
         "duration": 597,
         "retry": 0,
         "workerIndex": 2
+      },
+      {
+        "timestamp": "2025-11-06T13:48:47.660Z",
+        "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#boxes-title')\nExpected substring: \u001b[32m\"Boxes Assigned to testvolunteerw7_1762436916340_10_2901@toysfortots.mcl1311.com\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('#boxes-title')\u001b[22m\n\u001b[2m    2 × locator resolved to <h2 id=\"boxes-title\">Loading...</h2>\u001b[22m\n\u001b[2m      - unexpected value \"Loading...\"\u001b[22m\n",
+        "duration": 11396,
+        "retry": 0,
+        "workerIndex": 7
+      },
+      {
+        "timestamp": "2025-11-06T13:52:49.218Z",
+        "error": "Error: page.evaluate: Execution context was destroyed, most likely because of a navigation",
+        "duration": 834,
+        "retry": 0,
+        "workerIndex": 10
       }
     ],
-    "totalSuccesses": 10
+    "totalSuccesses": 12
   },
   "Dashboard Page > should display multiple boxes sorted by label": {
-    "totalFailures": 4,
-    "totalSuccesses": 11,
+    "totalFailures": 5,
+    "totalSuccesses": 14,
     "firstSuccess": "2025-11-06T07:37:53.812Z",
-    "lastFailure": "2025-11-06T13:43:02.125Z"
+    "lastFailure": "2025-11-06T13:53:02.474Z"
   },
   "Dashboard Page > should show correct address and city": {
     "totalFailures": 1,
-    "totalSuccesses": 12,
+    "totalSuccesses": 16,
     "firstSuccess": "2025-11-06T07:37:54.881Z",
     "lastFailure": "2025-11-06T13:19:52.077Z"
   }
