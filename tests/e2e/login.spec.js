@@ -4,7 +4,8 @@ import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.j
 
 test.describe('Login Page', () => {
   test.beforeEach(async () => {
-    await clearTestData();
+    // Note: clearTestData() removed to prevent wiping data from parallel workers
+    // Unique test IDs prevent collisions between workers
     await seedTestConfig('TEST_PASSCODE');
   });
 

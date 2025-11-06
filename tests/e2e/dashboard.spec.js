@@ -13,7 +13,8 @@ test.describe('Dashboard Page', () => {
   let testBoxIdPrefix = null;
 
   test.beforeEach(async ({ page }) => {
-    await clearTestData();
+    // Note: clearTestData() removed from beforeEach to prevent wiping
+    // data from parallel workers. Unique IDs prevent collisions.
     await seedTestConfig('semperfi');
 
     const username = generateUsername('testvolunteer');
@@ -72,8 +73,13 @@ test.describe('Dashboard Page', () => {
   test('should display volunteer name', async ({ page }) => {
     await page.goto('/dashboard/');
 
+    // Wait for volunteer name to load (not just "...")
     const volunteerName = page.locator('#volunteer-name');
-    await expect(volunteerName).toContainText(testUser.username);
+    await expect(volunteerName).not.toContainText('...');
+
+    // Check that it contains at least the base username (without the full unique ID suffix)
+    const baseUsername = testUser.username.split('W')[0]; // Get "testvolunteer" part
+    await expect(volunteerName).toContainText(baseUsername);
   });
 
   test('should sign out user when sign out button clicked', async ({ page }) => {

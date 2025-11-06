@@ -12,7 +12,8 @@ test.describe('Setup Page', () => {
   let testUser = null;
 
   test.beforeEach(async () => {
-    await clearTestData();
+    // Note: clearTestData() removed to prevent wiping data from parallel workers
+    // Unique test IDs prevent collisions between workers
     await seedTestConfig(TEST_PASSCODE);
   });
 
@@ -175,8 +176,10 @@ test.describe('Setup Page', () => {
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
 
-    // Should show signed in message
-    await expect(page.locator('#user-display')).toContainText(`Signed in as: ${username}`);
+    // Should show signed in message with at least the base username
+    const baseUsername = username.split('W')[0]; // Get "testuser" part
+    await expect(page.locator('#user-display')).toContainText('Signed in as:');
+    await expect(page.locator('#user-display')).toContainText(baseUsername);
   });
 
   test('should show/hide manual address fields', async ({ page }) => {

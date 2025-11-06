@@ -7,6 +7,10 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 4, // Run tests with 4 parallel workers
 
+  // Global setup/teardown for one-time data clearing
+  globalSetup: './tests/global-setup.js',
+  globalTeardown: './tests/global-teardown.js',
+
   // Reorder tests to reduce contention (login/home first, then spread heavy tests)
   testMatch: [
     '**/login.spec.js',
