@@ -15,63 +15,37 @@ echo ""
 npx playwright test --reporter=list,./flakiness-reporter.js 2>&1 | tee test-run.log
 EXIT_CODE=$?
 
-# Count how many tests failed on first attempt
-TIER1_FAILURES=$(grep "✘" test-run.log | grep -v "retry #1" | wc -l)
+# Extract ALL tests that failed on initial attempt (ignore retry results)
+# This is the list we'll manually retry with 1 worker
+TIER1_FAILED_TESTS=$(grep "✘" test-run.log | grep -v "retry #1" | sed -E 's/.*›\s+(.+)\s+\(.+\)$/\1/' | sort -u)
+TIER1_FAILURES=$(echo "$TIER1_FAILED_TESTS" | grep -v '^$' | wc -l)
 
-# Count how many tests failed even after retry (failed on BOTH attempts)
-# These show up as duplicate test names in the failure list
-TIER2_STILL_FAILING=$(grep "✘" test-run.log | sed -E 's/.*›\s+(.+)\s+\(.+\)$/\1/' | sort | uniq -d | wc -l)
-
-# Check if all tests ultimately passed (no tests failed on both attempts)
-if [ $TIER2_STILL_FAILING -eq 0 ]; then
+# If no failures at all, we're done
+if [ $TIER1_FAILURES -eq 0 ]; then
   echo ""
-  # Generate summary from test results
   TOTAL_TESTS=$(grep -c "✓\|✘" test-run.log | head -1)
-  TIER2_RECOVERIES=$(grep "✓.*retry #1" test-run.log | wc -l)
-
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "📊 TEST RUN SUMMARY"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
-  echo "Result: ✅ All $TOTAL_TESTS tests passed!"
+  echo "Result: ✅ All $TOTAL_TESTS tests passed on first attempt!"
   echo ""
   echo "Three-Tier Strategy Performance:"
-  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed initially"
-  echo "  • Tier 2 (4 workers, built-in retry): All $TIER1_FAILURES failure(s) recovered - 100% pass rate"
-  echo "  • Tier 3 (1 worker, sequential): Not needed!"
+  echo "  • Tier 1 (4 workers, first attempt): 0 failures - perfect run!"
+  echo "  • Tier 2 (built-in retry): Not needed"
+  echo "  • Tier 3 (sequential retry): Not needed"
   echo ""
-
-  if [ $TIER1_FAILURES -gt 0 ]; then
-    echo "Tests that failed on Tier 1 but passed on Tier 2:"
-    grep "✘" test-run.log | grep -v "retry #1" | sed -E 's/.*›\s+(.+)\s+\(.+\)$/  - \1/' | nl -w2 -s'. '
-    echo ""
-  fi
-
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "Logs preserved for analysis:"
-  echo "  - test-run.log (full test output)"
-  echo "  - test-flakiness.log (if any failures occurred)"
-  echo "  - test-flakiness-stats.json (cumulative failure tracking)"
   exit 0
 fi
 
 echo ""
-echo "⚠️  Some tests still failed after built-in retry. Analyzing..."
+echo "⚠️  $TIER1_FAILURES test(s) failed on initial run."
+echo "   Ignoring Playwright's retry results - will manually verify with Tier 3..."
 echo ""
 
-# Extract tests that failed on BOTH attempts (failed initially AND on retry)
-# Look for tests that have TWO failure markers (✘) without a passing retry between them
-FAILED_TESTS=$(grep "✘" test-run.log | sed -E 's/.*›\s+(.+)\s+\(.+\)$/\1/' | sort | uniq -d)
-
-if [ -z "$FAILED_TESTS" ]; then
-  echo "✅ No consistently failing tests found (all passed on retry)"
-  exit 0
-fi
-
-FAILED_COUNT=$(echo "$FAILED_TESTS" | wc -l)
-echo "Found $FAILED_COUNT test(s) that failed on both attempts:"
-echo "$FAILED_TESTS" | sed 's/^/  - /'
+echo "Tests that failed on initial attempt:"
+echo "$TIER1_FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
 echo ""
 
 # Clean up before sequential retry
@@ -86,8 +60,8 @@ echo ""
 echo "🔄 Phase 3: Sequential retry with 1 worker (isolated execution)..."
 echo ""
 
-# Build grep pattern for failed tests
-GREP_PATTERN=$(echo "$FAILED_TESTS" | sed 's/[]\/$*.^[]/\\&/g' | paste -sd'|' -)
+# Build grep pattern for failed tests (use TIER1_FAILED_TESTS)
+GREP_PATTERN=$(echo "$TIER1_FAILED_TESTS" | sed 's/[]\/$*.^[]/\\&/g' | paste -sd'|' -)
 
 # Retry with 1 worker, no retries (we want to see if sequential fixes it)
 npx playwright test --workers=1 --retries=0 --grep "$GREP_PATTERN" --reporter=list 2>&1 | tee test-run-sequential.log
@@ -96,7 +70,7 @@ EXIT_CODE_SEQ=$?
 echo ""
 
 # Generate Tier 3 summary
-TIER3_TESTS=$(echo "$FAILED_TESTS" | wc -l)
+TIER3_TESTS=$TIER1_FAILURES
 TIER3_PASSED=$(grep -c "✓" test-run-sequential.log 2>/dev/null || echo "0")
 TIER3_FAILED=$(grep -c "✘" test-run-sequential.log 2>/dev/null || echo "0")
 
@@ -109,12 +83,12 @@ if [ $EXIT_CODE_SEQ -eq 0 ]; then
   echo "Result: ✅ All tests passed after sequential retry!"
   echo ""
   echo "Three-Tier Strategy Performance:"
-  echo "  • Tier 1 (4 workers, first attempt): Some tests failed"
-  echo "  • Tier 2 (4 workers, built-in retry): $TIER3_TESTS test(s) still failing"
+  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed"
+  echo "  • Tier 2 (4 workers, built-in retry): Playwright claims some passed (IGNORED)"
   echo "  • Tier 3 (1 worker, sequential): All $TIER3_TESTS test(s) passed - 100% recovery"
   echo ""
-  echo "Tests recovered by sequential execution:"
-  echo "$FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
+  echo "Tests that failed on Tier 1 but passed on Tier 3:"
+  echo "$TIER1_FAILED_TESTS" | nl -w2 -s'. ' | sed 's/^/  /'
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
@@ -133,8 +107,8 @@ else
   echo "Result: ❌ Some tests still failing"
   echo ""
   echo "Three-Tier Strategy Performance:"
-  echo "  • Tier 1 (4 workers, first attempt): Some tests failed"
-  echo "  • Tier 2 (4 workers, built-in retry): $TIER3_TESTS test(s) still failing"
+  echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed"
+  echo "  • Tier 2 (4 workers, built-in retry): Playwright claims some passed (IGNORED)"
   echo "  • Tier 3 (1 worker, sequential): $TIER3_FAILED test(s) STILL FAILING"
   echo ""
   echo "Tests that fail even in sequential execution (REAL BUGS):"
