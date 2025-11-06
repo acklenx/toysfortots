@@ -911,9 +911,12 @@ footer {
 /* Clear Status Button */
 .clear-status-btn {
     margin-top: 0.75rem; /* mt-3 */
-    width: 100%;
+    width: 60%; /* Narrower than full width */
+    margin-left: auto;
+    margin-right: auto;
+    display: block; /* Needed for margin auto centering */
     padding: 0.5rem 0.75rem; /* py-2 px-3 */
-    background-color: var(--t4t-green);
+    background-color: var(--t4t-red);
     color: white;
     font-size: 0.875rem; /* text-sm */
     font-weight: 600; /* font-semibold */
@@ -922,7 +925,7 @@ footer {
     cursor: pointer;
 }
 .clear-status-btn:hover {
-    background-color: #15803d; /* hover:bg-green-700 */
+    background-color: #a01828; /* hover:bg-red-700 */
 }
 
 /* View History Button */
