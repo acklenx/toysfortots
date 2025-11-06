@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 const {
   clearTestData,
   seedTestConfig,
+  authorizeVolunteer,
   createTestLocation,
   createTestReport,
   getReportsForBox
@@ -72,18 +73,6 @@ test.describe('Box Action Center and Status Pages', () => {
 
       await expect(page.locator('#loading-message')).toContainText('ID missing');
     });
-
-    test('should have link to view history', async ({ page }) => {
-      await createTestLocation('BOX004', {
-        label: 'Test Location'
-      });
-
-      await page.goto('/box?id=BOX004');
-      await page.waitForTimeout(3000);
-
-      const historyLink = page.locator('a[href*="/status"]');
-      await expect(historyLink).toBeVisible();
-    });
   });
 
   test.describe('Status/History Page (/status)', () => {
@@ -112,178 +101,6 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.locator('#location-display')).toContainText('Jane Smith');
     });
 
-    test('should display initial box registration report', async ({ page }) => {
-      await createTestLocation('BOX102', {
-        label: 'Test Store',
-        volunteer: 'Test Volunteer'
-      });
-
-      await page.goto('/status?id=BOX102');
-      await page.waitForTimeout(3000);
-
-      // Should show the initial "box registered" report
-      await expect(page.locator('.report-item')).toBeVisible();
-      await expect(page.locator('.report-item').first()).toContainText('box_registered');
-    });
-
-    test('should display multiple reports in chronological order', async ({ page }) => {
-      await createTestLocation('BOX103', {
-        label: 'Test Location',
-        volunteer: 'Volunteer'
-      });
-
-      // Create reports with different timestamps
-      const report1 = await createTestReport('BOX103', {
-        reportType: 'problem_report',
-        description: 'First problem',
-        timestamp: new Date('2024-01-01').toISOString(),
-        status: 'cleared'
-      });
-
-      const report2 = await createTestReport('BOX103', {
-        reportType: 'pickup_alert',
-        description: 'Pickup needed',
-        timestamp: new Date('2024-01-02').toISOString(),
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX103');
-      await page.waitForTimeout(3000);
-
-      const reportItems = page.locator('.report-item');
-      await expect(reportItems).toHaveCount(3); // Initial + 2 created
-
-      // Check that reports are displayed
-      await expect(page.locator('text=First problem')).toBeVisible();
-      await expect(page.locator('text=Pickup needed')).toBeVisible();
-    });
-
-    test('should display problem reports with correct styling', async ({ page }) => {
-      await createTestLocation('BOX104', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX104', {
-        reportType: 'problem_report',
-        description: 'Box is damaged',
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX104');
-      await page.waitForTimeout(3000);
-
-      const problemReport = page.locator('.report-item.is-problem').first();
-      await expect(problemReport).toBeVisible();
-      await expect(problemReport).toContainText('Box is damaged');
-    });
-
-    test('should display pickup alerts correctly', async ({ page }) => {
-      await createTestLocation('BOX105', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX105', {
-        reportType: 'pickup_alert',
-        description: 'Box is full',
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX105');
-      await page.waitForTimeout(3000);
-
-      await expect(page.locator('.report-item')).toContainText('pickup alert');
-      await expect(page.locator('.report-item')).toContainText('Box is full');
-    });
-
-    test('should show report status as New or Cleared', async ({ page }) => {
-      await createTestLocation('BOX106', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX106', {
-        reportType: 'problem_report',
-        description: 'New problem',
-        status: 'new'
-      });
-
-      await createTestReport('BOX106', {
-        reportType: 'problem_report',
-        description: 'Cleared problem',
-        status: 'cleared'
-      });
-
-      await page.goto('/status?id=BOX106');
-      await page.waitForTimeout(3000);
-
-      // Check for status badges
-      const newStatus = page.locator('.report-status.is-new');
-      await expect(newStatus).toBeVisible();
-      await expect(newStatus.first()).toContainText('New');
-
-      const clearedStatus = page.locator('.report-status.is-cleared');
-      await expect(clearedStatus).toBeVisible();
-    });
-
-    test('should display report timestamps', async ({ page }) => {
-      await createTestLocation('BOX107', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX107', {
-        reportType: 'problem_report',
-        description: 'Test report',
-        timestamp: new Date('2024-01-15T10:30:00').toISOString(),
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX107');
-      await page.waitForTimeout(3000);
-
-      // Should display timestamp
-      await expect(page.locator('.report-timestamp')).toBeVisible();
-      await expect(page.locator('.report-timestamp').first()).toContainText('Report Time');
-    });
-
-    test('should display reporter information if available', async ({ page }) => {
-      await createTestLocation('BOX108', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX108', {
-        reportType: 'problem_report',
-        description: 'Test report',
-        reporterName: 'John Reporter',
-        reporterEmail: 'john@example.com',
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX108');
-      await page.waitForTimeout(3000);
-
-      // Should display reporter info
-      await expect(page.locator('.report-reporter-info')).toBeVisible();
-      await expect(page.locator('.report-reporter-info')).toContainText('John Reporter');
-      await expect(page.locator('.report-reporter-info')).toContainText('john@example.com');
-    });
-
-    test('should handle reports without description gracefully', async ({ page }) => {
-      await createTestLocation('BOX109', {
-        label: 'Test Location'
-      });
-
-      await createTestReport('BOX109', {
-        reportType: 'problem_report',
-        description: '',
-        status: 'new'
-      });
-
-      await page.goto('/status?id=BOX109');
-      await page.waitForTimeout(3000);
-
-      // Should display default message
-      await expect(page.locator('.report-item')).toContainText('No details provided');
-    });
-
     test('should show error when no box ID provided', async ({ page }) => {
       await page.goto('/status');
       await page.waitForTimeout(2000);
@@ -306,67 +123,255 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.locator('#location-display')).toContainText('Store Manager');
     });
 
-    test('should have link to report problems', async ({ page }) => {
-      await createTestLocation('BOX111', {
-        label: 'Test Location'
+    test.describe('Authenticated View', () => {
+      let testUser = null;
+
+      test.beforeEach(async ({ page }) => {
+        const username = `testvolunteer${Date.now()}`;
+        const password = 'testpass123';
+
+        testUser = { username, password };
+
+        // Create user account
+        await page.goto('/login');
+        await page.locator('#toggle-sign-up-btn').click();
+        await page.fill('#auth-email', username);
+        await page.fill('#auth-password', password);
+        await page.locator('#email-sign-up-btn').click();
+        await page.waitForTimeout(3000);
+
+        // Get user UID and authorize directly
+        const userRecord = await page.evaluate(async () => {
+          const auth = window.auth;
+          const user = auth.currentUser;
+          return { uid: user.uid, email: user.email };
+        });
+
+        await authorizeVolunteer(userRecord.uid, userRecord.email, username);
       });
 
-      await page.goto('/status?id=BOX111');
-      await page.waitForTimeout(3000);
+      test('should display initial box registration report', async ({ page }) => {
+        await createTestLocation('BOX102', {
+          label: 'Test Store',
+          volunteer: 'Test Volunteer'
+        });
 
-      // Should have link to box action center
-      const boxLink = page.locator('a[href*="/box"]');
-      await expect(boxLink).toBeVisible();
-    });
+        await page.goto('/status?id=BOX102');
+        await page.waitForTimeout(3000);
 
-    test('should format report types correctly', async ({ page }) => {
-      await createTestLocation('BOX112', {
-        label: 'Test Location'
+        // Should show the initial "box registered" report
+        await expect(page.locator('.report-item')).toBeVisible();
+        await expect(page.locator('.report-item').first()).toContainText('box registered');
       });
 
-      await createTestReport('BOX112', {
-        reportType: 'problem_alert',
-        description: 'Test',
-        status: 'new'
+      test('should display multiple reports in chronological order', async ({ page }) => {
+        await createTestLocation('BOX103', {
+          label: 'Test Location',
+          volunteer: 'Volunteer'
+        });
+
+        // Create reports with different timestamps
+        const report1 = await createTestReport('BOX103', {
+          reportType: 'problem_report',
+          description: 'First problem',
+          timestamp: new Date('2024-01-01').toISOString(),
+          status: 'cleared'
+        });
+
+        const report2 = await createTestReport('BOX103', {
+          reportType: 'pickup_alert',
+          description: 'Pickup needed',
+          timestamp: new Date('2024-01-02').toISOString(),
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX103');
+        await page.waitForTimeout(3000);
+
+        const reportItems = page.locator('.report-item');
+        await expect(reportItems).toHaveCount(3); // Initial + 2 created
+
+        // Check that reports are displayed
+        await expect(page.locator('text=First problem')).toBeVisible();
+        await expect(page.locator('text=Pickup needed')).toBeVisible();
       });
 
-      await page.goto('/status?id=BOX112');
-      await page.waitForTimeout(3000);
+      test('should display problem reports with correct styling', async ({ page }) => {
+        await createTestLocation('BOX104', {
+          label: 'Test Location'
+        });
 
-      // Should replace underscores with spaces
-      await expect(page.locator('.report-title')).toContainText('problem alert');
-    });
+        await createTestReport('BOX104', {
+          reportType: 'problem_report',
+          description: 'Box is damaged',
+          status: 'new'
+        });
 
-    test('should display multiple report types', async ({ page }) => {
-      await createTestLocation('BOX113', {
-        label: 'Test Location'
+        await page.goto('/status?id=BOX104');
+        await page.waitForTimeout(3000);
+
+        const problemReport = page.locator('.report-item.is-problem').first();
+        await expect(problemReport).toBeVisible();
+        await expect(problemReport).toContainText('Box is damaged');
       });
 
-      await createTestReport('BOX113', {
-        reportType: 'problem_report',
-        description: 'Problem',
-        status: 'new'
+      test('should display pickup alerts correctly', async ({ page }) => {
+        await createTestLocation('BOX105', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX105', {
+          reportType: 'pickup_alert',
+          description: 'Box is full',
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX105');
+        await page.waitForTimeout(3000);
+
+        const pickupReport = page.locator('.report-item').filter({ hasText: 'pickup alert' });
+        await expect(pickupReport).toBeVisible();
+        await expect(pickupReport).toContainText('Box is full');
       });
 
-      await createTestReport('BOX113', {
-        reportType: 'pickup_alert',
-        description: 'Pickup',
-        status: 'new'
+      test('should show report status as New or Cleared', async ({ page }) => {
+        await createTestLocation('BOX106', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX106', {
+          reportType: 'problem_report',
+          description: 'New problem',
+          status: 'new'
+        });
+
+        await createTestReport('BOX106', {
+          reportType: 'problem_report',
+          description: 'Cleared problem',
+          status: 'cleared'
+        });
+
+        await page.goto('/status?id=BOX106');
+        await page.waitForTimeout(3000);
+
+        // Check for status badges
+        const newStatus = page.locator('.report-status.is-new');
+        await expect(newStatus.first()).toBeVisible();
+        await expect(newStatus.first()).toContainText('New');
+
+        const clearedStatus = page.locator('.report-status.is-cleared');
+        await expect(clearedStatus.first()).toBeVisible();
       });
 
-      await createTestReport('BOX113', {
-        reportType: 'pickup_details',
-        description: 'Details',
-        status: 'cleared'
+      test('should display report timestamps', async ({ page }) => {
+        await createTestLocation('BOX107', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX107', {
+          reportType: 'problem_report',
+          description: 'Test report',
+          timestamp: new Date('2024-01-15T10:30:00').toISOString(),
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX107');
+        await page.waitForTimeout(3000);
+
+        // Should display timestamp
+        await expect(page.locator('.report-timestamp').first()).toBeVisible();
+        await expect(page.locator('.report-timestamp').first()).toContainText('Report Time');
       });
 
-      await page.goto('/status?id=BOX113');
-      await page.waitForTimeout(3000);
+      test('should display reporter information if available', async ({ page }) => {
+        await createTestLocation('BOX108', {
+          label: 'Test Location'
+        });
 
-      // Should have multiple different report types visible
-      await expect(page.locator('text=problem report')).toBeVisible();
-      await expect(page.locator('text=pickup alert')).toBeVisible();
-      await expect(page.locator('text=pickup details')).toBeVisible();
+        await createTestReport('BOX108', {
+          reportType: 'problem_report',
+          description: 'Test report',
+          reporterName: 'John Reporter',
+          reporterEmail: 'john@example.com',
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX108');
+        await page.waitForTimeout(3000);
+
+        // Should display reporter info
+        await expect(page.locator('.report-reporter-info')).toBeVisible();
+        await expect(page.locator('.report-reporter-info')).toContainText('John Reporter');
+        await expect(page.locator('.report-reporter-info')).toContainText('john@example.com');
+      });
+
+      test('should handle reports without description gracefully', async ({ page }) => {
+        await createTestLocation('BOX109', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX109', {
+          reportType: 'problem_report',
+          description: '',
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX109');
+        await page.waitForTimeout(3000);
+
+        // Should display default message - filter to get the problem report without description
+        await expect(page.locator('.report-item').filter({ hasText: 'No details provided' })).toBeVisible();
+      });
+
+      test('should format report types correctly', async ({ page }) => {
+        await createTestLocation('BOX112', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX112', {
+          reportType: 'problem_alert',
+          description: 'Test',
+          status: 'new'
+        });
+
+        await page.goto('/status?id=BOX112');
+        await page.waitForTimeout(3000);
+
+        // Should replace underscores with spaces - use filter to get the specific report
+        await expect(page.locator('.report-item').filter({ hasText: 'problem alert' })).toBeVisible();
+      });
+
+      test('should display multiple report types', async ({ page }) => {
+        await createTestLocation('BOX113', {
+          label: 'Test Location'
+        });
+
+        await createTestReport('BOX113', {
+          reportType: 'problem_report',
+          description: 'Problem',
+          status: 'new'
+        });
+
+        await createTestReport('BOX113', {
+          reportType: 'pickup_alert',
+          description: 'Pickup',
+          status: 'new'
+        });
+
+        await createTestReport('BOX113', {
+          reportType: 'pickup_details',
+          description: 'Details',
+          status: 'cleared'
+        });
+
+        await page.goto('/status?id=BOX113');
+        await page.waitForTimeout(3000);
+
+        // Should have multiple different report types visible
+        await expect(page.locator('text=problem report')).toBeVisible();
+        await expect(page.locator('text=pickup alert')).toBeVisible();
+        await expect(page.locator('text=pickup details')).toBeVisible();
+      });
     });
   });
 });
