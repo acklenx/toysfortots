@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "Toys for Tots Logo" [ref=e5] [cursor=pointer]:
+        - /url: https://www.toysfortots.org
+        - img "Toys for Tots Logo" [ref=e6]
+      - generic [ref=e7]:
+        - link "Toys for Tots Drop-Off Locations" [ref=e8] [cursor=pointer]:
+          - /url: https://toysfortots.mcl1311.com/
+          - heading "Toys for Tots Drop-Off Locations" [level=1] [ref=e9]
+        - link "North Metro Atlanta Area" [ref=e10] [cursor=pointer]:
+          - /url: https://northatlanta.toysfortots.org/
+          - heading "North Metro Atlanta Area" [level=2] [ref=e11]
+        - paragraph [ref=e12]: "Coordinated by Marine Corps League Detachment #1311, Woodstock, GA"
+      - link "Marine Corps League Logo" [ref=e13] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Marine Corps League Logo" [ref=e14]
+  - generic [ref=e15]:
+    - banner [ref=e16]:
+      - heading "Volunteer Access" [level=1] [ref=e17]
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Sign In with Username" [level=2] [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: Username
+            - textbox "Username" [ref=e24]
+          - generic [ref=e25]:
+            - generic [ref=e26]: Password
+            - textbox "Password" [ref=e27]
+          - button "Sign In" [ref=e28] [cursor=pointer]
+        - paragraph [ref=e29]:
+          - button "New user? Create an account" [ref=e30] [cursor=pointer]
+        - generic [ref=e32]: You are signed in but not authorized. Please complete the setup form or contact an administrator.
+      - generic [ref=e33]: "-- OR --"
+      - paragraph [ref=e34]: Please sign in to continue.
+      - button "Sign In with Google" [ref=e35] [cursor=pointer]
+  - contentinfo [ref=e37]:
+    - paragraph [ref=e38]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
+    - img "Marine Bear Mascot" [ref=e39]
+```

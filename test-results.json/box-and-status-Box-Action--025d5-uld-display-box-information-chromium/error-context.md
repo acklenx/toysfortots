@@ -1,0 +1,49 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "Toys for Tots Logo" [ref=e5] [cursor=pointer]:
+        - /url: https://www.toysfortots.org
+        - img "Toys for Tots Logo" [ref=e6]
+      - generic [ref=e7]:
+        - link "Toys for Tots Drop-Off Locations" [ref=e8] [cursor=pointer]:
+          - /url: https://toysfortots.mcl1311.com/
+          - heading "Toys for Tots Drop-Off Locations" [level=1] [ref=e9]
+        - link "North Metro Atlanta Area" [ref=e10] [cursor=pointer]:
+          - /url: https://northatlanta.toysfortots.org/
+          - heading "North Metro Atlanta Area" [level=2] [ref=e11]
+        - paragraph [ref=e12]: "Coordinated by Marine Corps League Detachment #1311, Woodstock, GA"
+      - link "Marine Corps League Logo" [ref=e13] [cursor=pointer]:
+        - /url: /dashboard
+        - img "Marine Corps League Logo" [ref=e14]
+  - generic [ref=e16]:
+    - heading "Set Up New Box Location" [level=1] [ref=e17]
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]: Box ID to Set Up
+        - generic [ref=e21]: BOX_W0_1762438963015_2_6799
+      - generic [ref=e22]:
+        - generic [ref=e23]: Setup Code
+        - textbox "Setup Code" [ref=e24]
+        - generic [ref=e25] [cursor=pointer]: show code
+      - button "Use My GPS Location" [ref=e28] [cursor=pointer]
+      - generic [ref=e29] [cursor=pointer]: Click here to type in the address
+      - generic [ref=e31]:
+        - generic [ref=e32]: Location Name (Label)
+        - textbox "Location Name (Label)" [ref=e33]
+      - generic [ref=e34]:
+        - generic [ref=e35]: Contact Name
+        - textbox "Contact Name" [ref=e36]
+      - generic [ref=e37]:
+        - generic [ref=e38]: Contact Email
+        - textbox "Contact Email" [ref=e39]
+      - generic [ref=e40]:
+        - generic [ref=e41]: Contact Phone
+        - textbox "Contact Phone" [ref=e42]
+      - button "Submit Location" [ref=e44] [cursor=pointer]
+  - contentinfo [ref=e46]:
+    - paragraph [ref=e47]: The Marine Corps League representatives are official representatives of the Toys for Tots campaign.
+    - img "Marine Bear Mascot" [ref=e48]
+```

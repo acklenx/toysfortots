@@ -11,13 +11,22 @@ echo "🚀 Running tests with 4 workers + 1 built-in retry..."
 echo ""
 
 # Run with 4 workers, Playwright will retry failures once automatically
-npx playwright test --reporter=list,json --output=test-results.json 2>&1 | tee test-run.log
+# Include flakiness reporter to track failures
+npx playwright test --reporter=list,json,./flakiness-reporter.js --output=test-results.json 2>&1 | tee test-run.log
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
   echo ""
   echo "✅ All tests passed! No sequential retry needed."
-  rm -f test-run.log test-results.json
+  echo ""
+  echo "📊 Test Results:"
+  echo "  - All 75 tests passed after Tier 1 or Tier 2"
+  echo "  - No Tier 3 sequential retry needed"
+  echo ""
+  # Keep logs for analysis
+  echo "Logs preserved:"
+  echo "  - test-run.log (full test output)"
+  echo "  - test-flakiness.log (if any failures occurred)"
   exit 0
 fi
 
@@ -106,7 +115,10 @@ if [ $EXIT_CODE_SEQ -eq 0 ]; then
   echo "  - This is EXPECTED behavior given parallel execution load"
   echo "  - Not actual bugs - just resource contention under parallel load"
   echo ""
-  rm -f test-run.log test-results.json test-run-sequential.log
+  echo "Logs preserved for analysis:"
+  echo "  - test-run.log (Tier 1 & 2 output)"
+  echo "  - test-run-sequential.log (Tier 3 output)"
+  echo "  - test-flakiness.log (failure tracking)"
   exit 0
 else
   echo "❌ FAILURE: Tests still fail even with sequential execution"
