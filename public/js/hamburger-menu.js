@@ -81,19 +81,24 @@
         menuUsername.textContent = username;
       }
 
-      // Show authenticated menu items
+      // Show hamburger button and authenticated menu items
+      hamburgerBtn.style.display = 'flex';
       menuUserInfo.style.display = 'block';
       menuDashboard.style.display = 'block';
       menuNewBox.style.display = 'block';
       menuSignOut.style.display = 'block';
       menuSignIn.style.display = 'none';
     } else {
-      // Not authenticated or anonymous
+      // Not authenticated or anonymous - hide hamburger button
+      hamburgerBtn.style.display = 'none';
       menuUserInfo.style.display = 'none';
       menuDashboard.style.display = 'none';
       menuNewBox.style.display = 'none';
       menuSignOut.style.display = 'none';
       menuSignIn.style.display = 'block';
+
+      // Close menu if it's open
+      closeMenu();
     }
   }
 
