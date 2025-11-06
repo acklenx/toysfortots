@@ -1163,3 +1163,188 @@ footer {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
+/* --- Box Action Page Styles --- */
+.action-box {
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.action-box.bg-tots-green {
+    background-color: var(--t4t-green);
+}
+
+.action-button {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: none;
+    border: 3px solid white;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 0.75rem;
+}
+
+.action-button:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.action-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.action-description {
+    color: white;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.text-link {
+    color: var(--t4t-red);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.text-link:hover {
+    color: #a01828;
+    text-decoration: underline;
+}
+
+.text-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.info-box {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--t4t-red);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--t4t-red);
+    margin: 0 0 0.5rem 0;
+}
+
+.info-text {
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin: 0.25rem 0;
+}
+
+.info-detail {
+    font-size: 0.875rem;
+    color: #374151;
+    margin: 0.5rem 0 0 0;
+}
+
+.confirmation-message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.confirmation-message.success {
+    background-color: #d1fae5;
+    color: var(--t4t-green);
+    border: 1px solid var(--t4t-green);
+}
+
+.confirmation-message.warning {
+    background-color: #fee2e2;
+    color: var(--t4t-red);
+    border: 1px solid var(--t4t-red);
+}
+
+.form-container {
+    background-color: #fef2f2;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--t4t-red);
+    box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.1);
+}
+
+.form-fieldset {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-fieldset legend {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    padding: 0 0.5rem;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--t4t-red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+    background-color: #a01828;
+}
+
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible-content.open {
+    max-height: 1000px;
+}
