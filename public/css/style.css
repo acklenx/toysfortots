@@ -6,6 +6,8 @@
     --dark-text: #333;
     --off-white: #fdfdfd;
     --t4t-green: #008000;
+    /* Consistent spacing variable */
+    --page-spacing: 20px;
 }
 
 .hidden {
@@ -17,6 +19,10 @@ body {
     margin: 0;
     background-color: var(--light-gray);
     color: var(--dark-text);
+    /* Sticky footer layout */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .bg-marine-blue {
@@ -86,7 +92,7 @@ header {
 .container {
     display: flex;
     max-width: 1200px;
-    margin: 20px auto;
+    margin: var(--page-spacing) auto;
     gap: 20px;
     padding: 0 20px;
     height: 75vh;
@@ -171,6 +177,8 @@ footer {
     background-color: var(--marine-blue);
     color: white;
     font-size: 0.9rem;
+    /* Sticky footer - push to bottom */
+    margin-top: auto;
 
     /* --- NATIVE CSS FIX: Added '&' --- */
     & .footer-bear {
@@ -200,8 +208,16 @@ footer {
     }
 }
 
+/* Page Content Wrapper - Ensures consistent spacing */
+.page-content {
+    max-width: 1200px;
+    margin: var(--page-spacing) auto;
+    padding: 0 20px;
+}
+
 .form-wrapper {
-    padding: 20px 0;
+    margin: var(--page-spacing) auto;
+    padding: 0 20px;
 }
 
 .form-group {
@@ -606,9 +622,8 @@ footer {
 /* --- Main Dashboard Content --- */
 .dashboard-header-container {
     max-width: 42rem; /* max-w-2xl */
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1.5rem 1rem; /* p-6 md:p-4 */
+    margin: var(--page-spacing) auto;
+    padding: 0 1rem;
 }
 
 .dashboard-header-flex {
@@ -856,7 +871,8 @@ footer {
 /* --- Status Page Styles --- */
 .status-page-container {
     max-width: 28rem; /* max-w-md */
-    margin: 20px auto 20px auto; /* mx-auto, my-20 */
+    margin: var(--page-spacing) auto;
+    padding: 0 20px;
 }
 
 .status-header {
@@ -1010,4 +1026,18 @@ footer {
 .auth-message-spacing {
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
+}
+
+/* --- Box Page Specific Styles --- */
+/* Constrain the box page content to match other pages */
+.box-page-container {
+    max-width: 28rem; /* max-w-md - same as status page */
+    margin: var(--page-spacing) auto;
+    padding: 0 20px;
+}
+
+/* Override inline styles for box page card */
+.box-action-card {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
