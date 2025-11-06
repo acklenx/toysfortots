@@ -91,12 +91,13 @@ header {
 /* --- Main Container --- */
 .container {
     display: flex;
-    max-width: 1200px;
+    max-width: 900px; /* Between header (1200px) and content pages (638px) */
     margin: var(--page-spacing) auto;
     gap: 20px;
     padding: 0 20px;
     height: 75vh;
     min-height: 500px;
+    flex: 1; /* Allow container to grow and push footer down */
 
     /* --- NATIVE CSS FIX: Added '&' --- */
     & #map {
@@ -208,16 +209,18 @@ footer {
     }
 }
 
-/* Page Content Wrapper - Ensures consistent spacing */
+/* Page Content Wrapper - Ensures consistent spacing and pushes footer down */
 .page-content {
     max-width: 1200px;
     margin: var(--page-spacing) auto;
     padding: 0 20px;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 .form-wrapper {
     margin: var(--page-spacing) auto;
     padding: 0 20px;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 .form-group {
@@ -332,6 +335,7 @@ footer {
     .container {
         flex-direction: column;
         height: auto;
+        min-height: 60vh; /* Ensure enough height to push footer down on mobile */
 
         /* --- NATIVE CSS FIX: Added '&' --- */
         & #map {
@@ -590,13 +594,14 @@ footer {
 
 /* Auth Container (Layout) */
 #auth-container {
-    max-width: 28rem; /* max-w-md */
+    max-width: 28rem; /* max-w-md (448px) */
     margin: 5rem auto;
     padding: 2rem; /* p-8 */
     background-color: white;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
     border-radius: 0.75rem; /* rounded-xl */
     text-align: center;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 #auth-container header {
@@ -621,9 +626,10 @@ footer {
 
 /* --- Main Dashboard Content --- */
 .dashboard-header-container {
-    max-width: 42rem; /* max-w-2xl */
+    max-width: 42rem; /* max-w-2xl (638px) */
     margin: var(--page-spacing) auto;
     padding: 0 1rem;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 .dashboard-header-flex {
@@ -870,9 +876,10 @@ footer {
 }
 /* --- Status Page Styles --- */
 .status-page-container {
-    max-width: 28rem; /* max-w-md */
+    max-width: 28rem; /* max-w-md (448px) */
     margin: var(--page-spacing) auto;
     padding: 0 20px;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 .status-header {
@@ -1031,9 +1038,10 @@ footer {
 /* --- Box Page Specific Styles --- */
 /* Constrain the box page content to match other pages */
 .box-page-container {
-    max-width: 28rem; /* max-w-md - same as status page */
+    max-width: 28rem; /* max-w-md (448px) - same as status page */
     margin: var(--page-spacing) auto;
     padding: 0 20px;
+    flex: 1; /* Grow to fill space and push footer down */
 }
 
 /* Override inline styles for box page card */
