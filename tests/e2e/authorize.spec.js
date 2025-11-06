@@ -36,8 +36,8 @@ test.describe('Authorization Page', () => {
     // Already on authorize page from beforeEach
     await expect(page).toHaveURL(/\/authorize/);
 
-    // Check page elements
-    await expect(page.locator('h1')).toContainText('Volunteer Authorization');
+    // Check page elements (use more specific selector for h1 to avoid header conflict)
+    await expect(page.locator('#auth-container h1')).toContainText('Volunteer Authorization');
     await expect(page.locator('#auth-code')).toBeVisible();
     await expect(page.locator('#authorize-btn')).toBeVisible();
   });
@@ -70,7 +70,7 @@ test.describe('Authorization Page', () => {
   test('should show error when submitting empty code', async ({ page }) => {
     await page.locator('#authorize-btn').click();
 
-    const errorMsg = page.locator('#auth-error');
+    const errorMsg = page.locator('#auth-msg');
     await expect(errorMsg).toBeVisible();
     await expect(errorMsg).toContainText('Please enter the authorization code');
   });
@@ -82,7 +82,7 @@ test.describe('Authorization Page', () => {
     // Wait for the function to respond
     await page.waitForTimeout(2000);
 
-    const errorMsg = page.locator('#auth-error');
+    const errorMsg = page.locator('#auth-msg');
     await expect(errorMsg).toBeVisible();
     await expect(errorMsg).toContainText(/Invalid authorization code|check the code/i);
   });
@@ -92,7 +92,7 @@ test.describe('Authorization Page', () => {
     await page.locator('#authorize-btn').click();
 
     // Wait for success message
-    const successMsg = page.locator('#auth-error');
+    const successMsg = page.locator('#auth-msg');
     await expect(successMsg).toContainText(/Authorization successful/i);
 
     // Should redirect to dashboard (default when no returnUrl)
@@ -138,7 +138,7 @@ test.describe('Authorization Page', () => {
     await page.waitForTimeout(2000);
 
     // Should show success message or redirect
-    const successMsg = page.locator('#auth-error');
+    const successMsg = page.locator('#auth-msg');
     const hasSuccessMsg = await successMsg.isVisible().catch(() => false);
 
     if (hasSuccessMsg) {
@@ -187,7 +187,7 @@ test.describe('Authorization Page', () => {
     // Generate error by submitting empty form
     await page.locator('#authorize-btn').click();
 
-    const errorMsg = page.locator('#auth-error');
+    const errorMsg = page.locator('#auth-msg');
     await expect(errorMsg).toBeVisible();
 
     // Start typing in code field
@@ -219,7 +219,7 @@ test.describe('Authorization Page', () => {
     await page.press('#auth-code', 'Enter');
 
     // Wait for success message
-    const successMsg = page.locator('#auth-error');
+    const successMsg = page.locator('#auth-msg');
     await expect(successMsg).toContainText(/Authorization successful/i);
 
     // Should redirect

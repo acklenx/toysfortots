@@ -12,7 +12,7 @@
 			<header>
 				<h1>Volunteer Authorization</h1>
 			</header>
-			<div id="auth-buttons">
+			<div id="email-auth-section">
 				<p id="auth-message" class="auth-message-spacing">
 					Welcome! To complete your registration and access volunteer features, please enter the shared authorization code.
 				</p>
@@ -138,6 +138,9 @@
 			});
 
 			document.getElementById('authorize-form').addEventListener('submit', handleAuthorize);
+
+			// Clear error message when user starts typing
+			authCodeInput.addEventListener('input', clearAuthMessage);
 		</script>
 	</body>
 </html>
