@@ -30,13 +30,22 @@ class FlakinessTracker {
   }
 
   saveStats() {
-    fs.writeFileSync(STATS_FILE, JSON.stringify(this.stats, null, 2));
+    try {
+      // Use atomic write (write to temp file, then rename) to prevent corruption
+      const tempFile = `${STATS_FILE}.tmp`;
+      fs.writeFileSync(tempFile, JSON.stringify(this.stats, null, 2));
+      fs.renameSync(tempFile, STATS_FILE);
+    } catch (e) {
+      // Ignore write errors in case of concurrent access
+      // Stats are informational only, not critical
+      console.warn('Warning: Could not save flakiness stats:', e.message);
+    }
   }
 
   recordFailure(testName, error, metadata = {}) {
     const timestamp = new Date().toISOString();
 
-    // Initialize test stats if not exists
+    // Initialize test stats if not exists or if missing failures array (legacy data)
     if (!this.stats[testName]) {
       this.stats[testName] = {
         totalFailures: 0,
@@ -44,6 +53,11 @@ class FlakinessTracker {
         lastFailure: timestamp,
         failures: []
       };
+    }
+
+    // Ensure failures array exists (fix for legacy stats files)
+    if (!this.stats[testName].failures) {
+      this.stats[testName].failures = [];
     }
 
     // Update stats
@@ -55,13 +69,16 @@ class FlakinessTracker {
       ...metadata
     });
 
-    // Write to log file
-    const logEntry = `[${timestamp}] FAILURE: ${testName}\n` +
-                     `  Error: ${error.message || String(error)}\n` +
-                     `  Metadata: ${JSON.stringify(metadata)}\n` +
-                     `  Total failures for this test: ${this.stats[testName].totalFailures}\n\n`;
-
-    fs.appendFileSync(LOG_FILE, logEntry);
+    // Write to log file (ignore errors, logging is not critical)
+    try {
+      const logEntry = `[${timestamp}] FAILURE: ${testName}\n` +
+                       `  Error: ${error.message || String(error)}\n` +
+                       `  Metadata: ${JSON.stringify(metadata)}\n` +
+                       `  Total failures for this test: ${this.stats[testName].totalFailures}\n\n`;
+      fs.appendFileSync(LOG_FILE, logEntry);
+    } catch (e) {
+      // Ignore log write errors
+    }
 
     // Save updated stats
     this.saveStats();
@@ -74,11 +91,17 @@ class FlakinessTracker {
       this.stats[testName] = {
         totalFailures: 0,
         totalSuccesses: 0,
-        firstSuccess: timestamp
+        firstSuccess: timestamp,
+        failures: [] // Ensure failures array exists
       };
     }
 
-    this.stats[testName].totalSuccesses = (this.stats[testName].totalSuccesses || 0) + 1;
+    // Ensure totalSuccesses exists (fix for legacy stats files)
+    if (typeof this.stats[testName].totalSuccesses === 'undefined') {
+      this.stats[testName].totalSuccesses = 0;
+    }
+
+    this.stats[testName].totalSuccesses++;
     this.saveStats();
   }
 
