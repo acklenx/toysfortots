@@ -36,11 +36,11 @@ export function showAuthMessage(type, text) {
 		msgDiv = document.createElement('div');
 		msgDiv.id = 'auth-msg';
 		// Insert it before the first input/button's parent
-		const emailInput = document.getElementById('auth-email');
-		if (emailInput && emailInput.parentElement) {
-			emailAuthSection.insertBefore(msgDiv, emailInput.parentElement);
+		const authError = document.getElementById('auth-error');
+		if (authError ) {
+			emailAuthSection.appendChild(msgDiv);
 		} else {
-			emailAuthSection.appendChild(msgDiv); // Fallback
+			alert( emailAuthSection.appendChild(msgDiv) ); // Fallback
 		}
 	}
 	// We add 'message' for basic styling, but also 'mt-3 mb-3' which are CSS classes
