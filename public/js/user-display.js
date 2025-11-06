@@ -1,6 +1,6 @@
 // Display logged-in username in footer
 (function() {
-  function displayUser() {
+  async function displayUser() {
     const userDisplay = document.getElementById('logged-in-user');
     if (!userDisplay) return;
 
@@ -13,8 +13,26 @@
         username = username.split('@')[0];
       }
 
-      // Just display the username (no authorization check needed for footer display)
-      userDisplay.textContent = username;
+      // Check authorization using Cloud Function
+      if (window.functions) {
+        try {
+          const { httpsCallable } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js');
+          const checkAuth = httpsCallable(window.functions, 'isAuthorizedVolunteerV2');
+          const result = await checkAuth();
+          const isAuthorized = result.data.isAuthorized;
+
+          // Add asterisk if not authorized (for debugging)
+          const suffix = isAuthorized ? '' : '*';
+          userDisplay.textContent = `${username}${suffix}`;
+        } catch (err) {
+          // If authorization check fails, just show username without suffix
+          userDisplay.textContent = username;
+        }
+      } else {
+        // Functions not available, just show username
+        userDisplay.textContent = username;
+      }
+
       userDisplay.style.display = 'block';
     } else {
       userDisplay.style.display = 'none';

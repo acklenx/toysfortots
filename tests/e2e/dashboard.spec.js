@@ -82,7 +82,7 @@ test.describe('Dashboard Page', () => {
     await expect(volunteerName).toContainText(baseUsername);
   });
 
-  test('should display username in footer', async ({ page }) => {
+  test('should display username in footer without asterisk for authorized user', async ({ page }) => {
     await page.goto('/dashboard/');
 
     // Wait for main content to load
@@ -98,6 +98,10 @@ test.describe('Dashboard Page', () => {
     // Check that it contains at least the base username
     const baseUsername = testUser.username.split('W')[0]; // Get "testvolunteer" part
     await expect(footerUser).toContainText(baseUsername);
+
+    // Verify no asterisk (user is authorized in beforeEach)
+    const footerText = await footerUser.textContent();
+    expect(footerText.endsWith('*')).toBe(false);
   });
 
   test('should sign out user when sign out button clicked', async ({ page }) => {

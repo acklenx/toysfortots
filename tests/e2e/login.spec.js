@@ -244,5 +244,11 @@ test.describe('Login Page', () => {
 
     // The message should indicate either checking or not authorized
     expect(messageText).toBeTruthy();
+
+    // Check footer username has asterisk for non-authorized user
+    const footerUser = page.locator('#logged-in-user');
+    await expect(footerUser).toBeVisible();
+    const footerText = await footerUser.textContent();
+    expect(footerText.endsWith('*')).toBe(true);
   });
 });

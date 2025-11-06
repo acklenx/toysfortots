@@ -38,4 +38,5 @@ export const authorizedVolunteersCollectionPath = `${ privateBasePath }/authoriz
 
 // Make paths available globally for user-display.js
 window.db = db;
+window.functions = functions;
 window.authorizedVolunteersCollectionPath = authorizedVolunteersCollectionPath;
