@@ -102,6 +102,8 @@
 				}
 			}
 
+			let isNewSignup = false;
+
 			async function handleEmailSignUp() {
 				clearAuthMessage();
 				const username = authEmail.value;
@@ -117,6 +119,7 @@
 				const email = `${username}@toysfortots.mcl1311.com`;
 				try {
 					await createUserWithEmailAndPassword(auth, email, password);
+					isNewSignup = true; // Mark as new signup
 				} catch (error) {
 					console.error('Email Sign Up Error:', error);
 					if (error.code === 'auth/email-already-in-use') {
@@ -149,6 +152,23 @@
 					onAuthStateChanged(auth, async (user) => {
 						if (user && !user.isAnonymous) {
 							clearAuthMessage();
+
+							// If this was a new signup, redirect to authorize page
+							if (isNewSignup) {
+								showAuthMessage('success', 'Account created! Redirecting to authorization...');
+								setTimeout(() => {
+									// Extract boxId from returnUrl if present
+									const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
+									const boxId = urlParams.get('id');
+									const authorizeUrl = boxId
+										? `/authorize?boxId=${boxId}`
+										: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
+									window.location.href = authorizeUrl;
+								}, 1000);
+								return;
+							}
+
+							// Existing user - check authorization
 							showAuthMessage('success', 'Checking authorization...');
 							try {
 								const result = await isAuthorizedVolunteer({ uid: user.uid });
@@ -156,7 +176,16 @@
 									// Successful login and authorization - redirect to return URL
 									window.location.href = returnUrl;
 								} else {
-									showAuthMessage('error', 'You are signed in but not authorized. Please complete the setup form or contact an administrator.');
+									// Existing user but not authorized - redirect to authorize page
+									showAuthMessage('success', 'Redirecting to authorization...');
+									setTimeout(() => {
+										const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
+										const boxId = urlParams.get('id');
+										const authorizeUrl = boxId
+											? `/authorize?boxId=${boxId}`
+											: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
+										window.location.href = authorizeUrl;
+									}, 1000);
 								}
 							} catch (err) {
 								console.error('Authorization check failed:', err);

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Volunteer Authorization - Toys for Tots</title>
+		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
+	</head>
+	<body class="bg-gray-100">
+		<div id="header-placeholder"></div>
+		<div id="auth-container">
+			<header>
+				<h1>Volunteer Authorization</h1>
+			</header>
+			<div id="auth-buttons">
+				<p id="auth-message" class="auth-message-spacing">
+					Welcome! To complete your registration and access volunteer features, please enter the shared authorization code.
+				</p>
+
+				<form id="authorize-form">
+					<div id="auth-error"></div>
+					<div>
+						<label for="auth-code">Authorization Code</label>
+						<input
+							type="password"
+							id="auth-code"
+							placeholder="Enter shared code"
+							autocomplete="off"
+							required
+						>
+						<span id="toggle-code" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer; margin-top: 0.25rem;">
+							Show code
+						</span>
+					</div>
+
+					<button id="authorize-btn" type="submit">
+						Authorize Access
+					</button>
+				</form>
+
+				<p style="margin-top: 1.5rem; font-size: 0.875rem; color: #6b7281;">
+					Don't have an authorization code? Contact your local coordinator or administrator.
+				</p>
+			</div>
+		</div>
+		<div id="footer-placeholder"></div>
+		<script src="/js/loader.js" defer></script>
+		<script type="module">
+			import { auth, functions } from '../js/firebase-init.js';
+			import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+			import { showAuthMessage, clearAuthMessage } from '/js/utils.js';
+
+			const authCodeInput = document.getElementById('auth-code');
+			const authorizeBtn = document.getElementById('authorize-btn');
+			const toggleCode = document.getElementById('toggle-code');
+
+			// Get return URL from query parameters (boxId or returnUrl)
+			const urlParams = new URLSearchParams(window.location.search);
+			const boxId = urlParams.get('boxId');
+			const returnUrl = urlParams.get('returnUrl') || (boxId ? `/setup?id=${boxId}` : '/dashboard');
+
+			// Toggle password visibility
+			toggleCode.addEventListener('click', () => {
+				if (authCodeInput.type === 'password') {
+					authCodeInput.type = 'text';
+					toggleCode.textContent = 'Hide code';
+				} else {
+					authCodeInput.type = 'password';
+					toggleCode.textContent = 'Show code';
+				}
+			});
+
+			async function handleAuthorize(e) {
+				e.preventDefault();
+				clearAuthMessage();
+
+				const code = authCodeInput.value.trim();
+				if (!code) {
+					showAuthMessage('error', 'Please enter the authorization code.');
+					return;
+				}
+
+				authorizeBtn.disabled = true;
+				authorizeBtn.textContent = 'Authorizing...';
+
+				try {
+					const user = auth.currentUser;
+					if (!user) {
+						showAuthMessage('error', 'You must be signed in to authorize.');
+						return;
+					}
+
+					// Call the authorize function with the code
+					const authorizeFunction = httpsCallable(functions, 'authorizeVolunteerV2');
+					const result = await authorizeFunction({ code });
+
+					if (result.data.success) {
+						showAuthMessage('success', 'Authorization successful! Redirecting...');
+						setTimeout(() => {
+							window.location.href = returnUrl;
+						}, 1000);
+					} else {
+						showAuthMessage('error', result.data.message || 'Authorization failed.');
+						authorizeBtn.disabled = false;
+						authorizeBtn.textContent = 'Authorize Access';
+					}
+				} catch (error) {
+					console.error('Authorization error:', error);
+					showAuthMessage('error', error.message || 'Authorization failed. Please check the code and try again.');
+					authorizeBtn.disabled = false;
+					authorizeBtn.textContent = 'Authorize Access';
+				}
+			}
+
+			// Check if user is already authorized
+			onAuthStateChanged(auth, async (user) => {
+				if (!user || user.isAnonymous) {
+					// Not signed in, redirect to login
+					window.location.href = `/login?returnUrl=${encodeURIComponent('/authorize' + window.location.search)}`;
+					return;
+				}
+
+				// Check if already authorized
+				try {
+					const checkAuth = httpsCallable(functions, 'isAuthorizedVolunteerV2');
+					const result = await checkAuth();
+					if (result.data.isAuthorized) {
+						// Already authorized, redirect to return URL
+						showAuthMessage('success', 'You are already authorized! Redirecting...');
+						setTimeout(() => {
+							window.location.href = returnUrl;
+						}, 1000);
+					}
+				} catch (err) {
+					console.error('Error checking authorization:', err);
+				}
+			});
+
+			document.getElementById('authorize-form').addEventListener('submit', handleAuthorize);
+		</script>
+	</body>
+</html>

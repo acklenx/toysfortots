@@ -20,6 +20,7 @@ export default defineConfig({
     '**/box-and-status.spec.js', // Medium: Box and status ops
     '**/home.spec.js',           // Light: Minimal data
     '**/login.spec.js',          // Light: Auth only
+    '**/authorize.spec.js',      // Light: Auth + authorization flow
     '**/user-journeys.spec.js'   // Real-world user scenarios (run last, sequential)
   ],
   reporter: [

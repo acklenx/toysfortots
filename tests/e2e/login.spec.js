@@ -76,7 +76,7 @@ test.describe('Login Page', () => {
     await expect(page.locator('#auth-msg')).toContainText('Username cannot contain "@" symbol');
   });
 
-  test('should create new user account', async ({ page }) => {
+  test('should create new user account and redirect to authorize page', async ({ page }) => {
     await page.goto('/login');
 
     const username = generateUsername('testuser');
@@ -92,11 +92,18 @@ test.describe('Login Page', () => {
     // Create account
     await page.locator('#email-sign-up-btn').click();
 
-    // Should show checking authorization or not authorized message
-    await page.waitForTimeout(2000);
+    // Should show success message (either "Account created" or "Redirecting to authorization")
+    // and redirect to authorize page
+    await page.waitForTimeout(1000);
     const authMessage = page.locator('#auth-msg');
-    const messageText = await authMessage.textContent();
-    expect(messageText).toBeTruthy();
+    const messageText = await authMessage.textContent().catch(() => '');
+
+    // Accept either "Account created" or "Redirecting to authorization" messages
+    expect(messageText).toMatch(/Account created|Redirecting to authorization/i);
+
+    // Should redirect to authorize page
+    await page.waitForURL(/\/authorize/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/authorize/);
   });
 
   test('should show error for invalid sign-in credentials', async ({ page }) => {
@@ -110,7 +117,7 @@ test.describe('Login Page', () => {
     await expect(page.locator('#auth-msg')).toContainText('Invalid username or password', { timeout: 10000 });
   });
 
-  test('should sign in existing user', async ({ page }) => {
+  test('should sign in existing user and redirect to authorize page if not authorized', async ({ page }) => {
     const username = generateUsername('testuser');
     const password = 'testpass123';
 
@@ -121,8 +128,8 @@ test.describe('Login Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    // Wait for account creation
-    await page.waitForTimeout(2000);
+    // Wait for redirect to authorize page
+    await page.waitForURL(/\/authorize/, { timeout: 5000 });
 
     // Sign out properly using Firebase auth
     await page.evaluate(async () => {
@@ -131,17 +138,19 @@ test.describe('Login Page', () => {
     });
     await page.waitForTimeout(1000);
 
-    // Now sign in with the same credentials
+    // Now sign in with the same credentials (user still not authorized)
     await page.goto('/login');
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-in-btn').click();
 
-    // Should successfully authenticate and show authorization check message
-    await page.waitForTimeout(3000);
+    // Should show authorization check message then redirect to authorize page
     const authMessage = page.locator('#auth-msg');
-    const messageText = await authMessage.textContent();
-    expect(messageText).toBeTruthy();
+    await expect(authMessage).toContainText(/Checking authorization|Redirecting to authorization/i);
+
+    // Should redirect to authorize page again (still not authorized)
+    await page.waitForURL(/\/authorize/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/authorize/);
   });
 
   test('should show error when trying to create account with existing username', async ({ page }) => {
@@ -204,7 +213,7 @@ test.describe('Login Page', () => {
     await expect(page.locator('#auth-msg')).toContainText('at least 6 characters');
   });
 
-  test('should handle form submission via Enter key', async ({ page }) => {
+  test('should handle form submission via Enter key and redirect to authorize', async ({ page }) => {
     await page.goto('/login');
 
     const username = generateUsername('testuser');
@@ -217,14 +226,12 @@ test.describe('Login Page', () => {
     // Press Enter on password field
     await page.locator('#auth-password').press('Enter');
 
-    // Should submit the form and show auth message
-    await page.waitForTimeout(2000);
-    const authMessage = page.locator('#auth-msg');
-    const messageText = await authMessage.textContent();
-    expect(messageText).toBeTruthy();
+    // Should redirect to authorize page (may show "Account created" or "Redirecting" message)
+    await page.waitForURL(/\/authorize/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/authorize/);
   });
 
-  test('should show not authorized message for non-authorized user', async ({ page }) => {
+  test('should redirect non-authorized user to authorize page with asterisk in footer', async ({ page }) => {
     const username = generateUsername('testuser');
     const password = 'testpass123';
 
@@ -235,17 +242,12 @@ test.describe('Login Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    // Wait for authorization check
-    await page.waitForTimeout(3000);
-
-    // Should show not authorized message (since we haven't authorized them)
-    const authMessage = page.locator('#auth-msg');
-    const messageText = await authMessage.textContent();
-
-    // The message should indicate either checking or not authorized
-    expect(messageText).toBeTruthy();
+    // Should redirect to authorize page
+    await page.waitForURL(/\/authorize/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/authorize/);
 
     // Check footer username has asterisk for non-authorized user
+    await page.waitForTimeout(2000); // Wait for footer to load and auth check to complete
     const footerUser = page.locator('#logged-in-user');
     await expect(footerUser).toBeVisible();
     const footerText = await footerUser.textContent();

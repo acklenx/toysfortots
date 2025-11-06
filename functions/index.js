@@ -267,3 +267,98 @@ exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 		throw new HttpsError( 'internal', 'Could not check authorization status.' );
 	}
 } );
+
+exports.authorizeVolunteerV2 = onCall( async( request ) =>
+{
+	console.log( '--- authorizeVolunteerV2 STARTED ---' );
+	if( !request.auth || !request.auth.uid )
+	{
+		console.warn( 'authorizeVolunteerV2: Authentication failed (No auth or uid).' );
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to authorize.' );
+	}
+	const uid = request.auth.uid;
+	const userEmail = request.auth.token.email;
+	const userName = request.auth.token.name || userEmail;
+	console.log( `authorizeVolunteerV2: User Authenticated. UID: ${ uid }, Email: ${ userEmail }` );
+
+	const data = request.data;
+	const code = data.code;
+
+	if( !code )
+	{
+		console.warn( 'authorizeVolunteerV2: No authorization code provided.' );
+		throw new HttpsError( 'invalid-argument', 'Authorization code is required.' );
+	}
+
+	const db = getFirestore();
+
+	// Check if user is already authorized
+	const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
+	try
+	{
+		const authSnap = await authVolRef.get();
+		if( authSnap.exists )
+		{
+			console.log( 'authorizeVolunteerV2: User is already authorized.' );
+			return { success: true, message: 'You are already authorized.' };
+		}
+	}
+	catch( error )
+	{
+		console.error( 'authorizeVolunteerV2: Error checking existing authorization:', error );
+		throw new HttpsError( 'internal', 'Error checking authorization status.' );
+	}
+
+	// Get the shared passcode from config
+	const configRef = db.doc( CONFIG_PATH );
+	let sharedPasscode;
+	try
+	{
+		const configSnap = await configRef.get();
+		if( !configSnap.exists )
+		{
+			console.error( 'authorizeVolunteerV2: Config document not found!' );
+			throw new HttpsError( 'internal', 'Authorization system not configured.' );
+		}
+		const configData = configSnap.data();
+		sharedPasscode = configData.sharedPasscode;
+		if( !sharedPasscode )
+		{
+			console.error( 'authorizeVolunteerV2: No shared passcode in config!' );
+			throw new HttpsError( 'internal', 'Authorization system not configured properly.' );
+		}
+		console.log( 'authorizeVolunteerV2: Shared passcode retrieved from config.' );
+	}
+	catch( error )
+	{
+		console.error( 'authorizeVolunteerV2: Error reading config:', error );
+		throw new HttpsError( 'internal', 'Error accessing authorization system.' );
+	}
+
+	// Verify the code
+	if( code !== sharedPasscode )
+	{
+		console.warn( 'authorizeVolunteerV2: Invalid authorization code provided.' );
+		return { success: false, message: 'Invalid authorization code. Please check the code and try again.' };
+	}
+
+	console.log( 'authorizeVolunteerV2: Code verified successfully. Authorizing user...' );
+
+	// Add user to authorized volunteers
+	try
+	{
+		await authVolRef.set( {
+			uid: uid,
+			email: userEmail,
+			displayName: userName,
+			authorizedAt: FieldValue.serverTimestamp()
+		} );
+		console.log( 'authorizeVolunteerV2: User authorized successfully.' );
+		return { success: true, message: 'Authorization successful!' };
+	}
+	catch( error )
+	{
+		console.error( 'authorizeVolunteerV2: Error saving authorization:', error );
+		throw new HttpsError( 'internal', 'Error saving authorization. Please try again.' );
+	}
+} );
