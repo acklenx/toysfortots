@@ -65,28 +65,15 @@ test.describe('Dashboard Page', () => {
 
     // Check dashboard elements are visible
     await expect(page.locator('#main-content h1')).toContainText('Dashboard');
-    await expect(page.locator('#volunteer-name')).toBeVisible();
-    await expect(page.locator('#sign-out-btn')).toBeVisible();
     await expect(page.locator('#view-filter')).toBeVisible();
-  });
-
-  test('should display volunteer name', async ({ page }) => {
-    await page.goto('/dashboard/');
-
-    // Wait for volunteer name to load (not just "...")
-    const volunteerName = page.locator('#volunteer-name');
-    await expect(volunteerName).not.toContainText('...');
-
-    // Check that it contains at least the base username (without the full unique ID suffix)
-    const baseUsername = testUser.username.split('W')[0]; // Get "testvolunteer" part
-    await expect(volunteerName).toContainText(baseUsername);
+    await expect(page.locator('#boxes-container')).toBeVisible();
   });
 
   test('should display username in footer without asterisk for authorized user', async ({ page }) => {
     await page.goto('/dashboard/');
 
     // Wait for main content to load
-    await expect(page.locator('#volunteer-name')).not.toContainText('...');
+    await expect(page.locator('#boxes-container')).toBeVisible();
 
     // Wait for footer to load and user-display.js to run (footer loads async)
     await page.waitForTimeout(1000);
@@ -102,17 +89,6 @@ test.describe('Dashboard Page', () => {
     // Verify no asterisk (user is authorized in beforeEach)
     const footerText = await footerUser.textContent();
     expect(footerText.endsWith('*')).toBe(false);
-  });
-
-  test('should sign out user when sign out button clicked', async ({ page }) => {
-    await page.goto('/dashboard/');
-
-    // Wait for sign-out button to be visible before clicking
-    await expect(page.locator('#sign-out-btn')).toBeVisible();
-    await page.locator('#sign-out-btn').click();
-
-    // Should redirect to login
-    await expect(page).toHaveURL(/\/login/);
   });
 
   test('should display message when no boxes exist', async ({ page }) => {
@@ -327,13 +303,11 @@ test.describe('Dashboard Page', () => {
   test('should display username without email domain', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // Check the welcome message displays username without @domain
-    const volunteerName = await page.locator('#volunteer-name').textContent();
-    expect(volunteerName).not.toContain('@');
-    expect(volunteerName).toBe(testUser.username);
+    // Wait for dashboard to load
+    await expect(page.locator('#boxes-container')).toBeVisible();
 
     // Check the filter dropdown displays username without @domain
-    const filterSelect = page.locator('#filter-select');
+    const filterSelect = page.locator('#view-filter');
     const myBoxesOption = filterSelect.locator(`option[value="${testUser.username}"]`);
     await expect(myBoxesOption).toHaveText('My Boxes');
 

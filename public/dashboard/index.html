@@ -13,17 +13,11 @@
 				<div class="dashboard-header-flex">
 					<div>
 						<h1>Dashboard</h1>
-						<p class="welcome-text">Welcome,
-							<span id="volunteer-name">...</span>
-						</p>
 					</div>
 					<div class="dashboard-header-controls">
 						<label for="view-filter">Show boxes:</label>
 						<select id="view-filter">
 						</select>
-						<button id="sign-out-btn">
-							Sign Out
-						</button>
 					</div>
 				</div>
 				<section id="boxes-section">
@@ -78,8 +72,6 @@
 									displayName = displayName.substring( 0, atIndex );
 								}
 									document.getElementById( 'main-content' ).style.display = 'block';
-									document.getElementById( 'volunteer-name' ).textContent = displayName;
-									document.getElementById( 'sign-out-btn' ).onclick = () => signOut( auth );
 									window.initApp( user, displayName );
 								}
 								else
@@ -168,7 +160,7 @@
 				}
 				else
 				{
-					boxesTitle.textContent = `Boxes Assigned to ${ filterKey }`;
+					boxesTitle.textContent = `${ filterKey }'s Boxes`;
 					allBoxesMap.forEach( box =>
 					{
 						if( box.volunteer === filterKey )
