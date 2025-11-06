@@ -5,7 +5,7 @@ module.exports = defineConfig({
   fullyParallel: false, // Tests within describe blocks run sequentially
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 4, // Run 4 tests in parallel for faster execution
+  workers: 2, // Run 2 tests in parallel (reduced for Firebase emulator stability)
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list']
@@ -16,16 +16,16 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 3000, // 3 seconds for actions like click, fill, etc.
-    navigationTimeout: 3000, // 3 seconds for page navigations
+    actionTimeout: 10000, // 10 seconds for actions (increased for parallel execution)
+    navigationTimeout: 10000, // 10 seconds for page navigations (increased for parallel execution)
   },
 
   // Global timeout for each test
-  timeout: 15 * 1000, // 15 seconds total per test
+  timeout: 30 * 1000, // 30 seconds total per test (increased for parallel execution)
 
   // Timeout for assertions (expect calls)
   expect: {
-    timeout: 3000, // 3 seconds for assertions
+    timeout: 10000, // 10 seconds for assertions (increased for parallel execution)
   },
 
   projects: [

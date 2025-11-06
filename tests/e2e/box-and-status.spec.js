@@ -130,6 +130,9 @@ test.describe('Box Action Center and Status Pages', () => {
         await page.fill('#auth-password', password);
         await page.locator('#email-sign-up-btn').click();
 
+        // Wait for authentication to complete by checking for current user
+        await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+
         // Get user UID and authorize directly
         const userRecord = await page.evaluate(async () => {
           const auth = window.auth;

@@ -130,14 +130,41 @@ npm run test:smoke    # Quick smoke test (no emulators)
 
 ## What Gets Tested
 
-- ✅ Login/Authentication (13 tests)
-- ✅ Dashboard functionality (12 tests)
-- ✅ Location setup (15 tests)
-- ✅ Box action center (10+ tests)
-- ✅ Status/history pages (13+ tests)
-- ✅ Home page (15 tests)
+### Current Test Status (as of Nov 5, 2025)
 
-**Total: 78+ comprehensive E2E tests**
+- ✅ **Login/Authentication** - 12/12 passing
+  - Form display and toggles
+  - Sign up/sign in flows
+  - Error handling
+  - Password validation
+  - Authorization checks
+
+- ✅ **Dashboard** - 13/13 passing
+  - Authentication redirects
+  - Volunteer information display
+  - Box status displays (good, problem, pickup alert)
+  - Filtering (my boxes vs all boxes)
+  - Clear status functionality
+
+- ✅ **Box Action Center & Status Pages** - 19/19 passing
+  - Public box action center (/box) - 5 tests
+  - Public status page views - 4 tests
+  - Authenticated status/history views - 10 tests
+  - Report displays (problems, pickups, timestamps)
+  - Status badges (New/Cleared)
+
+- ⏳ **Location Setup** - Not yet tested
+- ⏳ **Home Page** - Not yet tested
+- ⏳ **Email Notifications** - Skipped (Mailgun not configured)
+
+**Total: 44/44 passing (100%)**
+
+### Test Organization
+
+Tests are organized by authentication requirements:
+- **Public tests** - No authentication needed
+- **Authenticated tests** - Require user login and authorization
+- Each authenticated test suite creates its own test user with proper authorization
 
 ## CI/CD Note
 
