@@ -12,8 +12,38 @@
 			</a>
 			<p class="sub-header">Coordinated by Marine Corps League Detachment #1311, Woodstock, GA</p>
 		</div>
-		<a href="/dashboard">
-			<img src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
-		</a>
+		<div class="header-right">
+			<button id="hamburger-menu-btn" class="hamburger-menu-btn" aria-label="Menu" aria-expanded="false">
+				<span></span>
+				<span></span>
+				<span></span>
+			</button>
+			<a href="/dashboard">
+				<img src="/images/mcl-logo.png" height="80" alt="Marine Corps League Logo" class="logo mcl-logo">
+			</a>
+		</div>
 	</div>
+	<nav id="hamburger-menu" class="hamburger-menu" aria-hidden="true">
+		<div class="menu-content">
+			<div id="menu-user-info" class="menu-user-info" style="display: none;">
+				<span id="menu-username"></span>
+			</div>
+			<a href="/" class="menu-item">
+				<span>Map</span>
+			</a>
+			<a href="/dashboard" class="menu-item" id="menu-dashboard" style="display: none;">
+				<span>Dashboard</span>
+			</a>
+			<a href="#" class="menu-item" id="menu-new-box" style="display: none;">
+				<span>New Box</span>
+			</a>
+			<a href="/login" class="menu-item" id="menu-sign-in">
+				<span>Sign In</span>
+			</a>
+			<a href="#" class="menu-item" id="menu-sign-out" style="display: none;">
+				<span>Sign Out</span>
+			</a>
+		</div>
+	</nav>
 </header>
+<script src="/js/hamburger-menu.js"></script>
