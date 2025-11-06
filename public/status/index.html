@@ -58,9 +58,11 @@
 			const renderReportItem = ( report ) =>
 			{
 				const reportTypeName = report.reportType || report[ 'report-type' ] || 'unknown_report';
+				const STATUS_RESOLVED_TEXT = 'Resolved'; // Variable for status text
 
 				const isProblem = reportTypeName.includes( 'problem' );
-				const statusText = report.status === 'new' ? 'New' : 'Cleared';
+				const isResolved = report.status === 'cleared';
+				const statusText = report.status === 'new' ? 'New' : STATUS_RESOLVED_TEXT;
 
 				let reporterInfoHtml = '';
 				if (report.reporterName || report.reporterEmail) {
@@ -73,8 +75,16 @@
             `;
 				}
 
+				// Apply styling: problem reports stay red, resolved reports get green, new pickups stay white
+				let itemClasses = 'report-item';
+				if (isResolved) {
+					itemClasses += ' is-resolved';
+				} else if (isProblem && report.status === 'new') {
+					itemClasses += ' is-problem';
+				}
+
 				return `
-                <li class="report-item ${ isProblem ? 'is-problem' : '' }">
+                <li class="${ itemClasses }">
                     <div class="report-item-header">
                         <span class="report-title">${ reportTypeName.replace( /_/g, ' ' ) }</span>
                         <span class="report-status ${ report.status === 'new' ? 'is-new' : 'is-cleared' }">${ statusText }</span>

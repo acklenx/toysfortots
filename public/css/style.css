@@ -1024,10 +1024,10 @@ footer {
 
 /* Location Card (from box page) - Re-using styles */
 #location-display .bg-tots-light {
-    background-color: #fcebeb; /* tots-light */
+    background-color: #f0fdf4; /* bg-green-50 - changed from red to green */
     padding: 1rem;
     border-radius: 0.5rem;
-    border: 1px solid var(--t4t-red);
+    border: 1px solid var(--t4t-green); /* changed from red to green */
     box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 }
 #location-display .bg-tots-light h2 {
@@ -1088,6 +1088,8 @@ footer {
 #history-container {
     display: grid;
     gap: 0.75rem; /* space-y-3 */
+    list-style: none; /* Remove list item disks */
+    padding: 0; /* Remove default list padding */
 }
 
 /* Individual Report Item */
@@ -1101,6 +1103,10 @@ footer {
 .report-item.is-problem {
     background-color: #fef2f2; /* bg-red-50 */
     border-color: rgba(204, 0, 0, 0.5); /* border-tots-red/50 */
+}
+.report-item.is-resolved {
+    background-color: #f0fdf4; /* bg-green-50 */
+    border-color: rgba(0, 128, 0, 0.3); /* border-green/30 */
 }
 
 .report-item-header {

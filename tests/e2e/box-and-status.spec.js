@@ -236,7 +236,7 @@ test.describe('Box Action Center and Status Pages', () => {
         await expect(pickupReport).toContainText('Box is full');
       });
 
-      test('should show report status as New or Cleared', async ({ page }) => {
+      test('should show report status as New or Resolved', async ({ page }) => {
         const boxId = generateBoxId('BOX');
         await createTestLocation(boxId, {
           label: 'Test Location'
@@ -250,7 +250,7 @@ test.describe('Box Action Center and Status Pages', () => {
 
         await createTestReport(boxId, {
           reportType: 'problem_report',
-          description: 'Cleared problem',
+          description: 'Resolved problem',
           status: 'cleared'
         });
 
@@ -261,8 +261,9 @@ test.describe('Box Action Center and Status Pages', () => {
         await expect(newStatus.first()).toBeVisible();
         await expect(newStatus.first()).toContainText('New');
 
-        const clearedStatus = page.locator('.report-status.is-cleared');
-        await expect(clearedStatus.first()).toBeVisible();
+        const resolvedStatus = page.locator('.report-status.is-cleared');
+        await expect(resolvedStatus.first()).toBeVisible();
+        await expect(resolvedStatus.first()).toContainText('Resolved');
       });
 
       test('should display report timestamps', async ({ page }) => {

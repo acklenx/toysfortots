@@ -201,7 +201,7 @@ test.describe('Dashboard Page', () => {
 
     // Should have clear status button
     await expect(page.locator('.clear-status-btn')).toBeVisible();
-    await expect(page.locator('.clear-status-btn')).toContainText('Mark as Cleared');
+    await expect(page.locator('.clear-status-btn')).toContainText('Mark as Resolved');
   });
 
   test('should have view history link', async ({ page }) => {

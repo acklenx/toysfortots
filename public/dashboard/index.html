@@ -101,6 +101,7 @@
 			};
 			const renderBoxCard = ( box ) =>
 			{
+				const STATUS_RESOLVED_TEXT = 'Resolved'; // Variable for status text
 				let statusHtml;
 				if( box.latestPendingReport )
 				{
@@ -115,7 +116,7 @@
                         <button
                             class="clear-status-btn"
                             data-report-id="${ report.id }">
-                            Mark as Cleared
+                            Mark as ${ STATUS_RESOLVED_TEXT }
                         </button>
                     </div>
                 `;
@@ -125,7 +126,7 @@
 					statusHtml = `
                     <div class="status-good">
                         <p class="status-title">Status: Good</p>
-                        <p class="status-desc">All reports are cleared.</p>
+                        <p class="status-desc">All reports are ${ STATUS_RESOLVED_TEXT.toLowerCase() }.</p>
                     </div>
                 `;
 				}
@@ -269,10 +270,11 @@
 			{
 				if( e.target && e.target.classList.contains( 'clear-status-btn' ) )
 				{
+					const STATUS_RESOLVED_TEXT = 'Resolved'; // Variable for status text
 					const button = e.target;
 					const reportId = button.dataset.reportId;
 					button.disabled = true;
-					button.textContent = 'Clearing...';
+					button.textContent = 'Resolving...';
 					try
 					{
 						const reportRef = doc( db, reportsCollectionPath, reportId );
@@ -283,10 +285,10 @@
 					}
 					catch( err )
 					{
-						console.error( 'Error clearing status: ', err );
-						alert( 'Error clearing status. Please try again.' );
+						console.error( 'Error resolving status: ', err );
+						alert( 'Error resolving status. Please try again.' );
 						button.disabled = false;
-						button.textContent = 'Clear Status';
+						button.textContent = `Mark as ${ STATUS_RESOLVED_TEXT }`;
 					}
 				}
 			} );
