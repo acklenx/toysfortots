@@ -4,7 +4,20 @@ async function loadComponent(id, url) {
 		if (!response.ok) return;
 		const text = await response.text();
 		const el = document.getElementById(id);
-		if (el) el.innerHTML = text;
+		if (el) {
+			el.innerHTML = text;
+			// Execute any script tags in the loaded HTML
+			const scripts = el.querySelectorAll('script');
+			scripts.forEach(oldScript => {
+				const newScript = document.createElement('script');
+				if (oldScript.src) {
+					newScript.src = oldScript.src;
+				} else {
+					newScript.textContent = oldScript.textContent;
+				}
+				oldScript.parentNode.replaceChild(newScript, oldScript);
+			});
+		}
 	} catch (err) {
 		console.error(`Failed to load component ${url}:`, err);
 	}

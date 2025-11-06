@@ -30,5 +30,12 @@ const appId = firebaseConfig.projectId;
 const publicDocumentId = '01';
 const dataDocumentId = '01';
 const basePath = `artifacts/${ appId }/public/${ publicDocumentId }/data/${ dataDocumentId }`;
+const privateBasePath = `artifacts/${ appId }/private/${ publicDocumentId }/data/${ dataDocumentId }`;
+
 export const locationsCollectionPath = `${ basePath }/locations`;
 export const reportsCollectionPath = `${ basePath }/totsReports`;
+export const authorizedVolunteersCollectionPath = `${ privateBasePath }/authorizedVolunteers`;
+
+// Make paths available globally for user-display.js
+window.db = db;
+window.authorizedVolunteersCollectionPath = authorizedVolunteersCollectionPath;

@@ -82,6 +82,24 @@ test.describe('Dashboard Page', () => {
     await expect(volunteerName).toContainText(baseUsername);
   });
 
+  test('should display username in footer', async ({ page }) => {
+    await page.goto('/dashboard/');
+
+    // Wait for main content to load
+    await expect(page.locator('#volunteer-name')).not.toContainText('...');
+
+    // Wait for footer to load and user-display.js to run (footer loads async)
+    await page.waitForTimeout(1000);
+
+    // Check footer username is visible
+    const footerUser = page.locator('#logged-in-user');
+    await expect(footerUser).toBeVisible();
+
+    // Check that it contains at least the base username
+    const baseUsername = testUser.username.split('W')[0]; // Get "testvolunteer" part
+    await expect(footerUser).toContainText(baseUsername);
+  });
+
   test('should sign out user when sign out button clicked', async ({ page }) => {
     await page.goto('/dashboard/');
 

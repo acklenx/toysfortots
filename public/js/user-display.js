@@ -13,37 +13,33 @@
         username = username.split('@')[0];
       }
 
-      // Check if user is authorized by checking Firestore
-      if (window.db) {
-        window.db.collection('volunteers').doc(user.uid).get()
-          .then(doc => {
-            const isAuthorized = doc.exists;
-            const suffix = isAuthorized ? '' : '*';
-            userDisplay.textContent = `${username}${suffix}`;
-            userDisplay.style.display = 'block';
-          })
-          .catch(err => {
-            // If can't check authorization, just show username
-            userDisplay.textContent = username;
-            userDisplay.style.display = 'block';
-          });
-      } else {
-        // No Firestore access, just show username
-        userDisplay.textContent = username;
-        userDisplay.style.display = 'block';
-      }
+      // Just display the username (no authorization check needed for footer display)
+      userDisplay.textContent = username;
+      userDisplay.style.display = 'block';
     } else {
       userDisplay.style.display = 'none';
     }
   }
 
-  // Wait for auth to be ready
-  if (window.auth) {
-    window.auth.onAuthStateChanged(() => {
-      displayUser();
-    });
-  } else {
-    // Retry if auth isn't loaded yet
-    setTimeout(displayUser, 1000);
+  // Wait for auth and db to be ready
+  let retryCount = 0;
+  const maxRetries = 20; // 10 seconds total (500ms * 20)
+
+  function initDisplayUser() {
+    if (window.auth && window.db) {
+      window.auth.onAuthStateChanged(() => {
+        displayUser();
+      });
+      // Also call immediately in case user is already signed in
+      if (window.auth.currentUser) {
+        displayUser();
+      }
+    } else if (retryCount < maxRetries) {
+      // Retry if auth/db isn't loaded yet
+      retryCount++;
+      setTimeout(initDisplayUser, 500);
+    }
   }
+
+  initDisplayUser();
 })();
