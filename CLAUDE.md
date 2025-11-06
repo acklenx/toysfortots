@@ -15,27 +15,29 @@ This is a Firebase-based web application for tracking Toys for Tots donation box
 # OR manually:
 npx firebase emulators:start --only hosting,auth,firestore,functions
 
-# Run all tests (recommended: 2 workers for best reliability)
-npx playwright test --workers=2
+# Recommended: Smart test runner with 3-tier retry strategy
+npm run test:smart
+# Or directly:
+./run-tests-smart.sh
 
-# Run with 1 worker (100% reliable, slower)
-npx playwright test --workers=1
-
-# Run with 4 workers (faster, ~90% reliable)
-npx playwright test --workers=4
-
-# Run specific test file
-npx playwright test tests/e2e/dashboard.spec.js
-
-# Run single test by name
-npx playwright test -g "should display dashboard"
-
-# Run tests with UI
-npx playwright test --ui
-
-# View test report
-npx playwright show-report
+# Standard test commands
+npx playwright test                              # Run all tests (4 workers + auto-retry)
+npx playwright test --workers=2                  # Run with 2 workers (more stable)
+npx playwright test --workers=1                  # Run with 1 worker (most stable, slower)
+npx playwright test tests/e2e/dashboard.spec.js  # Run specific file
+npx playwright test -g "should display dashboard" # Run single test
+npx playwright test --ui                         # Run with UI
+npx playwright show-report                       # View test report
 ```
+
+**Smart Test Runner:** The `run-tests-smart.sh` script provides:
+- **Tier 1:** Fast parallel execution (4 workers)
+- **Tier 2:** Automatic retry for transient failures
+- **Tier 3:** Sequential retry to distinguish real bugs from Firebase emulator contention
+- Automatic summary showing which tier recovered failures
+- Preserves all logs for analysis
+
+See `docs/TEST_DEBUGGING_GUIDE.md` for more details.
 
 ### Test Writing and Debugging
 

@@ -1,5 +1,23 @@
 # Project: Toys for Tots Box Locator
 
+## Quick Start: Running Tests
+
+**Recommended:** Use the smart test runner for best results:
+```bash
+npm run test:smart
+```
+Or directly:
+```bash
+./run-tests-smart.sh
+```
+
+This runs a three-tier retry strategy:
+- **Tier 1:** Fast parallel execution (4 workers)
+- **Tier 2:** Automatic retry for transient failures
+- **Tier 3:** Sequential retry to distinguish real bugs from contention
+
+See `docs/TEST_DEBUGGING_GUIDE.md` and `docs/TEST_WRITING_GUIDE.md` for more details.
+
 ## Mission
 
 To provide an easy-to-use, scalable system for Marine Corps Reserve detachments (like Detachment 1311) to efficiently register, track, and manage Toys for Tots donation boxes. This tool empowers local detachments to gather accurate location data, which can then be easily passed on to the centralized Marine Corps Reserve tracking systems.
