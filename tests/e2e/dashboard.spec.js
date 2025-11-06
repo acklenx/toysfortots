@@ -323,4 +323,22 @@ test.describe('Dashboard Page', () => {
 
     await expect(page.locator('.box-card')).toContainText('789 Main St, Decatur');
   });
+
+  test('should display username without email domain', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    // Check the welcome message displays username without @domain
+    const volunteerName = await page.locator('#volunteer-name').textContent();
+    expect(volunteerName).not.toContain('@');
+    expect(volunteerName).toBe(testUser.username);
+
+    // Check the filter dropdown displays username without @domain
+    const filterSelect = page.locator('#filter-select');
+    const myBoxesOption = filterSelect.locator(`option[value="${testUser.username}"]`);
+    await expect(myBoxesOption).toHaveText('My Boxes');
+
+    // Verify the option value also doesn't contain @domain
+    const optionValue = await myBoxesOption.getAttribute('value');
+    expect(optionValue).not.toContain('@');
+  });
 });

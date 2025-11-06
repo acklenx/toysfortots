@@ -70,7 +70,13 @@
 								const result = await isAuthorizedVolunteer( { uid: user.uid } );
 								if( result.data.isAuthorized )
 								{
-									const displayName = result.data.displayName || user.email;
+									let displayName = result.data.displayName || user.email;
+								// Strip @domain from email addresses
+								const atIndex = displayName.indexOf( '@' );
+								if( atIndex !== -1 )
+								{
+									displayName = displayName.substring( 0, atIndex );
+								}
 									document.getElementById( 'main-content' ).style.display = 'block';
 									document.getElementById( 'volunteer-name' ).textContent = displayName;
 									document.getElementById( 'sign-out-btn' ).onclick = () => signOut( auth );
