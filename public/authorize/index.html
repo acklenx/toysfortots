@@ -41,6 +41,10 @@
 				<p style="margin-top: 1.5rem; font-size: 0.875rem; color: #6b7281;">
 					Don't have an authorization code? Contact your local coordinator or administrator.
 				</p>
+
+				<button id="sign-out-btn" class="secondary-button" style="margin-top: 1rem; width: 100%;">
+					Sign Out
+				</button>
 			</div>
 		</div>
 		<div id="footer-placeholder"></div>
@@ -107,7 +111,14 @@
 					}
 				} catch (error) {
 					console.error('Authorization error:', error);
-					showAuthMessage('error', error.message || 'Authorization failed. Please check the code and try again.');
+					// Show more detailed error information
+					let errorMessage = 'Authorization failed. Please check the code and try again.';
+					if (error.code) {
+						errorMessage = `Error (${error.code}): ${error.message}`;
+					} else if (error.message) {
+						errorMessage = error.message;
+					}
+					showAuthMessage('error', errorMessage);
 					authorizeBtn.disabled = false;
 					authorizeBtn.textContent = 'Authorize Access';
 				}
@@ -141,6 +152,17 @@
 
 			// Clear error message when user starts typing
 			authCodeInput.addEventListener('input', clearAuthMessage);
+
+			// Sign out button
+			document.getElementById('sign-out-btn').addEventListener('click', async () => {
+				try {
+					await signOut(auth);
+					window.location.href = '/login';
+				} catch (error) {
+					console.error('Sign out error:', error);
+					showAuthMessage('error', 'Failed to sign out. Please try again.');
+				}
+			});
 		</script>
 	</body>
 </html>
