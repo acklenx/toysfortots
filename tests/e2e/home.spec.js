@@ -49,6 +49,48 @@ test.describe('Home Page', () => {
     await expect(page.locator('#footer-placeholder')).toBeVisible();
   });
 
+  test('should display map element', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+
+    // Map element should exist and be visible
+    const mapElement = page.locator('#map');
+    await expect(mapElement).toBeVisible();
+  });
+
+  test('should have map with minimum dimensions', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+
+    // Check that map has proper dimensions (not 0px height)
+    const mapDimensions = await page.evaluate(() => {
+      const mapEl = document.getElementById('map');
+      return {
+        width: mapEl.offsetWidth,
+        height: mapEl.offsetHeight
+      };
+    });
+
+    // Map should have width > 0 and height > 0
+    expect(mapDimensions.width).toBeGreaterThan(0);
+    expect(mapDimensions.height).toBeGreaterThan(0);
+
+    // Map should meet minimum width requirement on desktop
+    expect(mapDimensions.width).toBeGreaterThanOrEqual(400);
+  });
+
+  test('should initialize Leaflet map with controls', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(3000); // Wait for Leaflet to initialize
+
+    // Check that Leaflet zoom controls are present
+    const zoomInButton = page.locator('.leaflet-control-zoom-in');
+    const zoomOutButton = page.locator('.leaflet-control-zoom-out');
+
+    await expect(zoomInButton).toBeVisible();
+    await expect(zoomOutButton).toBeVisible();
+  });
+
   test('should initialize without authentication errors', async ({ page }) => {
     // Listen for console errors
     const errors = [];
