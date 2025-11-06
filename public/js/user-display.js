@@ -6,6 +6,13 @@
 
     if (window.auth && window.auth.currentUser) {
       const user = window.auth.currentUser;
+
+      // Don't show anything for anonymous users
+      if (user.isAnonymous) {
+        userDisplay.style.display = 'none';
+        return;
+      }
+
       let username = user.displayName || user.email || 'Unknown';
 
       // Strip @domain.com from email if present
