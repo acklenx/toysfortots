@@ -79,13 +79,16 @@ TIER3_TESTS=$TIER1_FAILURES
 TIER3_PASSED=$(grep -c "✓" test-run-sequential.log 2>/dev/null || echo "0")
 TIER3_FAILED=$(grep -c "✘" test-run-sequential.log 2>/dev/null || echo "0")
 
+# Calculate total tests
+TOTAL_TESTS=$(grep -c "✓\|✘" test-run.log 2>/dev/null || echo "0")
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📊 TEST RUN SUMMARY"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
 if [ $EXIT_CODE_SEQ -eq 0 ]; then
-  echo "Result: ✅ All tests passed after sequential retry!"
+  echo "Result: ✅ All ($TOTAL_TESTS) tests passed after sequential retry!"
   echo ""
   echo "Three-Tier Strategy Performance:"
   echo "  • Tier 1 (4 workers, first attempt): $TIER1_FAILURES test(s) failed"
