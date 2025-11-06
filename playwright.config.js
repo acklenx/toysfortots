@@ -6,6 +6,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 4, // Run tests with 4 parallel workers
+
+  // Reorder tests to reduce contention (login/home first, then spread heavy tests)
+  testMatch: [
+    '**/login.spec.js',
+    '**/home.spec.js',
+    '**/box-and-status.spec.js',
+    '**/setup.spec.js',
+    '**/dashboard.spec.js'
+  ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],

@@ -4,6 +4,7 @@ import {
   seedTestConfig,
   createTestLocation
 } from '../fixtures/firebase-helpers.js';
+import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.js';
 
 test.describe('Home Page', () => {
   test.beforeEach(async () => {
@@ -104,7 +105,7 @@ test.describe('Home Page', () => {
 
   test('should load locations when they exist', async ({ page }) => {
     // Create test locations
-    await createTestLocation('HOME001', {
+    await createTestLocation(generateBoxId('HOME'), {
       label: 'Test Store 1',
       address: '123 Main St',
       city: 'Atlanta',
@@ -112,7 +113,7 @@ test.describe('Home Page', () => {
       lon: -84.3880
     });
 
-    await createTestLocation('HOME002', {
+    await createTestLocation(generateBoxId('HOME'), {
       label: 'Test Store 2',
       address: '456 Oak Ave',
       city: 'Decatur',
@@ -197,7 +198,7 @@ test.describe('Home Page', () => {
   test('should handle multiple locations without errors', async ({ page }) => {
     // Create multiple locations
     for (let i = 1; i <= 10; i++) {
-      await createTestLocation(`MULTI${String(i).padStart(3, '0')}`, {
+      await createTestLocation(generateBoxId('MULTI'), {
         label: `Location ${i}`,
         address: `${i}00 Test St`,
         city: 'Atlanta',

@@ -5,6 +5,7 @@ import {
   authorizeVolunteer,
   createTestLocation
 } from '../fixtures/firebase-helpers.js';
+import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.js';
 
 test.describe('Setup Page', () => {
   const TEST_PASSCODE = 'TEST_PASSCODE';
@@ -21,7 +22,7 @@ test.describe('Setup Page', () => {
 
   test('should display box ID from URL parameter', async ({ page }) => {
     // Create and sign in a user first
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -31,14 +32,15 @@ test.describe('Setup Page', () => {
     await page.locator('#email-sign-up-btn').click();
 
     // Navigate to setup with box ID
-    await page.goto('/setup?id=TESTBOX123');
+    const boxId = generateBoxId('TESTBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Check that box ID is displayed
-    await expect(page.locator('#box-id-display')).toContainText('TESTBOX123');
+    await expect(page.locator('#box-id-display')).toContainText(boxId);
   });
 
   test('should show error when no box ID in URL', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -56,11 +58,12 @@ test.describe('Setup Page', () => {
 
   test('should redirect to status page if box already exists', async ({ page }) => {
     // Create existing box
-    await createTestLocation('EXISTING001', {
+    const boxId = generateBoxId('EXISTING');
+    await createTestLocation(boxId, {
       label: 'Existing Location'
     });
 
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -70,14 +73,14 @@ test.describe('Setup Page', () => {
     await page.locator('#email-sign-up-btn').click();
 
     // Try to setup existing box
-    await page.goto('/setup?id=EXISTING001');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Wait for redirect to happen
-    await page.waitForURL(/\/status\/\?id=EXISTING001/, { timeout: 10000 });
+    await page.waitForURL(new RegExp(`/status/\\?id=${boxId}`), { timeout: 10000 });
   });
 
   test('should hide passcode field for authorized volunteers', async ({ page }) => {
-    const username = `volunteer${Date.now()}`;
+    const username = generateUsername('volunteer');
     const password = 'testpass123';
 
     // Create user
@@ -97,7 +100,8 @@ test.describe('Setup Page', () => {
     }
 
     // Navigate to setup
-    await page.goto('/setup?id=NEWBOX001');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Passcode field should be hidden
     const passcodeGroup = page.locator('#passcode').locator('..');
@@ -105,7 +109,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should show passcode field for non-authorized users', async ({ page }) => {
-    const username = `newuser${Date.now()}`;
+    const username = generateUsername('newuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -115,7 +119,8 @@ test.describe('Setup Page', () => {
     await page.locator('#email-sign-up-btn').click();
 
     // Navigate to setup (user is NOT authorized)
-    await page.goto('/setup?id=NEWBOX002');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Passcode field should be visible
     const passcodeGroup = page.locator('#passcode').locator('..');
@@ -124,7 +129,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should show/hide passcode when toggle clicked', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -133,7 +138,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX003');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     const passcodeInput = page.locator('#passcode');
 
@@ -154,7 +160,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should display signed in user name', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -166,14 +172,15 @@ test.describe('Setup Page', () => {
     // Wait for auth to complete
     await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
 
-    await page.goto('/setup?id=NEWBOX004');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Should show signed in message
     await expect(page.locator('#user-display')).toContainText(`Signed in as: ${username}`);
   });
 
   test('should show/hide manual address fields', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -182,7 +189,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX005');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Manual address fields should be hidden initially
     await expect(page.locator('#manual-address-fields')).toBeHidden();
@@ -198,7 +206,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should validate required fields on form submission', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -207,7 +215,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX006');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Show address fields
     await page.locator('#show-address-btn').click();
@@ -220,7 +229,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should require contact info on submission', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -229,7 +238,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX007');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     // Fill in all required fields except contact info
     await page.locator('#show-address-btn').click();
@@ -252,7 +262,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should have sign out button', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -264,13 +274,14 @@ test.describe('Setup Page', () => {
     // Wait for auth to complete
     await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
 
-    await page.goto('/setup?id=NEWBOX008');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     await expect(page.locator('#sign-out-btn')).toBeVisible();
   });
 
   test('should have GPS location button', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -279,14 +290,15 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX009');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     await expect(page.locator('#gps-btn')).toBeVisible();
     await expect(page.locator('#gps-btn')).toContainText('Use My GPS Location');
   });
 
   test('should have default state value of GA', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -295,7 +307,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX010');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     await page.locator('#show-address-btn').click();
 
@@ -304,7 +317,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should display form fields correctly', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.goto('/login');
@@ -313,7 +326,8 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
-    await page.goto('/setup?id=NEWBOX011');
+    const boxId = generateBoxId('NEWBOX');
+    await page.goto(`/setup?id=${boxId}`);
 
     await page.locator('#show-address-btn').click();
 

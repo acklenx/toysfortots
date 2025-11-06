@@ -6,18 +6,21 @@ import {
   createTestLocation,
   createTestReport
 } from '../fixtures/firebase-helpers.js';
+import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.js';
 
 test.describe('Dashboard Page', () => {
   let testUser = null;
+  let testBoxIdPrefix = null;
 
   test.beforeEach(async ({ page }) => {
     await clearTestData();
     await seedTestConfig('semperfi');
 
-    const username = `testvolunteer${Date.now()}`;
+    const username = generateUsername('testvolunteer');
     const password = 'testpass123';
 
     testUser = { username, password };
+    testBoxIdPrefix = generateBoxId('DASH');
 
     // Create user account
     await page.goto('/login');
@@ -99,7 +102,8 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX001', {
+    const boxId = generateBoxId('BOX');
+    await createTestLocation(boxId, {
       label: 'Test Market',
       address: '123 Test St',
       city: 'Atlanta',
@@ -111,7 +115,7 @@ test.describe('Dashboard Page', () => {
     await expect(page.locator('.box-card')).toBeVisible();
     await expect(page.locator('.box-card')).toContainText('Test Market');
     await expect(page.locator('.box-card')).toContainText('Status: Good');
-    await expect(page.locator('.box-card')).toContainText('BOX001');
+    await expect(page.locator('.box-card')).toContainText(boxId);
   });
 
   test('should display boxes with problem status', async ({ page }) => {
@@ -121,7 +125,8 @@ test.describe('Dashboard Page', () => {
     });
 
     // Create a test location
-    await createTestLocation('BOX002', {
+    const boxId = generateBoxId('BOX');
+    await createTestLocation(boxId, {
       label: 'Test Store',
       address: '456 Test Ave',
       city: 'Atlanta',
@@ -129,7 +134,7 @@ test.describe('Dashboard Page', () => {
     });
 
     // Create a problem report
-    await createTestReport('BOX002', {
+    await createTestReport(boxId, {
       reportType: 'problem_report',
       description: 'Box is damaged',
       status: 'new'
@@ -152,12 +157,13 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX003', {
+    const boxId = generateBoxId('BOX');
+    await createTestLocation(boxId, {
       label: 'Test Mall',
       volunteer: displayName
     });
 
-    await createTestReport('BOX003', {
+    await createTestReport(boxId, {
       reportType: 'pickup_alert',
       description: 'Box is full',
       status: 'new'
@@ -175,12 +181,13 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX004', {
+    const boxId = generateBoxId('BOX');
+    await createTestLocation(boxId, {
       label: 'Test Location',
       volunteer: displayName
     });
 
-    await createTestReport('BOX004', {
+    await createTestReport(boxId, {
       reportType: 'problem_report',
       description: 'Test problem',
       status: 'new'
@@ -199,7 +206,8 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX005', {
+    const boxId = generateBoxId('BOX');
+    await createTestLocation(boxId, {
       label: 'Test Box',
       volunteer: displayName
     });
@@ -209,7 +217,7 @@ test.describe('Dashboard Page', () => {
     const historyLink = page.locator('.view-history-btn').first();
     await expect(historyLink).toBeVisible();
     await expect(historyLink).toContainText('View Full History');
-    await expect(historyLink).toHaveAttribute('href', /\/status\/\?id=BOX005/);
+    await expect(historyLink).toHaveAttribute('href', new RegExp(`/status/\\?id=${boxId}`));
   });
 
   test('should filter boxes by volunteer', async ({ page }) => {
@@ -219,12 +227,14 @@ test.describe('Dashboard Page', () => {
     });
 
     // Create boxes for different volunteers
-    await createTestLocation('BOX006', {
+    const boxId1 = generateBoxId('BOX');
+    await createTestLocation(boxId1, {
       label: 'My Box',
       volunteer: displayName
     });
 
-    await createTestLocation('BOX007', {
+    const boxId2 = generateBoxId('BOX');
+    await createTestLocation(boxId2, {
       label: 'Other Box',
       volunteer: 'Other Volunteer'
     });
@@ -249,9 +259,9 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX008', { label: 'Z Store', volunteer: displayName });
-    await createTestLocation('BOX009', { label: 'A Store', volunteer: displayName });
-    await createTestLocation('BOX010', { label: 'M Store', volunteer: displayName });
+    await createTestLocation(generateBoxId('BOX'), { label: 'Z Store', volunteer: displayName });
+    await createTestLocation(generateBoxId('BOX'), { label: 'A Store', volunteer: displayName });
+    await createTestLocation(generateBoxId('BOX'), { label: 'M Store', volunteer: displayName });
 
     await page.goto('/dashboard');
 
@@ -274,7 +284,7 @@ test.describe('Dashboard Page', () => {
       return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
     });
 
-    await createTestLocation('BOX011', {
+    await createTestLocation(generateBoxId('BOX'), {
       label: 'Test Location',
       address: '789 Main St',
       city: 'Decatur',

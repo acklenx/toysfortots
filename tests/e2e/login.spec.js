@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { clearTestData, seedTestConfig, authorizeVolunteer } from '../fixtures/firebase-helpers.js';
+import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.js';
 
 test.describe('Login Page', () => {
   test.beforeEach(async () => {
@@ -77,7 +78,7 @@ test.describe('Login Page', () => {
   test('should create new user account', async ({ page }) => {
     await page.goto('/login');
 
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     // Switch to sign-up mode
@@ -109,7 +110,7 @@ test.describe('Login Page', () => {
   });
 
   test('should sign in existing user', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     // First create the account
@@ -143,7 +144,7 @@ test.describe('Login Page', () => {
   });
 
   test('should show error when trying to create account with existing username', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     // Create account first time
@@ -166,7 +167,7 @@ test.describe('Login Page', () => {
   });
 
   test('should redirect to returnUrl after successful login', async ({ page, context }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     // Mock authorization by setting up user in database
@@ -205,7 +206,7 @@ test.describe('Login Page', () => {
   test('should handle form submission via Enter key', async ({ page }) => {
     await page.goto('/login');
 
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     await page.locator('#toggle-sign-up-btn').click();
@@ -223,7 +224,7 @@ test.describe('Login Page', () => {
   });
 
   test('should show not authorized message for non-authorized user', async ({ page }) => {
-    const username = `testuser${Date.now()}`;
+    const username = generateUsername('testuser');
     const password = 'testpass123';
 
     // Create a user but don't authorize them
