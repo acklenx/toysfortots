@@ -927,12 +927,11 @@ footer {
 
 /* View History Button */
 .view-history-btn {
-    display: block;
+    display: inline-block;
     text-align: center;
-    width: 100%;
     margin-top: 0.75rem; /* mt-3 */
-    padding: 0.5rem 0.75rem; /* py-2 px-3 */
-    background-color: #4b5563; /* bg-gray-600 */
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    background-color: #059669; /* bg-green-600 */
     color: white;
     font-size: 0.875rem; /* text-sm */
     font-weight: 600; /* font-semibold */
@@ -940,7 +939,7 @@ footer {
     text-decoration: none;
 }
 .view-history-btn:hover {
-    background-color: #374151; /* hover:bg-gray-700 */
+    background-color: #047857; /* hover:bg-green-700 */
 }
 
 .sr-only {
