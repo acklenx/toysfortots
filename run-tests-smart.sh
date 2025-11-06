@@ -12,17 +12,21 @@ echo ""
 
 # Run with 4 workers, Playwright will retry failures once automatically
 # Include flakiness reporter to track failures
-npx playwright test --reporter=list,json,./flakiness-reporter.js --output=test-results.json 2>&1 | tee test-run.log
+npx playwright test --reporter=list,./flakiness-reporter.js 2>&1 | tee test-run.log
 EXIT_CODE=$?
 
-if [ $EXIT_CODE -eq 0 ]; then
-  echo ""
-  echo "✅ All tests passed! No sequential retry needed."
-  echo ""
+# Count how many tests failed on first attempt
+TIER1_FAILURES=$(grep "✘" test-run.log | grep -v "retry #1" | wc -l)
 
+# Count how many tests failed even after retry (failed on BOTH attempts)
+# These show up as duplicate test names in the failure list
+TIER2_STILL_FAILING=$(grep "✘" test-run.log | sed -E 's/.*›\s+(.+)\s+\(.+\)$/\1/' | sort | uniq -d | wc -l)
+
+# Check if all tests ultimately passed (no tests failed on both attempts)
+if [ $TIER2_STILL_FAILING -eq 0 ]; then
+  echo ""
   # Generate summary from test results
   TOTAL_TESTS=$(grep -c "✓\|✘" test-run.log | head -1)
-  TIER1_FAILURES=$(grep "✘" test-run.log | grep -v "retry #1" | wc -l)
   TIER2_RECOVERIES=$(grep "✓.*retry #1" test-run.log | wc -l)
 
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -56,40 +60,12 @@ echo ""
 echo "⚠️  Some tests still failed after built-in retry. Analyzing..."
 echo ""
 
-# Extract tests that failed on BOTH attempts (status: failed, not flaky)
-FAILED_TESTS=$(node --input-type=module -e "
-import fs from 'fs';
-try {
-  const results = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
-  const failed = [];
-
-  // Find specs that failed on all attempts
-  for (const suite of results.suites || []) {
-    for (const spec of suite.specs || []) {
-      const allFailed = spec.tests.every(t => t.status === 'failed' || t.status === 'timedOut');
-      if (allFailed) {
-        failed.push(spec.title);
-      }
-    }
-  }
-
-  if (failed.length === 0) {
-    console.log('');
-  } else {
-    console.log(failed.join('\\n'));
-  }
-} catch (e) {
-  // Fallback: parse from log file
-  const log = fs.readFileSync('test-run.log', 'utf8');
-  const matches = log.match(/✘.*›\s+(.+?)\s+\(/g) || [];
-  const tests = [...new Set(matches.map(m => m.match(/›\s+(.+?)\s+\(/)[1]))];
-  console.log(tests.join('\\n'));
-}
-")
+# Extract tests that failed on BOTH attempts (failed initially AND on retry)
+# Look for tests that have TWO failure markers (✘) without a passing retry between them
+FAILED_TESTS=$(grep "✘" test-run.log | sed -E 's/.*›\s+(.+)\s+\(.+\)$/\1/' | sort | uniq -d)
 
 if [ -z "$FAILED_TESTS" ]; then
   echo "✅ No consistently failing tests found (all passed on retry)"
-  rm -f test-run.log test-results.json
   exit 0
 fi
 
