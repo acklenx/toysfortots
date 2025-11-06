@@ -147,11 +147,11 @@ test.describe('Volunteer User Journeys', () => {
     await page.goto('/login');
 
     // Should default to sign-in mode
-    await expect(page.locator('#auth-form-title')).toContainText('Sign In');
+    await expect(page.locator('#email-auth-title')).toContainText('Sign In with Username');
 
     // Click to toggle to sign-up mode
-    await page.locator('#toggle-mode').click();
-    await expect(page.locator('#auth-form-title')).toContainText('Sign Up');
+    await page.locator('#toggle-sign-up-btn').click();
+    await expect(page.locator('#email-auth-title')).toContainText('Create Account');
 
     // Fill sign-up form
     await page.fill('#auth-email', username);
@@ -164,8 +164,8 @@ test.describe('Volunteer User Journeys', () => {
     // === STEP 2: Register first box (this authorizes the volunteer) ===
     await page.goto(`/setup?id=${boxId}`);
 
-    // Should show setup form
-    await expect(page.locator('h1')).toContainText('Register');
+    // Wait for setup form to load
+    await expect(page.locator('#passcode')).toBeVisible({ timeout: 15000 });
 
     // Fill out box registration form
     await page.fill('#passcode', 'semperfi');
@@ -312,7 +312,7 @@ test.describe('Volunteer User Journeys', () => {
     await page.goto('/login');
 
     // Sign up
-    await page.locator('#toggle-mode').click();
+    await page.locator('#toggle-sign-up-btn').click();
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
@@ -320,13 +320,22 @@ test.describe('Volunteer User Journeys', () => {
 
     // Register a box to get authorized
     await page.goto(`/setup?id=${boxId}`);
+
+    // Wait for form to load
+    await expect(page.locator('#passcode')).toBeVisible({ timeout: 15000 });
+
     await page.fill('#passcode', 'semperfi');
     await page.fill('#label', 'Existing Vol Box');
 
+    // Show address fields if button exists and is visible
     const showAddressBtn = page.locator('#show-address-btn');
-    if (await showAddressBtn.isVisible()) {
+    if (await showAddressBtn.isVisible().catch(() => false)) {
       await showAddressBtn.click();
+      await page.waitForTimeout(500);
     }
+
+    // Wait for address field to be visible
+    await expect(page.locator('#address')).toBeVisible({ timeout: 5000 });
 
     await page.fill('#address', '300 Check St');
     await page.fill('#city', 'Atlanta');
