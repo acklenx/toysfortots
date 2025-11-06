@@ -16,6 +16,9 @@ export const auth = getAuth( app );
 export const db = getFirestore( app );
 export const functions = getFunctions( app, 'us-central1' );
 
+// Make auth available globally for tests
+window.auth = auth;
+
 // Connect to emulators if running locally
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
 	connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });

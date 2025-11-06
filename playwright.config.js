@@ -2,12 +2,12 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false, // Run tests sequentially to avoid Firebase conflicts
+  fullyParallel: false, // Tests within describe blocks run sequentially
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // Single worker to avoid Firebase emulator conflicts
+  workers: 4, // Run 4 tests in parallel for faster execution
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list']
   ],
 
@@ -21,7 +21,7 @@ module.exports = defineConfig({
   },
 
   // Global timeout for each test
-  timeout: 30 * 1000, // 30 seconds total per test (reasonable for sequential tests with multiple actions)
+  timeout: 15 * 1000, // 15 seconds total per test
 
   // Timeout for assertions (expect calls)
   expect: {

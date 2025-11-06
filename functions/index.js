@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require( 'firebase-functions/v2/https' );
-const { getFirestore } = require( 'firebase-admin/firestore' );
+const { getFirestore, FieldValue } = require( 'firebase-admin/firestore' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { initializeApp } = require( 'firebase-admin/app' );
 const admin = require( 'firebase-admin' );
@@ -204,7 +204,7 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 			console.log( `Authorizing new volunteer: ${ uid }` );
 			batch.set( authVolRef, {
 				email: userEmail, displayName: userName,
-				authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+				authorizedAt: FieldValue.serverTimestamp()
 			}, { merge: true } );
 		}
 		const initialReportRef = db.collection( REPORTS_PATH ).doc();

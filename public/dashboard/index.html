@@ -37,7 +37,7 @@
 		<div id="footer-placeholder"></div>
 		<script src="/js/loader.js" defer></script>
 		<script type="module">
-			import { auth, db, functions, reportsCollectionPath } from '../js/firebase-init.js';
+			import { auth, db, functions, reportsCollectionPath, locationsCollectionPath } from '../js/firebase-init.js';
 			import {
 				onAuthStateChanged,
 				signOut
@@ -47,6 +47,7 @@
 				getDocs,
 				query,
 				orderBy,
+				where,
 				doc,
 				updateDoc
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
@@ -172,7 +173,7 @@
 				}
 				if( boxesToRender.length === 0 )
 				{
-					boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No boxes found for this filter.</p>';
+					boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No reports have been filed for any boxes yet.</p>';
 					return;
 				}
 				let html = '';
@@ -192,41 +193,50 @@
 				const filterSelect = document.getElementById( 'view-filter' );
 				try
 				{
-					const reportsRef = collection( db, reportsCollectionPath );
-					const q = query( reportsRef,
-							orderBy( 'timestamp', 'asc' )
-					);
-					const querySnapshot = await getDocs( q );
+					// Get all locations
+					const locationsRef = collection( db, locationsCollectionPath );
+					const locationsSnapshot = await getDocs( locationsRef );
 					loadingMessage.remove();
-					if( querySnapshot.empty )
+					if( locationsSnapshot.empty )
 					{
 						boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No reports have been filed for any boxes yet.</p>';
 						return;
 					}
 					const volunteerNames = new Set();
 					allBoxesMap.clear();
-					querySnapshot.forEach( doc =>
+
+					// Build boxes map from locations
+					locationsSnapshot.forEach( doc =>
+					{
+						const location = doc.data();
+						const boxId = doc.id;
+						if( location.volunteer )
+						{
+							volunteerNames.add( location.volunteer );
+						}
+						allBoxesMap.set( boxId, {
+							boxId: boxId,
+							label: location.label || 'Unnamed Location',
+							address: location.address || '',
+							city: location.city || '',
+							latestPendingReport: null,
+							provisionedBy: location.provisionedBy,
+							volunteer: location.volunteer
+						} );
+					} );
+
+					// Get all reports to find latest pending for each box
+					const reportsRef = collection( db, reportsCollectionPath );
+					const reportsQuery = query( reportsRef, orderBy( 'timestamp', 'desc' ) );
+					const reportsSnapshot = await getDocs( reportsQuery );
+
+					reportsSnapshot.forEach( doc =>
 					{
 						const report = { id: doc.id, ...doc.data() };
 						const boxId = report.boxId;
-						if( report.volunteer )
-						{
-							volunteerNames.add( report.volunteer );
-						}
-						if( !allBoxesMap.has( boxId ) )
-						{
-							allBoxesMap.set( boxId, {
-								boxId: boxId,
-								label: report.label,
-								address: report.address,
-								city: report.city,
-								latestPendingReport: null,
-								provisionedBy: report.provisionedBy,
-								volunteer: report.volunteer
-							} );
-						}
 						const box = allBoxesMap.get( boxId );
-						if( report.status === 'new' )
+
+						if( box && report.status === 'new' && !box.latestPendingReport )
 						{
 							box.latestPendingReport = report;
 						}
