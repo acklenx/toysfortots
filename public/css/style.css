@@ -91,7 +91,7 @@ header {
 /* --- Main Container --- */
 .container {
     display: flex;
-    max-width: 900px; /* Between header (1200px) and content pages (638px) */
+    max-width: 1200px; /* Increased from 900px for better desktop visibility */
     margin: var(--page-spacing) auto;
     gap: 20px;
     padding: 0 20px;
@@ -101,8 +101,9 @@ header {
 
     /* --- NATIVE CSS FIX: Added '&' --- */
     & #map {
-        height: 100%;
+        height: 500px; /* Explicit height for Leaflet */
         flex: 2;
+        min-width: 400px; /* Ensure minimum width on desktop */
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
@@ -110,6 +111,7 @@ header {
     /* --- NATIVE CSS FIX: Added '&' --- */
     & #location-list-container {
         flex: 1;
+        min-width: 300px; /* Ensure list has minimum width too */
         height: 100%;
         background: white;
         border-radius: 8px;
@@ -339,8 +341,8 @@ footer {
 
         /* --- NATIVE CSS FIX: Added '&' --- */
         & #map {
-            height: 40vh;
-            min-height: 300px;
+            height: 50vh;
+            min-height: 400px;
             width: 100%;
         }
 
