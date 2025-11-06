@@ -20,12 +20,12 @@ npm run test:smart
 # Or directly:
 ./run-tests-smart.sh
 
-# Standard test commands
-npx playwright test                              # Run all tests (4 workers + auto-retry)
-npx playwright test --workers=2                  # Run with 2 workers (more stable)
-npx playwright test --workers=1                  # Run with 1 worker (most stable, slower)
+# Standard test commands (use these for quick iteration, NOT for full test runs)
+# NOTE: Running the full test suite with npx playwright test is SLOW and prone to
+# failures due to Firebase emulator contention. Use test:smart for full test runs.
 npx playwright test tests/e2e/dashboard.spec.js  # Run specific file
 npx playwright test -g "should display dashboard" # Run single test
+npx playwright test --workers=1                  # Run with 1 worker (most stable, slower)
 npx playwright test --ui                         # Run with UI
 npx playwright show-report                       # View test report
 ```
