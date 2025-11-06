@@ -96,11 +96,11 @@
 						}
 					}
 					listDiv.innerHTML = `
-                   <div class="bg-tots-light p-4 rounded-lg border border-tots-red shadow-inner">
-                       <h2 class="text-xl font-bold text-tots-red">${ location.label }</h2>
-                       <p class="text-sm text-gray-700 mt-1">${ location.address }, ${ location.city }, ${ location.state }</p>
-                       <p class="text-sm font-semibold mt-3">Box ID: <span class="text-tots-red">${ boxId }</span></p>
-                       <p class="text-sm font-semibold">Assigned Volunteer: ${ volunteerDisplayName }</p>
+                   <div class="info-box">
+                       <h2 class="info-title">${ location.label }</h2>
+                       <p class="info-text">${ location.address }, ${ location.city }, ${ location.state }</p>
+                       <p class="info-detail">Box ID: <span class="text-tots-red font-semibold">${ boxId }</span></p>
+                       <p class="info-detail">Assigned Volunteer: <span class="font-semibold">${ volunteerDisplayName }</span></p>
                    </div>
                `;
 					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;
@@ -267,59 +267,77 @@
 				</a>
 			</div>
 		</header>
-		<div class="box-page-container">
-			<div class="bg-white shadow-xl rounded-xl overflow-hidden box-action-card">
-				<div class="bg-tots-red p-6">
-					<h1 class="text-3xl font-extrabold text-white text-center">Tots Box Action Center</h1>
-				</div>
-				<main class="p-6">
+		<div class="main-content">
+			<div class="content-box">
+				<h1 class="page-title">Toys for Tots Drop Box</h1>
+
 				<div id="location-display" class="mb-6">
 					<p id="loading-message" class="text-center text-gray-500">Loading location data...</p>
 				</div>
-				<div id="main-actions" class="space-y-4">
-					<button id="pickup-btn" class="w-full py-3 bg-tots-green hover:bg-green-700 text-white font-bold text-lg rounded-lg shadow-md transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
-						<span id="pickup-btn-text">Request Immediate Pickup</span>
-					</button>
-					<div id="pickup-confirmation" class="hidden text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
-						✅ Message Sent! Would you like to send any additional details?
+
+				<div id="main-actions">
+					<!-- Green pickup button box -->
+					<div class="action-box bg-tots-green">
+						<button id="pickup-btn" class="action-button" disabled>
+							<span id="pickup-btn-text">🚚 Request Immediate Pickup</span>
+						</button>
+						<p class="action-description">Click here if this box is full and needs to be picked up right away.</p>
 					</div>
-					<div class="h-px bg-gray-200"></div>
-					<button id="problem-btn" class="w-full py-2 text-center text-sm font-medium text-gray-600 hover:text-tots-red hover:underline transition duration-200 disabled:opacity-50" disabled>
-						<span id="problem-btn-text">Report a Problem</span>
-					</button>
-					<div id="problem-confirmation" class="hidden text-sm text-center bg-red-100 text-tots-red p-3 rounded-lg border border-red-300">
+
+					<div id="pickup-confirmation" class="hidden confirmation-message success">
+						✅ Message Sent! A volunteer has been notified.
+					</div>
+
+					<!-- Problem report link -->
+					<div class="text-center mt-4">
+						<a href="#" id="problem-btn" class="text-link" disabled>Report a Problem</a>
+					</div>
+
+					<div id="problem-confirmation" class="hidden confirmation-message warning mt-3">
 						⚠️ Please tell us the nature of the problem.
 					</div>
-					<div id="problem-details-section" class="collapsible-content bg-red-50 rounded-lg border border-red-300">
-						<form id="problem-details-form" class="space-y-3">
+
+					<!-- Problem details form -->
+					<div id="problem-details-section" class="collapsible-content mt-4">
+						<form id="problem-details-form" class="form-container">
 							<input type="hidden" id="problem-box-id-detail" name="boxInfo">
 							<input type="hidden" name="reportType" value="problem_report">
-							<label class="block text-sm font-medium text-gray-700" for="problemDescription">What is the
-								problem? <span class="text-tots-red">*</span></label>
-							<textarea name="description" id="problemDescription" rows="4" placeholder="Example: The box was vandalized, or the location is closed unexpectedly." class="w-full border border-gray-300 rounded-md p-2 focus:ring-tots-red focus:border-tots-red" required></textarea>
-							<fieldset class="problem-contact-fieldset">
+
+							<div class="form-group">
+								<label class="form-label" for="problemDescription">
+									What is the problem? <span class="text-tots-red">*</span>
+								</label>
+								<textarea
+									name="description"
+									id="problemDescription"
+									rows="4"
+									placeholder="Example: The box was vandalized, or the location is closed unexpectedly."
+									class="form-input"
+									required></textarea>
+							</div>
+
+							<fieldset class="form-fieldset">
 								<legend>Follow-up Contact (Optional):</legend>
-
-								<div class="input-wrapper">
+								<div class="form-group">
 									<label for="problemContactName" class="sr-only">Your Name</label>
-									<input type="text" id="problemContactName"  name="contactName" placeholder="Your Name">
+									<input type="text" id="problemContactName" name="contactName" placeholder="Your Name" class="form-input">
 								</div>
-
-								<div class="input-wrapper">
+								<div class="form-group">
 									<label for="problemContactEmail" class="sr-only">Email</label>
-									<input type="email" id="problemContactEmail"  name="contactEmail" placeholder="Email">
+									<input type="email" id="problemContactEmail" name="contactEmail" placeholder="Email" class="form-input">
 								</div>
 							</fieldset>
-							<button type="button" id="problem-submit-btn" class="w-full py-2 bg-tots-red hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
-								Send Full Problem Report
+
+							<button type="button" id="problem-submit-btn" class="submit-button">
+								Send Problem Report
 							</button>
 						</form>
-						<div id="problem-details-success" class="hidden mt-3 text-sm text-center bg-green-100 text-tots-green p-3 rounded-lg border border-green-300">
+
+						<div id="problem-details-success" class="hidden confirmation-message success mt-3">
 							✅ Thank you! The problem has been recorded instantly!
 						</div>
 					</div>
 				</div>
-			</main>
 			</div>
 		</div>
 		<div id="footer-placeholder"></div>
