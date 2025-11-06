@@ -1,0 +1,775 @@
+[2025-11-06T07:36:53.551Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: page.goto: net::ERR_ABORTED at http://localhost:5000/dashboard/
+Call log:
+[2m  - navigating to "http://localhost:5000/dashboard/", waiting until "load"[22m
+
+  Metadata: {"duration":660,"retry":0,"workerIndex":1}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:00.731Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11047,"retry":0,"workerIndex":0}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:11.920Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.box-card')
+Expected substring: [32m"pickup alert"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+
+  Metadata: {"duration":11820,"retry":0,"workerIndex":4}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:23.075Z] FAILURE: Authenticated View > should display problem reports with correct styling
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.report-item.is-problem').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.report-item.is-problem').first()[22m
+
+  Metadata: {"duration":11074,"retry":0,"workerIndex":5}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:25.323Z] FAILURE: Dashboard Page > should show clear status button for pending reports
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.clear-status-btn')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.clear-status-btn')[22m
+
+  Metadata: {"duration":11969,"retry":0,"workerIndex":6}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:31.156Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11318,"retry":0,"workerIndex":3}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:38.507Z] FAILURE: Dashboard Page > should have view history link
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.view-history-btn').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.view-history-btn').first()[22m
+
+  Metadata: {"duration":12080,"retry":0,"workerIndex":8}
+  Total failures for this test: 1
+
+[2025-11-06T07:37:51.810Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#boxes-title')
+Expected substring: [32m"Boxes Assigned to testvolunteer1762414660631@toysfortots.mcl1311.com"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#boxes-title')[22m
+[2m    2 × locator resolved to <h2 id="boxes-title">Loading...</h2>[22m
+[2m      - unexpected value "Loading..."[22m
+
+  Metadata: {"duration":11774,"retry":0,"workerIndex":10}
+  Total failures for this test: 1
+
+[2025-11-06T07:39:39.554Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10892,"retry":0,"workerIndex":0}
+  Total failures for this test: 2
+
+[2025-11-06T07:40:08.660Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11161,"retry":0,"workerIndex":3}
+  Total failures for this test: 2
+
+[2025-11-06T07:40:23.651Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.box-card')
+Expected substring: [32m"pickup alert"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+
+  Metadata: {"duration":12103,"retry":0,"workerIndex":9}
+  Total failures for this test: 2
+
+[2025-11-06T07:40:25.766Z] FAILURE: Authenticated View > should display problem reports with correct styling
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.report-item.is-problem').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.report-item.is-problem').first()[22m
+
+  Metadata: {"duration":11688,"retry":0,"workerIndex":10}
+  Total failures for this test: 2
+
+[2025-11-06T07:41:10.250Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: page.goto: net::ERR_ABORTED at http://localhost:5000/dashboard/
+Call log:
+[2m  - navigating to "http://localhost:5000/dashboard/", waiting until "load"[22m
+
+  Metadata: {"duration":910,"retry":0,"workerIndex":1}
+  Total failures for this test: 2
+
+[2025-11-06T07:41:19.992Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11301,"retry":0,"workerIndex":0}
+  Total failures for this test: 3
+
+[2025-11-06T07:41:50.197Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11396,"retry":0,"workerIndex":3}
+  Total failures for this test: 3
+
+[2025-11-06T07:42:03.043Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.box-card')
+Expected substring: [32m"pickup alert"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+
+  Metadata: {"duration":11101,"retry":0,"workerIndex":9}
+  Total failures for this test: 3
+
+[2025-11-06T07:51:45.385Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10829,"retry":0,"workerIndex":0}
+  Total failures for this test: 4
+
+[2025-11-06T07:52:17.031Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11635,"retry":0,"workerIndex":3}
+  Total failures for this test: 4
+
+[2025-11-06T07:52:29.364Z] FAILURE: Dashboard Page > should show clear status button for pending reports
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.clear-status-btn')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.clear-status-btn')[22m
+
+  Metadata: {"duration":11611,"retry":0,"workerIndex":8}
+  Total failures for this test: 2
+
+[2025-11-06T13:19:24.590Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10859,"retry":0,"workerIndex":0}
+  Total failures for this test: 5
+
+[2025-11-06T13:19:46.345Z] FAILURE: Dashboard Page > should show clear status button for pending reports
+  Error: Error: Failed to verify location BOX_W8_1762435185980_6 was created
+  Metadata: {"duration":834,"retry":0,"workerIndex":8}
+  Total failures for this test: 3
+
+[2025-11-06T13:20:06.058Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11015,"retry":0,"workerIndex":10}
+  Total failures for this test: 5
+
+[2025-11-06T13:21:05.411Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11544,"retry":0,"workerIndex":5}
+  Total failures for this test: 6
+
+[2025-11-06T13:21:27.517Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: Failed to verify location BOX_W11_1762435287189_3_6281 was created
+  Metadata: {"duration":1485,"retry":0,"workerIndex":11}
+  Total failures for this test: 4
+
+[2025-11-06T13:21:31.634Z] FAILURE: Dashboard Page > should have view history link
+  Error: Error: page.evaluate: Execution context was destroyed, most likely because of a navigation
+  Metadata: {"duration":962,"retry":0,"workerIndex":14}
+  Total failures for this test: 2
+
+[2025-11-06T13:21:36.787Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":10975,"retry":0,"workerIndex":4}
+  Total failures for this test: 6
+
+[2025-11-06T13:21:45.125Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator:  locator('.box-card')
+Expected: [32m2[39m
+Received: [31m12[39m
+Timeout:  10000ms
+
+Call log:
+[2m  - Expect "toHaveCount" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+[2m    14 × locator resolved to 12 elements[22m
+[2m       - unexpected value "12"[22m
+
+  Metadata: {"duration":12555,"retry":0,"workerIndex":15}
+  Total failures for this test: 2
+
+[2025-11-06T13:22:22.771Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10926,"retry":0,"workerIndex":0}
+  Total failures for this test: 7
+
+[2025-11-06T13:22:59.219Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: Failed to verify location BOX_W9_1762435378826_15_5789 was created
+  Metadata: {"duration":955,"retry":0,"workerIndex":9}
+  Total failures for this test: 3
+
+[2025-11-06T13:23:58.361Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: Failed to verify location BOX_W0_1762435437878_2_3034 was created
+  Metadata: {"duration":550,"retry":0,"workerIndex":0}
+  Total failures for this test: 8
+
+[2025-11-06T13:23:58.684Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: Failed to verify config was created
+  Metadata: {"duration":421,"retry":0,"workerIndex":1}
+  Total failures for this test: 3
+
+[2025-11-06T13:24:20.880Z] FAILURE: Authenticated View > should display problem reports with correct styling
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.report-item.is-problem').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.report-item.is-problem').first()[22m
+
+  Metadata: {"duration":10990,"retry":0,"workerIndex":4}
+  Total failures for this test: 3
+
+[2025-11-06T13:24:28.799Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: Error: Failed to verify location EXISTING_W3_1762435468483_10_2226 was created
+  Metadata: {"duration":381,"retry":0,"workerIndex":3}
+  Total failures for this test: 7
+
+[2025-11-06T13:25:29.873Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11197,"retry":0,"workerIndex":0}
+  Total failures for this test: 9
+
+[2025-11-06T13:26:18.295Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator:  locator('.box-card')
+Expected: [32m2[39m
+Received: [31m3[39m
+Timeout:  10000ms
+
+Call log:
+[2m  - Expect "toHaveCount" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+[2m    14 × locator resolved to 3 elements[22m
+[2m       - unexpected value "3"[22m
+
+  Metadata: {"duration":12089,"retry":0,"workerIndex":9}
+  Total failures for this test: 4
+
+[2025-11-06T13:26:45.193Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11109,"retry":0,"workerIndex":0}
+  Total failures for this test: 10
+
+[2025-11-06T13:26:46.082Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('#volunteer-name')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('#volunteer-name')[22m
+[2m    2 × locator resolved to <span id="volunteer-name">...</span>[22m
+[2m      - unexpected value "hidden"[22m
+
+  Metadata: {"duration":11477,"retry":0,"workerIndex":1}
+  Total failures for this test: 4
+
+[2025-11-06T13:27:18.310Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11870,"retry":0,"workerIndex":8}
+  Total failures for this test: 8
+
+[2025-11-06T13:27:29.802Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.box-card')
+Expected substring: [32m"pickup alert"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+
+  Metadata: {"duration":11949,"retry":0,"workerIndex":12}
+  Total failures for this test: 5
+
+[2025-11-06T13:40:14.622Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: page.goto: net::ERR_ABORTED at http://localhost:5000/dashboard/
+Call log:
+[2m  - navigating to "http://localhost:5000/dashboard/", waiting until "load"[22m
+
+  Metadata: {"duration":602,"retry":0,"workerIndex":0}
+  Total failures for this test: 5
+
+[2025-11-06T13:40:34.572Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: page.evaluate: Execution context was destroyed, most likely because of a navigation
+  Metadata: {"duration":597,"retry":0,"workerIndex":2}
+  Total failures for this test: 5
+
+[2025-11-06T13:48:12.767Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+[2m    - waiting for" http://localhost:5000/setup/?id=BOX_W0_1762436882008_2_9725" navigation to finish...[22m
+[2m    - navigated to "http://localhost:5000/setup/?id=BOX_W0_1762436882008_2_9725"[22m
+
+  Metadata: {"duration":10818,"retry":0,"workerIndex":0}
+  Total failures for this test: 11
+
+[2025-11-06T13:48:47.660Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#boxes-title')
+Expected substring: [32m"Boxes Assigned to testvolunteerw7_1762436916340_10_2901@toysfortots.mcl1311.com"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#boxes-title')[22m
+[2m    2 × locator resolved to <h2 id="boxes-title">Loading...</h2>[22m
+[2m      - unexpected value "Loading..."[22m
+
+  Metadata: {"duration":11396,"retry":0,"workerIndex":7}
+  Total failures for this test: 6
+
+[2025-11-06T13:52:13.622Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10961,"retry":0,"workerIndex":0}
+  Total failures for this test: 12
+
+[2025-11-06T13:52:14.401Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('#volunteer-name')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('#volunteer-name')[22m
+[2m    2 × locator resolved to <span id="volunteer-name">...</span>[22m
+[2m      - unexpected value "hidden"[22m
+
+  Metadata: {"duration":11337,"retry":0,"workerIndex":1}
+  Total failures for this test: 6
+
+[2025-11-06T13:52:49.218Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: page.evaluate: Execution context was destroyed, most likely because of a navigation
+  Metadata: {"duration":834,"retry":0,"workerIndex":10}
+  Total failures for this test: 7
+
+[2025-11-06T13:53:00.033Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":10936,"retry":0,"workerIndex":6}
+  Total failures for this test: 9
+
+[2025-11-06T13:53:32.804Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":11223,"retry":0,"workerIndex":0}
+  Total failures for this test: 13
+
+[2025-11-06T13:53:33.915Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('#volunteer-name')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('#volunteer-name')[22m
+[2m    2 × locator resolved to <span id="volunteer-name">...</span>[22m
+[2m      - unexpected value "hidden"[22m
+
+  Metadata: {"duration":11757,"retry":0,"workerIndex":1}
+  Total failures for this test: 7
+
+[2025-11-06T13:54:03.866Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11206,"retry":0,"workerIndex":3}
+  Total failures for this test: 10
+
+[2025-11-06T14:06:10.328Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: Failed to verify location BOX_W0_1762437969965_2_5271 was created
+  Metadata: {"duration":413,"retry":0,"workerIndex":0}
+  Total failures for this test: 14
+
+[2025-11-06T14:06:44.662Z] FAILURE: Authenticated View > should display problem reports with correct styling
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.report-item.is-problem').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.report-item.is-problem').first()[22m
+
+  Metadata: {"duration":11486,"retry":0,"workerIndex":9}
+  Total failures for this test: 4
+
+[2025-11-06T14:07:29.622Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10906,"retry":0,"workerIndex":0}
+  Total failures for this test: 15
+
+[2025-11-06T14:07:37.062Z] FAILURE: Dashboard Page > should display boxes with pickup alert status
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.box-card')
+Expected substring: [32m"pickup alert"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+
+  Metadata: {"duration":11262,"retry":0,"workerIndex":4}
+  Total failures for this test: 6
+
+[2025-11-06T14:07:51.062Z] FAILURE: Dashboard Page > should have view history link
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('.view-history-btn').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('.view-history-btn').first()[22m
+
+  Metadata: {"duration":11349,"retry":0,"workerIndex":6}
+  Total failures for this test: 3
+
+[2025-11-06T14:07:53.151Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: Failed to verify config was created
+  Metadata: {"duration":883,"retry":0,"workerIndex":8}
+  Total failures for this test: 8
+
+[2025-11-06T14:08:42.898Z] FAILURE: Box Action Center (/box) > should display box information
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('#location-display')
+Expected substring: [32m"Test Market"[39m
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 10000ms[22m
+[2m  - waiting for locator('#location-display')[22m
+[2m    2 × locator resolved to <div class="mb-6" id="location-display">…</div>[22m
+[2m      - unexpected value "[22m
+[2m					Loading location data...[22m
+[2m				"[22m
+
+  Metadata: {"duration":10937,"retry":0,"workerIndex":0}
+  Total failures for this test: 16
+
+[2025-11-06T14:08:43.843Z] FAILURE: Dashboard Page > should display dashboard for authorized user
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: locator('#volunteer-name')
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 10000ms[22m
+[2m  - waiting for locator('#volunteer-name')[22m
+[2m    2 × locator resolved to <span id="volunteer-name">...</span>[22m
+[2m      - unexpected value "hidden"[22m
+
+  Metadata: {"duration":11331,"retry":0,"workerIndex":1}
+  Total failures for this test: 8
+
+[2025-11-06T14:09:05.826Z] FAILURE: Dashboard Page > should filter boxes by volunteer
+  Error: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator:  locator('.box-card')
+Expected: [32m2[39m
+Received: [31m5[39m
+Timeout:  10000ms
+
+Call log:
+[2m  - Expect "toHaveCount" with timeout 10000ms[22m
+[2m  - waiting for locator('.box-card')[22m
+[2m    14 × locator resolved to 5 elements[22m
+[2m       - unexpected value "5"[22m
+
+  Metadata: {"duration":11818,"retry":0,"workerIndex":5}
+  Total failures for this test: 9
+
+[2025-11-06T14:09:12.991Z] FAILURE: Setup Page > should redirect to status page if box already exists
+  Error: TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+  Metadata: {"duration":11116,"retry":0,"workerIndex":3}
+  Total failures for this test: 11
+

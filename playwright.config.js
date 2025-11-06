@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false, // Tests within describe blocks run sequentially
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 1, // Retry once with 4 workers before custom sequential retry
   workers: 4, // Run tests with 4 parallel workers
 
   // Global setup/teardown for one-time data clearing

@@ -557,6 +557,15 @@ Before merging new tests:
 
 ## Tools Reference
 
+### Smart test runner (recommended):
+```bash
+./run-tests-smart.sh
+```
+Three-tier retry strategy:
+1. Run with 4 workers (fast)
+2. Playwright retries once with 4 workers (catches transient issues)
+3. Sequential retry with 1 worker (catches parallel contention)
+
 ### Run specific test:
 ```bash
 npx playwright test -g "test name pattern"
