@@ -279,6 +279,108 @@
 			margin-top: 5px;
 		}
 
+		.section-controls {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 15px;
+			margin-bottom: 15px;
+			flex-wrap: wrap;
+		}
+
+		.search-box {
+			flex: 1;
+			min-width: 250px;
+		}
+
+		.search-box input {
+			width: 100%;
+			padding: 10px 15px;
+			border: 1px solid var(--gray-300);
+			border-radius: 4px;
+			font-size: 1rem;
+		}
+
+		.search-box input:focus {
+			outline: none;
+			border-color: var(--marine-blue);
+		}
+
+		.control-buttons {
+			display: flex;
+			gap: 10px;
+		}
+
+		.export-btn {
+			background-color: var(--t4t-green);
+			color: white;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		.export-btn:hover {
+			background-color: var(--t4t-green-dark);
+		}
+
+		.data-table th {
+			cursor: pointer;
+			user-select: none;
+			position: relative;
+		}
+
+		.data-table th:hover {
+			background-color: var(--gray-200);
+		}
+
+		.data-table th.sortable::after {
+			content: ' ⇅';
+			font-size: 0.8em;
+			color: var(--gray-400);
+		}
+
+		.data-table th.sorted-asc::after {
+			content: ' ↑';
+			color: var(--marine-blue);
+		}
+
+		.data-table th.sorted-desc::after {
+			content: ' ↓';
+			color: var(--marine-blue);
+		}
+
+		.pagination {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 10px;
+			margin-top: 20px;
+		}
+
+		.pagination button {
+			padding: 8px 12px;
+			border: 1px solid var(--gray-300);
+			background-color: white;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		.pagination button:hover:not(:disabled) {
+			background-color: var(--gray-100);
+		}
+
+		.pagination button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		.pagination .page-info {
+			color: var(--text-secondary);
+			font-size: 0.9rem;
+		}
+
 		@media (max-width: 768px) {
 			.data-table {
 				font-size: 0.9rem;
@@ -337,9 +439,18 @@
 					<h2>Box Management</h2>
 					<button class="danger-btn" id="delete-all-boxes-btn">Delete All Boxes</button>
 				</div>
+				<div class="section-controls">
+					<div class="search-box">
+						<input type="text" id="boxes-search" placeholder="Search boxes by ID, location, address, city, or volunteer...">
+					</div>
+					<div class="control-buttons">
+						<button class="export-btn" id="export-boxes-btn">Export CSV</button>
+					</div>
+				</div>
 				<div id="boxes-loading" class="loading">Loading boxes...</div>
 				<div id="boxes-error" class="error-message" style="display: none;"></div>
 				<div id="boxes-container"></div>
+				<div id="boxes-pagination" class="pagination" style="display: none;"></div>
 			</div>
 
 			<!-- Report Management -->
@@ -348,9 +459,18 @@
 					<h2>Report Management</h2>
 					<button class="danger-btn" id="delete-all-reports-btn">Delete All Reports</button>
 				</div>
+				<div class="section-controls">
+					<div class="search-box">
+						<input type="text" id="reports-search" placeholder="Search reports by ID, box ID, type, or status...">
+					</div>
+					<div class="control-buttons">
+						<button class="export-btn" id="export-reports-btn">Export CSV</button>
+					</div>
+				</div>
 				<div id="reports-loading" class="loading">Loading reports...</div>
 				<div id="reports-error" class="error-message" style="display: none;"></div>
 				<div id="reports-container"></div>
+				<div id="reports-pagination" class="pagination" style="display: none;"></div>
 			</div>
 
 			<!-- Volunteer Management -->
@@ -359,9 +479,18 @@
 					<h2>Volunteer Management</h2>
 					<button class="danger-btn" id="delete-all-volunteers-btn">Delete All Volunteers</button>
 				</div>
+				<div class="section-controls">
+					<div class="search-box">
+						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID, name, or email...">
+					</div>
+					<div class="control-buttons">
+						<button class="export-btn" id="export-volunteers-btn">Export CSV</button>
+					</div>
+				</div>
 				<div id="volunteers-loading" class="loading">Loading volunteers...</div>
 				<div id="volunteers-error" class="error-message" style="display: none;"></div>
 				<div id="volunteers-container"></div>
+				<div id="volunteers-pagination" class="pagination" style="display: none;"></div>
 			</div>
 		</div>
 	</main>
@@ -465,6 +594,28 @@
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
 
+		// Data storage for filtering/sorting/pagination
+		let allBoxes = [];
+		let filteredBoxes = [];
+		let allReports = [];
+		let filteredReports = [];
+		let allVolunteers = [];
+		let filteredVolunteers = [];
+
+		// Pagination settings
+		const PAGE_SIZE = 20;
+		let currentBoxesPage = 1;
+		let currentReportsPage = 1;
+		let currentVolunteersPage = 1;
+
+		// Sorting state
+		let boxesSortColumn = null;
+		let boxesSortDirection = 'asc';
+		let reportsSortColumn = null;
+		let reportsSortDirection = 'asc';
+		let volunteersSortColumn = null;
+		let volunteersSortDirection = 'asc';
+
 		// Authorization check
 		onAuthStateChanged(auth, async (user) => {
 			if (!user || user.isAnonymous) {
@@ -503,40 +654,159 @@
 				const q = query(locationsRef, orderBy('created', 'desc'));
 				const snapshot = await getDocs(q);
 
-				document.getElementById('stat-boxes').textContent = snapshot.size;
-				document.getElementById('boxes-loading').style.display = 'none';
-
-				if (snapshot.empty) {
-					document.getElementById('boxes-container').innerHTML = '<p class="loading">No boxes found.</p>';
-					return;
-				}
-
-				let tableHTML = '<table class="data-table"><thead><tr>';
-				tableHTML += '<th>Box ID</th><th>Location</th><th>Address</th><th>City</th><th>Volunteer</th><th>Actions</th>';
-				tableHTML += '</tr></thead><tbody>';
-
+				allBoxes = [];
 				snapshot.forEach((doc) => {
-					const box = doc.data();
-					tableHTML += '<tr>';
-					tableHTML += `<td>${doc.id}</td>`;
-					tableHTML += `<td>${box.label || 'N/A'}</td>`;
-					tableHTML += `<td>${box.address || 'N/A'}</td>`;
-					tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
-					tableHTML += `<td>${box.volunteerEmail || 'N/A'}</td>`;
-					tableHTML += `<td><div class="action-buttons">`;
-					tableHTML += `<button class="edit-btn" onclick="window.editBox('${doc.id}')">Edit</button>`;
-					tableHTML += `<button class="delete-btn" onclick="window.deleteBox('${doc.id}', '${box.label}')">Delete</button>`;
-					tableHTML += `</div></td>`;
-					tableHTML += '</tr>';
+					allBoxes.push({ id: doc.id, ...doc.data() });
 				});
 
-				tableHTML += '</tbody></table>';
-				document.getElementById('boxes-container').innerHTML = tableHTML;
+				document.getElementById('stat-boxes').textContent = allBoxes.length;
+				document.getElementById('boxes-loading').style.display = 'none';
+
+				// Setup search
+				const searchInput = document.getElementById('boxes-search');
+				searchInput.addEventListener('input', () => filterAndRenderBoxes());
+
+				// Setup export
+				const exportBtn = document.getElementById('export-boxes-btn');
+				exportBtn.addEventListener('click', () => exportBoxesToCSV());
+
+				filterAndRenderBoxes();
 			} catch (error) {
 				document.getElementById('boxes-loading').style.display = 'none';
 				document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
 				document.getElementById('boxes-error').style.display = 'block';
 			}
+		}
+
+		function filterAndRenderBoxes() {
+			const searchTerm = document.getElementById('boxes-search').value.toLowerCase();
+			filteredBoxes = allBoxes.filter(box => {
+				return (
+					box.id.toLowerCase().includes(searchTerm) ||
+					(box.label || '').toLowerCase().includes(searchTerm) ||
+					(box.address || '').toLowerCase().includes(searchTerm) ||
+					(box.city || '').toLowerCase().includes(searchTerm) ||
+					(box.volunteerEmail || '').toLowerCase().includes(searchTerm)
+				);
+			});
+
+			renderBoxes();
+		}
+
+		function renderBoxes() {
+			const container = document.getElementById('boxes-container');
+
+			if (filteredBoxes.length === 0) {
+				container.innerHTML = '<p class="loading">No boxes found.</p>';
+				return;
+			}
+
+			// Pagination
+			const totalPages = Math.ceil(filteredBoxes.length / PAGE_SIZE);
+			const startIndex = (currentBoxesPage - 1) * PAGE_SIZE;
+			const endIndex = startIndex + PAGE_SIZE;
+			const pageData = filteredBoxes.slice(startIndex, endIndex);
+
+			let tableHTML = '<table class="data-table"><thead><tr>';
+			tableHTML += '<th class="sortable" data-sort="id" onclick="sortBoxes(\'id\')">Box ID</th>';
+			tableHTML += '<th class="sortable" data-sort="label" onclick="sortBoxes(\'label\')">Location</th>';
+			tableHTML += '<th class="sortable" data-sort="address" onclick="sortBoxes(\'address\')">Address</th>';
+			tableHTML += '<th class="sortable" data-sort="city" onclick="sortBoxes(\'city\')">City</th>';
+			tableHTML += '<th class="sortable" data-sort="volunteerEmail" onclick="sortBoxes(\'volunteerEmail\')">Volunteer</th>';
+			tableHTML += '<th>Actions</th>';
+			tableHTML += '</tr></thead><tbody>';
+
+			pageData.forEach((box) => {
+				tableHTML += '<tr>';
+				tableHTML += `<td>${box.id}</td>`;
+				tableHTML += `<td>${box.label || 'N/A'}</td>`;
+				tableHTML += `<td>${box.address || 'N/A'}</td>`;
+				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
+				tableHTML += `<td>${box.volunteerEmail || 'N/A'}</td>`;
+				tableHTML += `<td><div class="action-buttons">`;
+				tableHTML += `<button class="edit-btn" onclick="window.editBox('${box.id}')">Edit</button>`;
+				tableHTML += `<button class="delete-btn" onclick="window.deleteBox('${box.id}', '${box.label}')">Delete</button>`;
+				tableHTML += `</div></td>`;
+				tableHTML += '</tr>';
+			});
+
+			tableHTML += '</tbody></table>';
+			container.innerHTML = tableHTML;
+
+			// Update sort indicators
+			if (boxesSortColumn) {
+				const header = container.querySelector(`th[data-sort="${boxesSortColumn}"]`);
+				if (header) {
+					header.classList.remove('sortable');
+					header.classList.add(boxesSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+				}
+			}
+
+			// Render pagination
+			const paginationContainer = document.getElementById('boxes-pagination');
+			if (totalPages > 1) {
+				paginationContainer.style.display = 'flex';
+				paginationContainer.innerHTML = `
+					<button onclick="changeBoxesPage(${currentBoxesPage - 1})" ${currentBoxesPage === 1 ? 'disabled' : ''}>Previous</button>
+					<span class="page-info">Page ${currentBoxesPage} of ${totalPages} (${filteredBoxes.length} items)</span>
+					<button onclick="changeBoxesPage(${currentBoxesPage + 1})" ${currentBoxesPage === totalPages ? 'disabled' : ''}>Next</button>
+				`;
+			} else {
+				paginationContainer.style.display = 'none';
+			}
+		}
+
+		window.sortBoxes = function(column) {
+			if (boxesSortColumn === column) {
+				boxesSortDirection = boxesSortDirection === 'asc' ? 'desc' : 'asc';
+			} else {
+				boxesSortColumn = column;
+				boxesSortDirection = 'asc';
+			}
+
+			filteredBoxes.sort((a, b) => {
+				const aVal = a[column] || '';
+				const bVal = b[column] || '';
+				if (aVal < bVal) return boxesSortDirection === 'asc' ? -1 : 1;
+				if (aVal > bVal) return boxesSortDirection === 'asc' ? 1 : -1;
+				return 0;
+			});
+
+			renderBoxes();
+		};
+
+		window.changeBoxesPage = function(page) {
+			const totalPages = Math.ceil(filteredBoxes.length / PAGE_SIZE);
+			if (page >= 1 && page <= totalPages) {
+				currentBoxesPage = page;
+				renderBoxes();
+			}
+		};
+
+		function exportBoxesToCSV() {
+			const headers = ['Box ID', 'Location', 'Address', 'City', 'State', 'Volunteer Email', 'Created'];
+			const rows = filteredBoxes.map(box => [
+				box.id,
+				box.label || '',
+				box.address || '',
+				box.city || '',
+				box.state || '',
+				box.volunteerEmail || '',
+				box.created ? new Date(box.created.seconds * 1000).toLocaleString() : ''
+			]);
+
+			let csvContent = headers.join(',') + '\n';
+			rows.forEach(row => {
+				csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+			});
+
+			const blob = new Blob([csvContent], { type: 'text/csv' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `boxes_${new Date().toISOString().split('T')[0]}.csv`;
+			link.click();
+			URL.revokeObjectURL(url);
 		}
 
 		// Load reports
@@ -546,40 +816,164 @@
 				const q = query(reportsRef, orderBy('timestamp', 'desc'));
 				const snapshot = await getDocs(q);
 
-				document.getElementById('stat-reports').textContent = snapshot.size;
-				document.getElementById('reports-loading').style.display = 'none';
-
-				if (snapshot.empty) {
-					document.getElementById('reports-container').innerHTML = '<p class="loading">No reports found.</p>';
-					return;
-				}
-
-				let tableHTML = '<table class="data-table"><thead><tr>';
-				tableHTML += '<th>Report ID</th><th>Box ID</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th>';
-				tableHTML += '</tr></thead><tbody>';
-
+				allReports = [];
 				snapshot.forEach((doc) => {
-					const report = doc.data();
-					const date = report.timestamp ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : 'N/A';
-					tableHTML += '<tr>';
-					tableHTML += `<td>${doc.id}</td>`;
-					tableHTML += `<td>${report.boxId || 'N/A'}</td>`;
-					tableHTML += `<td>${report.reportType || 'N/A'}</td>`;
-					tableHTML += `<td>${report.status || 'N/A'}</td>`;
-					tableHTML += `<td>${date}</td>`;
-					tableHTML += `<td><div class="action-buttons">`;
-					tableHTML += `<button class="delete-btn" onclick="window.deleteReport('${doc.id}')">Delete</button>`;
-					tableHTML += `</div></td>`;
-					tableHTML += '</tr>';
+					allReports.push({ id: doc.id, ...doc.data() });
 				});
 
-				tableHTML += '</tbody></table>';
-				document.getElementById('reports-container').innerHTML = tableHTML;
+				document.getElementById('stat-reports').textContent = allReports.length;
+				document.getElementById('reports-loading').style.display = 'none';
+
+				// Setup search
+				const searchInput = document.getElementById('reports-search');
+				searchInput.addEventListener('input', () => filterAndRenderReports());
+
+				// Setup export
+				const exportBtn = document.getElementById('export-reports-btn');
+				exportBtn.addEventListener('click', () => exportReportsToCSV());
+
+				filterAndRenderReports();
 			} catch (error) {
 				document.getElementById('reports-loading').style.display = 'none';
 				document.getElementById('reports-error').textContent = 'Error loading reports: ' + error.message;
 				document.getElementById('reports-error').style.display = 'block';
 			}
+		}
+
+		function filterAndRenderReports() {
+			const searchTerm = document.getElementById('reports-search').value.toLowerCase();
+			filteredReports = allReports.filter(report => {
+				return (
+					report.id.toLowerCase().includes(searchTerm) ||
+					(report.boxId || '').toLowerCase().includes(searchTerm) ||
+					(report.reportType || '').toLowerCase().includes(searchTerm) ||
+					(report.status || '').toLowerCase().includes(searchTerm)
+				);
+			});
+
+			renderReports();
+		}
+
+		function renderReports() {
+			const container = document.getElementById('reports-container');
+
+			if (filteredReports.length === 0) {
+				container.innerHTML = '<p class="loading">No reports found.</p>';
+				return;
+			}
+
+			// Pagination
+			const totalPages = Math.ceil(filteredReports.length / PAGE_SIZE);
+			const startIndex = (currentReportsPage - 1) * PAGE_SIZE;
+			const endIndex = startIndex + PAGE_SIZE;
+			const pageData = filteredReports.slice(startIndex, endIndex);
+
+			let tableHTML = '<table class="data-table"><thead><tr>';
+			tableHTML += '<th class="sortable" data-sort="id" onclick="sortReports(\'id\')">Report ID</th>';
+			tableHTML += '<th class="sortable" data-sort="boxId" onclick="sortReports(\'boxId\')">Box ID</th>';
+			tableHTML += '<th class="sortable" data-sort="reportType" onclick="sortReports(\'reportType\')">Type</th>';
+			tableHTML += '<th class="sortable" data-sort="status" onclick="sortReports(\'status\')">Status</th>';
+			tableHTML += '<th class="sortable" data-sort="timestamp" onclick="sortReports(\'timestamp\')">Date</th>';
+			tableHTML += '<th>Actions</th>';
+			tableHTML += '</tr></thead><tbody>';
+
+			pageData.forEach((report) => {
+				const date = report.timestamp ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : 'N/A';
+				tableHTML += '<tr>';
+				tableHTML += `<td>${report.id}</td>`;
+				tableHTML += `<td>${report.boxId || 'N/A'}</td>`;
+				tableHTML += `<td>${report.reportType || 'N/A'}</td>`;
+				tableHTML += `<td>${report.status || 'N/A'}</td>`;
+				tableHTML += `<td>${date}</td>`;
+				tableHTML += `<td><div class="action-buttons">`;
+				tableHTML += `<button class="delete-btn" onclick="window.deleteReport('${report.id}')">Delete</button>`;
+				tableHTML += `</div></td>`;
+				tableHTML += '</tr>';
+			});
+
+			tableHTML += '</tbody></table>';
+			container.innerHTML = tableHTML;
+
+			// Update sort indicators
+			if (reportsSortColumn) {
+				const header = container.querySelector(`th[data-sort="${reportsSortColumn}"]`);
+				if (header) {
+					header.classList.remove('sortable');
+					header.classList.add(reportsSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+				}
+			}
+
+			// Render pagination
+			const paginationContainer = document.getElementById('reports-pagination');
+			if (totalPages > 1) {
+				paginationContainer.style.display = 'flex';
+				paginationContainer.innerHTML = `
+					<button onclick="changeReportsPage(${currentReportsPage - 1})" ${currentReportsPage === 1 ? 'disabled' : ''}>Previous</button>
+					<span class="page-info">Page ${currentReportsPage} of ${totalPages} (${filteredReports.length} items)</span>
+					<button onclick="changeReportsPage(${currentReportsPage + 1})" ${currentReportsPage === totalPages ? 'disabled' : ''}>Next</button>
+				`;
+			} else {
+				paginationContainer.style.display = 'none';
+			}
+		}
+
+		window.sortReports = function(column) {
+			if (reportsSortColumn === column) {
+				reportsSortDirection = reportsSortDirection === 'asc' ? 'desc' : 'asc';
+			} else {
+				reportsSortColumn = column;
+				reportsSortDirection = 'asc';
+			}
+
+			filteredReports.sort((a, b) => {
+				let aVal = a[column] || '';
+				let bVal = b[column] || '';
+
+				// Handle timestamp sorting
+				if (column === 'timestamp') {
+					aVal = a[column] ? a[column].seconds : 0;
+					bVal = b[column] ? b[column].seconds : 0;
+				}
+
+				if (aVal < bVal) return reportsSortDirection === 'asc' ? -1 : 1;
+				if (aVal > bVal) return reportsSortDirection === 'asc' ? 1 : -1;
+				return 0;
+			});
+
+			renderReports();
+		};
+
+		window.changeReportsPage = function(page) {
+			const totalPages = Math.ceil(filteredReports.length / PAGE_SIZE);
+			if (page >= 1 && page <= totalPages) {
+				currentReportsPage = page;
+				renderReports();
+			}
+		};
+
+		function exportReportsToCSV() {
+			const headers = ['Report ID', 'Box ID', 'Type', 'Status', 'Date', 'Details'];
+			const rows = filteredReports.map(report => [
+				report.id,
+				report.boxId || '',
+				report.reportType || '',
+				report.status || '',
+				report.timestamp ? new Date(report.timestamp.seconds * 1000).toLocaleString() : '',
+				report.details || ''
+			]);
+
+			let csvContent = headers.join(',') + '\n';
+			rows.forEach(row => {
+				csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+			});
+
+			const blob = new Blob([csvContent], { type: 'text/csv' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `reports_${new Date().toISOString().split('T')[0]}.csv`;
+			link.click();
+			URL.revokeObjectURL(url);
 		}
 
 		// Load volunteers
@@ -589,39 +983,150 @@
 				const volunteersRef = collection(db, volunteersPath);
 				const snapshot = await getDocs(volunteersRef);
 
-				document.getElementById('stat-volunteers').textContent = snapshot.size;
-				document.getElementById('volunteers-loading').style.display = 'none';
-
-				if (snapshot.empty) {
-					document.getElementById('volunteers-container').innerHTML = '<p class="loading">No volunteers found.</p>';
-					return;
-				}
-
-				let tableHTML = '<table class="data-table"><thead><tr>';
-				tableHTML += '<th>User ID</th><th>Display Name</th><th>Email</th><th>Actions</th>';
-				tableHTML += '</tr></thead><tbody>';
-
+				allVolunteers = [];
 				snapshot.forEach((doc) => {
-					const volunteer = doc.data();
-					const isCurrentUser = doc.id === currentUser.uid;
-					tableHTML += '<tr>';
-					tableHTML += `<td>${doc.id}</td>`;
-					tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
-					tableHTML += `<td>${volunteer.email || 'N/A'}</td>`;
-					tableHTML += `<td><div class="action-buttons">`;
-					tableHTML += `<button class="edit-btn" onclick="window.editVolunteer('${doc.id}')" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
-					tableHTML += `<button class="delete-btn" onclick="window.deleteVolunteer('${doc.id}', '${volunteer.displayName || volunteer.email}')" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
-					tableHTML += `</div></td>`;
-					tableHTML += '</tr>';
+					allVolunteers.push({ id: doc.id, ...doc.data() });
 				});
 
-				tableHTML += '</tbody></table>';
-				document.getElementById('volunteers-container').innerHTML = tableHTML;
+				document.getElementById('stat-volunteers').textContent = allVolunteers.length;
+				document.getElementById('volunteers-loading').style.display = 'none';
+
+				// Setup search
+				const searchInput = document.getElementById('volunteers-search');
+				searchInput.addEventListener('input', () => filterAndRenderVolunteers());
+
+				// Setup export
+				const exportBtn = document.getElementById('export-volunteers-btn');
+				exportBtn.addEventListener('click', () => exportVolunteersToCSV());
+
+				filterAndRenderVolunteers();
 			} catch (error) {
 				document.getElementById('volunteers-loading').style.display = 'none';
 				document.getElementById('volunteers-error').textContent = 'Error loading volunteers: ' + error.message;
 				document.getElementById('volunteers-error').style.display = 'block';
 			}
+		}
+
+		function filterAndRenderVolunteers() {
+			const searchTerm = document.getElementById('volunteers-search').value.toLowerCase();
+			filteredVolunteers = allVolunteers.filter(volunteer => {
+				return (
+					volunteer.id.toLowerCase().includes(searchTerm) ||
+					(volunteer.displayName || '').toLowerCase().includes(searchTerm) ||
+					(volunteer.email || '').toLowerCase().includes(searchTerm)
+				);
+			});
+
+			renderVolunteers();
+		}
+
+		function renderVolunteers() {
+			const container = document.getElementById('volunteers-container');
+
+			if (filteredVolunteers.length === 0) {
+				container.innerHTML = '<p class="loading">No volunteers found.</p>';
+				return;
+			}
+
+			// Pagination
+			const totalPages = Math.ceil(filteredVolunteers.length / PAGE_SIZE);
+			const startIndex = (currentVolunteersPage - 1) * PAGE_SIZE;
+			const endIndex = startIndex + PAGE_SIZE;
+			const pageData = filteredVolunteers.slice(startIndex, endIndex);
+
+			let tableHTML = '<table class="data-table"><thead><tr>';
+			tableHTML += '<th class="sortable" data-sort="id" onclick="sortVolunteers(\'id\')">User ID</th>';
+			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Display Name</th>';
+			tableHTML += '<th class="sortable" data-sort="email" onclick="sortVolunteers(\'email\')">Email</th>';
+			tableHTML += '<th>Actions</th>';
+			tableHTML += '</tr></thead><tbody>';
+
+			pageData.forEach((volunteer) => {
+				const isCurrentUser = volunteer.id === currentUser.uid;
+				tableHTML += '<tr>';
+				tableHTML += `<td>${volunteer.id}</td>`;
+				tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
+				tableHTML += `<td>${volunteer.email || 'N/A'}</td>`;
+				tableHTML += `<td><div class="action-buttons">`;
+				tableHTML += `<button class="edit-btn" onclick="window.editVolunteer('${volunteer.id}')" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
+				tableHTML += `<button class="delete-btn" onclick="window.deleteVolunteer('${volunteer.id}', '${volunteer.displayName || volunteer.email}')" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+				tableHTML += `</div></td>`;
+				tableHTML += '</tr>';
+			});
+
+			tableHTML += '</tbody></table>';
+			container.innerHTML = tableHTML;
+
+			// Update sort indicators
+			if (volunteersSortColumn) {
+				const header = container.querySelector(`th[data-sort="${volunteersSortColumn}"]`);
+				if (header) {
+					header.classList.remove('sortable');
+					header.classList.add(volunteersSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+				}
+			}
+
+			// Render pagination
+			const paginationContainer = document.getElementById('volunteers-pagination');
+			if (totalPages > 1) {
+				paginationContainer.style.display = 'flex';
+				paginationContainer.innerHTML = `
+					<button onclick="changeVolunteersPage(${currentVolunteersPage - 1})" ${currentVolunteersPage === 1 ? 'disabled' : ''}>Previous</button>
+					<span class="page-info">Page ${currentVolunteersPage} of ${totalPages} (${filteredVolunteers.length} items)</span>
+					<button onclick="changeVolunteersPage(${currentVolunteersPage + 1})" ${currentVolunteersPage === totalPages ? 'disabled' : ''}>Next</button>
+				`;
+			} else {
+				paginationContainer.style.display = 'none';
+			}
+		}
+
+		window.sortVolunteers = function(column) {
+			if (volunteersSortColumn === column) {
+				volunteersSortDirection = volunteersSortDirection === 'asc' ? 'desc' : 'asc';
+			} else {
+				volunteersSortColumn = column;
+				volunteersSortDirection = 'asc';
+			}
+
+			filteredVolunteers.sort((a, b) => {
+				const aVal = a[column] || '';
+				const bVal = b[column] || '';
+				if (aVal < bVal) return volunteersSortDirection === 'asc' ? -1 : 1;
+				if (aVal > bVal) return volunteersSortDirection === 'asc' ? 1 : -1;
+				return 0;
+			});
+
+			renderVolunteers();
+		};
+
+		window.changeVolunteersPage = function(page) {
+			const totalPages = Math.ceil(filteredVolunteers.length / PAGE_SIZE);
+			if (page >= 1 && page <= totalPages) {
+				currentVolunteersPage = page;
+				renderVolunteers();
+			}
+		};
+
+		function exportVolunteersToCSV() {
+			const headers = ['User ID', 'Display Name', 'Email'];
+			const rows = filteredVolunteers.map(volunteer => [
+				volunteer.id,
+				volunteer.displayName || '',
+				volunteer.email || ''
+			]);
+
+			let csvContent = headers.join(',') + '\n';
+			rows.forEach(row => {
+				csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+			});
+
+			const blob = new Blob([csvContent], { type: 'text/csv' });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `volunteers_${new Date().toISOString().split('T')[0]}.csv`;
+			link.click();
+			URL.revokeObjectURL(url);
 		}
 
 		// Edit box
