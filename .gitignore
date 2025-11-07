@@ -3,6 +3,7 @@ node_modules/
 
 # Test results
 test-results/
+test-results.json/
 playwright-report/
 playwright/.cache/
 test-flakiness-stats.json
@@ -54,3 +55,4 @@ lighthouse.*/
 # Debug artifacts
 home-page-debug.png
 debug-home-page.cjs
+/test-results.json/
