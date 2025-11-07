@@ -64,7 +64,6 @@
 #header-placeholder:empty {
     min-height: 145px;
     background-color: white;
-    border-bottom: 5px solid var(--t4t-red);
 }
 
 #footer-placeholder:empty {
