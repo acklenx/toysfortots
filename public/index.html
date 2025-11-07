@@ -7,7 +7,7 @@
 		<title>Toys for Tots - North Metro Atlanta Area</title>
 		<link rel="preconnect" href="https://unpkg.com" crossorigin>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-		<link rel="stylesheet" href="/css/style.min.css?v=1.0.17">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.18">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -82,16 +82,21 @@
 						return;
 					}
 
-					// Clear existing markers and list if this is realtime update
-					if( source === 'realtime' && cachedLocationsLoaded )
+					// Clear existing markers and list when rendering locations
+					if( source === 'realtime' )
 					{
-						map.eachLayer( ( layer ) =>
+						// Clear any existing markers if cache was loaded
+						if( cachedLocationsLoaded )
 						{
-							if( layer instanceof L.Marker )
+							map.eachLayer( ( layer ) =>
 							{
-								map.removeLayer( layer );
-							}
-						} );
+								if( layer instanceof L.Marker )
+								{
+									map.removeLayer( layer );
+								}
+							} );
+						}
+						// Always clear the list to remove loading message or cached items
 						locationList.innerHTML = '';
 					}
 					else if( source === 'cache' )
