@@ -18,7 +18,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} ).addTo( map );
 	const locationList = document.getElementById( 'location-list' );
 	const customIcon = L.icon( {
-		iconUrl: 'images/pin.png',
+		iconUrl: 'images/pin.webp',
 		iconSize: [ 40, 39 ],
 		iconAnchor: [ 20, 39 ],
 		popupAnchor: [ 0, -39 ]
