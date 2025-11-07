@@ -70,19 +70,13 @@
 						<button id="submit-btn" type="submit">Submit Location</button>
 					</div>
 					<div id="message-container"></div>
-					<div style="text-align: center;"><p id="user-display"></p>
-						<button id="sign-out-btn" type="button">
-							Sign Out
-						</button>
-					</div>
 				</form>
 			</div>
 			<script type="module">
 				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
 				import { showMessage } from '/js/utils.js';
 				import {
-					onAuthStateChanged,
-					signOut
+					onAuthStateChanged
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 				import {
 					doc,
@@ -94,8 +88,6 @@
 
 				let scannedBoxId = null;
 				let isAuthorizedVolunteer; // Firebase function ref
-				const signOutBtn = document.getElementById( 'sign-out-btn' );
-				const userDisplay = document.getElementById( 'user-display' );
 				const form = document.getElementById( 'new-location-form' );
 				const messageContainer = document.getElementById( 'message-container' );
 				const submitBtn = document.getElementById( 'submit-btn' );
@@ -312,7 +304,6 @@
 						showAddressBtn.classList.add( 'hidden' );
 						addressInput.focus();
 					};
-					signOutBtn.onclick = () => signOut( auth );
 					form.onsubmit = handleFormSubmit;
 					onAuthStateChanged( auth, async( user ) =>
 					{
@@ -365,17 +356,6 @@
 
 							// Box doesn't exist, show form
 							form.classList.remove( 'hidden' );
-
-							// Show user info
-							let displayName = user.email;
-							const atIndex = displayName.indexOf( '@' );
-							if( atIndex !== -1 )
-							{
-								displayName = displayName.substring( 0, atIndex );
-							}
-							userDisplay.textContent = `Signed in as: ${ displayName }`;
-							userDisplay.classList.remove( 'hidden' );
-							signOutBtn.classList.remove( 'hidden' );
 						}
 						catch( error )
 						{

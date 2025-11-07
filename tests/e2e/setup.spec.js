@@ -112,17 +112,6 @@ test.describe('Setup Page', () => {
     await expect(page.url()).toContain('returnUrl');
   });
 
-  test('should display signed in user name', async ({ page }) => {
-    const { username } = await createAuthorizedUser(page);
-
-    const boxId = generateBoxId('NEWBOX');
-    await page.goto(`/setup?id=${boxId}`);
-
-    // Should show signed in message with at least the base username
-    const baseUsername = username.split('W')[0]; // Get "testuser" part
-    await expect(page.locator('#user-display')).toContainText('Signed in as:');
-    await expect(page.locator('#user-display')).toContainText(baseUsername);
-  });
 
   test('should show/hide manual address fields', async ({ page }) => {
     await createAuthorizedUser(page);
@@ -184,14 +173,6 @@ test.describe('Setup Page', () => {
     await expect(page.locator('#message-container .message.error')).toContainText('Please enter a Location Contact Name', { timeout: 5000 });
   });
 
-  test('should have sign out button', async ({ page }) => {
-    await createAuthorizedUser(page);
-
-    const boxId = generateBoxId('NEWBOX');
-    await page.goto(`/setup?id=${boxId}`);
-
-    await expect(page.locator('#sign-out-btn')).toBeVisible();
-  });
 
   test('should have GPS location button', async ({ page }) => {
     await createAuthorizedUser(page);
