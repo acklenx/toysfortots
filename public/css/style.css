@@ -68,7 +68,7 @@
 }
 
 #footer-placeholder:empty {
-    min-height: 220px;
+    min-height: 160px;
     background-color: var(--marine-blue);
     margin-top: auto;
 }
@@ -76,12 +76,15 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
+    padding: 0;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     /* Sticky footer layout */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    /* Force scrollbar to prevent layout shift */
+    overflow-y: scroll;
 }
 
 /* Utility Classes */
