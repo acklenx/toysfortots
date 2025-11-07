@@ -12,7 +12,7 @@
     "test:coverage": "nyc mocha test/**/*.test.js"
   },
   "engines": {
-    "node": "24"
+    "node": "22"
   },
   "main": "index.js",
   "dependencies": {

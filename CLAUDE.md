@@ -112,8 +112,9 @@ All data uses hierarchical artifact paths:
 
 ```
 artifacts/toysfortots-eae4d/public/01/data/01/
-  ├── locations/{boxId}       # Box locations (public read)
-  └── totsReports/{reportId}  # Status reports (public create, volunteer read/update)
+  ├── locations/{boxId}            # Box locations (public read)
+  ├── totsReports/{reportId}       # Status reports (public create, volunteer read/update)
+  └── locationSuggestions/{id}     # Autocomplete data synced from Google Sheets
 
 artifacts/toysfortots-eae4d/private/01/data/01/
   ├── authorizedVolunteers/{uid}  # Who can access dashboard
@@ -123,6 +124,7 @@ artifacts/toysfortots-eae4d/private/01/data/01/
 **Critical paths** (exported from `firebase-init.js`):
 - `locationsCollectionPath`
 - `reportsCollectionPath`
+- `locationSuggestionsCollectionPath`
 
 ### Cloud Functions
 
@@ -140,6 +142,19 @@ artifacts/toysfortots-eae4d/private/01/data/01/
 **sendReportEmail** (Firestore trigger):
 - Fires when new report created in `totsReports`
 - Sends email via Mailgun to `toysfortots@qlamail.com`
+
+**syncLocationSuggestions** (callable):
+- Manual trigger to sync Google Sheets → Firestore
+- Only authorized volunteers can call
+- Syncs data from spreadsheet to `locationSuggestions` collection
+- Returns: `{ success: boolean, synced: number, message: string }`
+
+**scheduledSyncLocationSuggestions** (scheduled):
+- Runs every 10 minutes automatically
+- Syncs Google Sheets data to Firestore
+- Enables autocomplete on setup form
+- **Spreadsheet**: [Master Toys for Tots Box tracker](https://docs.google.com/spreadsheets/d/1XbU6koPSANKaLFN9bFqU11SlNs-9qUhNpkUS6bxFg8k/) (sheet: WorkingCopy)
+- **Columns mapped**: Label, Address, City, State, Owner/Manager Name, Phone, Email
 
 ### Frontend Pages
 
@@ -295,6 +310,102 @@ The box page checks if location exists and redirects to setup if not found.
 ### Shared Header/Footer
 
 All pages load `_header.html` and `_footer.html` via `loader.js` for consistent branding.
+
+### Location Autocomplete System
+
+The setup page includes an autocomplete system that reduces data entry by auto-filling form fields from a Google Sheets spreadsheet.
+
+**How it works**:
+1. **Scheduled Sync**: Every 10 minutes, `scheduledSyncLocationSuggestions` reads the spreadsheet and syncs to Firestore `locationSuggestions` collection
+2. **Manual Trigger**: Authorized volunteers can call `syncLocationSuggestions` via Firebase Console to force immediate sync
+3. **GPS Auto-Fill**: When user clicks "Use My GPS Location" and address is retrieved, system searches for exact match and silently auto-fills all fields
+4. **Dropdown Search**: When user types in "Location Name (Label)" field, dropdown shows matching locations from spreadsheet
+5. **Smart Fill**: Only fills fields that are currently empty - never overwrites user input
+
+**Autocomplete Library** (`/public/js/location-autocomplete.js`):
+- `searchByAddress(address, maxResults)` - Prefix search on address field
+- `searchByLabel(label, maxResults)` - Prefix search on location name
+- `findExactMatchByAddress(address)` - Returns single exact match (for GPS)
+- `autoFillFormFields(location, fieldIds)` - Fills form fields (only empty ones)
+- `createAutocomplete(inputElement, searchFunction, onSelect, debounceMs)` - Dropdown UI builder
+
+**Setup Page Integration**:
+```javascript
+// After GPS gets address (public/setup/index.html ~line 167)
+const match = await findExactMatchByAddress( addressInput.value );
+if( match ) {
+  autoFillFormFields( match );
+  showMessage( 'success', 'Location info auto-filled from records!' );
+}
+
+// Label field autocomplete (in init() function ~line 326)
+const labelInput = document.getElementById( 'label' );
+createAutocomplete(
+  labelInput,
+  searchByLabel,
+  ( selected ) => {
+    autoFillFormFields( selected );
+    showMessage( 'success', 'Location info filled from records!' );
+  }
+);
+```
+
+**Firestore Structure**:
+Each suggestion document contains:
+- `label` - Location name (from spreadsheet column A)
+- `address` - Street address (column B)
+- `city` - City (column C)
+- `state` - State (column D)
+- `contactName` - Owner/Manager name (column F)
+- `contactPhone` - Phone number (column G)
+- `contactEmail` - Email (column J)
+- `searchLabel` - Lowercase label for prefix matching
+- `searchAddress` - Lowercase address for prefix matching
+- `syncedAt` - Timestamp of last sync
+- `sourceRow` - Row number in spreadsheet
+
+**Search Performance**:
+Uses Firestore range queries with `\uf8ff` terminator for efficient prefix matching:
+```javascript
+where('searchLabel', '>=', normalized),
+where('searchLabel', '<=', normalized + '\uf8ff'),
+orderBy('searchLabel'),
+limit(maxResults)
+```
+
+**Deploying Autocomplete Updates**:
+```bash
+# After modifying Cloud Functions
+firebase deploy --only functions
+
+# After modifying Firestore rules
+firebase deploy --only firestore:rules
+
+# After modifying frontend
+firebase deploy --only hosting
+
+# Trigger initial sync
+# Option 1: Firebase Console → Functions → syncLocationSuggestions → Test
+# Option 2: Wait up to 10 minutes for scheduled sync
+```
+
+**Modifying Spreadsheet Mapping**:
+If spreadsheet columns change, update `syncLocationSuggestionsFromSheets()` in `functions/index.js`:
+```javascript
+const label = (row[0] || '').trim();        // Column A
+const address = (row[1] || '').trim();      // Column B
+const city = (row[2] || '').trim();         // Column C
+const state = (row[3] || 'GA').trim();      // Column D
+const contactName = (row[5] || '').trim();  // Column F (Owner/Manager Name)
+const contactPhone = (row[6] || '').trim(); // Column G (Phone)
+const contactEmail = (row[9] || '').trim(); // Column J (Email)
+```
+
+**Troubleshooting**:
+- **No autocomplete results**: Check if sync has run (Firebase Console → Firestore → locationSuggestions should have documents)
+- **Sync failing**: Check Cloud Functions logs for Google Sheets API errors
+- **Wrong data shown**: Verify spreadsheet tab name is exactly "WorkingCopy" (case-sensitive)
+- **Performance issues**: Default limit is 10 results - increase only if needed
 
 ## Common Issues
 
