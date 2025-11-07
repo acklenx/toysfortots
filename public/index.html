@@ -7,7 +7,7 @@
 		<title>Toys for Tots - North Metro Atlanta Area</title>
 		<link rel="preconnect" href="https://unpkg.com" crossorigin>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-		<link rel="stylesheet" href="/css/style.min.css?v=1.0.19">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.20">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -68,8 +68,6 @@
 				// Render locations on map and list
 				function renderLocations( locationsArray, source )
 				{
-					console.log( `Rendering ${ locationsArray.length } locations from ${ source }` );
-
 					// Remove loading message when we get data
 					removeLoadingMessage();
 
@@ -135,7 +133,6 @@
 				// Load cached locations first (fast, no auth required)
 				async function loadCachedLocations()
 				{
-					console.log( 'Loading cached locations...' );
 					locationList.innerHTML = '<p id="loading-message" style="padding: 5px; text-align: center; font-size: 0.9em; color: #666;">Loading locations...</p>';
 
 					// Remove loading message after 5 seconds
@@ -149,7 +146,6 @@
 							? '/mock-locations-cache.json'
 							: 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache';
 
-						console.log( `Fetching from ${ isLocalhost ? 'mock cache (localhost)' : 'production cache' }` );
 						const response = await fetch( cacheUrl );
 
 						if( !response.ok )
@@ -158,7 +154,6 @@
 						}
 
 						const cacheData = await response.json();
-						console.log( `Loaded ${ cacheData.count } cached locations (generated at ${ cacheData.generatedAt })` );
 
 						// Even if cache is empty (mock returns 0 locations), mark as loaded
 						// This prevents blocking and allows realtime to populate the map
@@ -175,7 +170,6 @@
 				// Load realtime locations from Firestore (slower, requires auth)
 				async function loadRealtimeLocations()
 				{
-					console.log( 'Loading realtime locations from Firestore...' );
 					try
 					{
 						const locationsRef = collection( db, locationsCollectionPath );
@@ -192,7 +186,6 @@
 							} );
 						} );
 
-						console.log( `Loaded ${ locations.length } realtime locations from Firestore` );
 						renderLocations( locations, 'realtime' );
 						realtimeLocationsLoaded = true;
 					}
