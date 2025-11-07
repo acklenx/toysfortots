@@ -216,21 +216,87 @@
 				}
 
 
+				// Validation helper: flash field red and set focus
+				function highlightInvalidField( fieldId, errorMessage )
+				{
+					const field = document.getElementById( fieldId );
+					if( !field ) return;
+
+					// Show error message
+					showMessage( 'error', errorMessage );
+
+					// Set persistent red background
+					field.style.backgroundColor = '#fecaca'; // Light red
+
+					// Flash animation (3 times)
+					let flashCount = 0;
+					const flashInterval = setInterval( () =>
+					{
+						field.style.backgroundColor = flashCount % 2 === 0 ? '#fef2f2' : '#fecaca';
+						flashCount++;
+						if( flashCount >= 6 ) // 3 full flashes (on/off/on/off/on/off)
+						{
+							clearInterval( flashInterval );
+							field.style.backgroundColor = '#fecaca'; // Leave it red
+						}
+					}, 200 ); // Flash every 200ms
+
+					// Focus the field
+					field.focus();
+				}
+
+				// Clear all validation highlighting
+				function clearValidationHighlights()
+				{
+					const allInputs = form.querySelectorAll( 'input, select, textarea' );
+					allInputs.forEach( input =>
+					{
+						input.style.backgroundColor = '';
+					} );
+				}
+
 				async function handleFormSubmit( e )
 				{
 					e.preventDefault();
+
+					// Clear previous validation highlights
+					clearValidationHighlights();
+
+					// Check HTML5 validation first
+					if( !form.checkValidity() )
+					{
+						// Find first invalid field
+						const invalidField = form.querySelector( ':invalid' );
+						if( invalidField )
+						{
+							const fieldName = invalidField.name || invalidField.id;
+							const label = form.querySelector( `label[for="${ invalidField.id }"]` )?.textContent || fieldName;
+							highlightInvalidField( invalidField.id, `Please fill out the ${ label } field.` );
+						}
+						return;
+					}
+
 					const formData = new FormData( form );
 					const contactName = formData.get( 'contactName' ).trim();
 					const contactEmail = formData.get( 'contactEmail' ).trim();
 					const contactPhone = formData.get( 'contactPhone' ).trim();
+
 					if( !contactName )
 					{
-						showMessage( 'error', 'Please enter a Location Contact Name.' );
+						highlightInvalidField( 'contactName', 'Please enter a Location Contact Name.' );
 						return; // Stop the submission
 					}
 					if( !contactEmail && !contactPhone )
 					{
-						showMessage( 'error', 'Please provide either a Contact Email or a Contact Phone.' );
+						// Highlight the first empty required field
+						if( !contactEmail )
+						{
+							highlightInvalidField( 'contactEmail', 'Please provide either a Contact Email or a Contact Phone.' );
+						}
+						else
+						{
+							highlightInvalidField( 'contactPhone', 'Please provide either a Contact Email or a Contact Phone.' );
+						}
 						return; // Stop the submission
 					}
 					if( !auth.currentUser || auth.currentUser.isAnonymous )
