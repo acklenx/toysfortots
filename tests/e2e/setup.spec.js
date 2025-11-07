@@ -42,7 +42,7 @@ test.describe('Setup Page', () => {
     return { username, password, uid };
   }
 
-  test('should display box ID from URL parameter @smoke', async ({ page }) => {
+  test('should display box ID from URL parameter', async ({ page }) => {
     await createAuthorizedUser(page);
 
     // Navigate to setup with box ID

@@ -44,6 +44,7 @@
     "jsdom": "^27.1.0"
   },
   "overrides": {
-    "superstatic": "10.0.0"
+    "superstatic": "10.0.0",
+    "glob": "^11.0.0"
   }
 }
