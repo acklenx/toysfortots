@@ -361,13 +361,23 @@ All pages load `_header.html` and `_footer.html` via `loader.js` for consistent 
 
 **Layout Shift Prevention:**
 - All images have explicit `width` and `height` attributes to reserve space before loading
-  - T4T logo: 181×60px
-  - MCL logo: 80×80px
-  - Gunny bear footer: 79×100px
-  - Map pin icon: 40×39px
+  - T4T logo: 181×60px (WebP)
+  - MCL logo: 80×80px (WebP)
+  - Gunny bear footer: 79×100px (WebP)
+  - Map pin icon: 40×39px (WebP)
 - Header and footer have `min-height` set (110px and 160px respectively)
 - Empty `#header-placeholder` and `#footer-placeholder` divs show skeleton styles
 - This reduces Cumulative Layout Shift (CLS) and improves Core Web Vitals
+
+**Accessibility Features:**
+- Descriptive alt text for all images:
+  - T4T logo: "Toys for Tots logo with red text and toy train"
+  - MCL logo: "Marine Corps League emblem with Eagle, Globe, and Anchor"
+  - Gunny bear: "Gunny Bear, the Toys for Tots teddy bear mascot wearing Marine Corps uniform with sunglasses"
+- Hidden menu items use `tabindex="-1"` and `aria-hidden="true"` to prevent keyboard focus traps
+- JavaScript properly manages ARIA attributes when showing/hiding menu elements
+- Hamburger menu button has `aria-label="Menu"` and `aria-expanded` state
+- WCAG 2.1 Level A compliance for Non-text Content, Keyboard, and Name/Role/Value
 
 ### Location Autocomplete System
 
