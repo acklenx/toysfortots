@@ -21,12 +21,14 @@ test.describe('Box Action Center and Status Pages', () => {
   });
 
   test.describe('Box Action Center (/box)', () => {
-    test('should redirect to setup if box does not exist @smoke', async ({ page }) => {
+    test('should redirect to login via setup if box does not exist @smoke', async ({ page }) => {
       const boxId = generateBoxId('NONEXISTENT');
       await page.goto(`/box?id=${boxId}`);
 
-      // Should redirect to setup page
-      await expect(page).toHaveURL(new RegExp(`/setup/\\?id=${boxId}`), { timeout: 10000 });
+      // Should redirect to setup, then to login (since setup requires auth)
+      await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+      await expect(page.url()).toContain('returnUrl');
+      await expect(page.url()).toContain('setup');
     });
 
     test('should display box information @smoke', async ({ page }) => {
@@ -77,12 +79,14 @@ test.describe('Box Action Center and Status Pages', () => {
   });
 
   test.describe('Status/History Page (/status)', () => {
-    test('should redirect to setup if box does not exist @smoke', async ({ page }) => {
+    test('should redirect to login via setup if box does not exist @smoke', async ({ page }) => {
       const boxId = generateBoxId('NONEXISTENT');
       await page.goto(`/status?id=${boxId}`);
 
-      // Should redirect to setup page
-      await expect(page).toHaveURL(new RegExp(`/setup/\\?id=${boxId}`), { timeout: 10000 });
+      // Status page requires auth, so anonymous users get redirected to login
+      // (actually goes status -> box -> setup -> login)
+      await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+      await expect(page.url()).toContain('returnUrl');
     });
 
     test('should display box information @smoke', async ({ page }) => {
