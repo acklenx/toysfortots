@@ -4,6 +4,7 @@
   const menuUserInfo = document.getElementById('menu-user-info');
   const menuUsername = document.getElementById('menu-username');
   const menuDashboard = document.getElementById('menu-dashboard');
+  const menuAdmin = document.getElementById('menu-admin');
   const menuNewBox = document.getElementById('menu-new-box');
   const menuSignIn = document.getElementById('menu-sign-in');
   const menuSignOut = document.getElementById('menu-sign-out');
@@ -108,6 +109,7 @@
       hamburgerBtn.style.display = 'flex';
       menuUserInfo.style.display = 'block';
       menuDashboard.style.display = 'block';
+      menuAdmin.style.display = 'block';
       menuNewBox.style.display = 'block';
       menuSignOut.style.display = 'block';
       menuSignIn.style.display = 'none';
@@ -121,6 +123,9 @@
       menuDashboard.style.display = 'none';
       menuDashboard.setAttribute('tabindex', '-1');
       menuDashboard.setAttribute('aria-hidden', 'true');
+      menuAdmin.style.display = 'none';
+      menuAdmin.setAttribute('tabindex', '-1');
+      menuAdmin.setAttribute('aria-hidden', 'true');
       menuNewBox.style.display = 'none';
       menuNewBox.setAttribute('tabindex', '-1');
       menuNewBox.setAttribute('aria-hidden', 'true');
