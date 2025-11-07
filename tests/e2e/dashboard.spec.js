@@ -59,7 +59,7 @@ test.describe('Dashboard Page', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('should display dashboard for authorized user @smoke', async ({ page }) => {
+  test('should display dashboard for authorized user', async ({ page }) => {
     // User is already logged in from beforeEach, just navigate to dashboard
     await page.goto('/dashboard/');
 

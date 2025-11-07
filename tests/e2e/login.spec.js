@@ -49,7 +49,7 @@ test.describe('Login Page', () => {
     await expect(page.locator('#email-sign-up-btn')).toBeHidden();
   });
 
-  test('should show error for empty credentials', async ({ page }) => {
+  test('should show error for empty credentials @smoke', async ({ page }) => {
     await page.goto('/login');
 
     // Wait for auth to be initialized

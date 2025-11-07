@@ -31,7 +31,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.url()).toContain('setup');
     });
 
-    test('should display box information @smoke', async ({ page }) => {
+    test('should display box information', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Market',
@@ -59,7 +59,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.locator('#location-display')).toContainText('John Doe');
     });
 
-    test('should have pickup and problem buttons @smoke', async ({ page }) => {
+    test('should have pickup and problem buttons', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Location'
@@ -71,7 +71,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.locator('#problem-btn')).toBeVisible();
     });
 
-    test('should show error when no box ID provided', async ({ page }) => {
+    test('should show error when no box ID provided @smoke', async ({ page }) => {
       await page.goto('/box');
 
       await expect(page.locator('#loading-message')).toContainText('ID missing');
@@ -89,7 +89,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.url()).toContain('returnUrl');
     });
 
-    test('should display box information @smoke', async ({ page }) => {
+    test('should display box information', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Market',

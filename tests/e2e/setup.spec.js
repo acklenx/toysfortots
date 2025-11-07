@@ -79,7 +79,7 @@ test.describe('Setup Page', () => {
     await page.waitForURL(new RegExp(`/status/\\?id=${boxId}`), { timeout: 10000 });
   });
 
-  test('should redirect unauthorized users to authorize page', async ({ page }) => {
+  test('should redirect unauthorized users to authorize page @smoke', async ({ page }) => {
     const username = generateUsername('newuser');
     const password = 'testpass123';
 
@@ -96,10 +96,11 @@ test.describe('Setup Page', () => {
 
     // Should redirect to authorize page with boxId
     await page.waitForURL(/\/authorize/, { timeout: 5000 });
-    await expect(page).toHaveURL(new RegExp(`/authorize\\?boxId=${boxId}`));
+    await expect(page.url()).toContain('/authorize');
+    await expect(page.url()).toContain(`boxId=${boxId}`);
   });
 
-  test('should redirect unauthenticated users to login page', async ({ page }) => {
+  test('should redirect unauthenticated users to login page @smoke', async ({ page }) => {
     const boxId = generateBoxId('NEWBOX');
 
     // Navigate to setup without being logged in

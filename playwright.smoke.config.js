@@ -6,10 +6,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e', // Only e2e tests, not unit tests
-  fullyParallel: false, // Run sequentially to avoid emulator contention
+  fullyParallel: true, // Run in parallel for speed
   forbidOnly: !!process.env.CI,
   retries: 1, // One retry for transient failures
-  workers: 1, // Single worker for stability
+  workers: 4, // Parallel workers for speed
   reporter: 'html',
   timeout: 15000, // 15 seconds per test
   globalSetup: './tests/global-setup.js',
