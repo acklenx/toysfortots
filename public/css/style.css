@@ -269,6 +269,7 @@ header {
 /* --- Main Container --- */
 .container {
     display: flex;
+    width: 100%; /* Fill available width */
     max-width: 1200px; /* Increased from 900px for better desktop visibility */
     margin: var(--page-spacing) auto;
     gap: 20px;
@@ -276,20 +277,22 @@ header {
     height: 75vh;
     min-height: 500px;
     flex: 1; /* Allow container to grow and push footer down */
+    box-sizing: border-box; /* Include padding in width calculation */
 
-    /* --- NATIVE CSS FIX: Added '&' --- */
-    & #map {
-        height: 500px; /* Explicit height for Leaflet */
-        flex: 4;
-        min-width: 800px; /* Ensure minimum width on desktop */
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+}
 
-    /* --- NATIVE CSS FIX: Added '&' --- */
-    & #location-list-container {
-        flex: 1;
-        min-width: 300px; /* Ensure list has minimum width too */
+.container #map {
+    height: 500px !important; /* Explicit height for Leaflet, override any library defaults */
+    flex: 4 !important;
+    min-width: 480px !important; /* Minimum for usable map viewing on desktop */
+    width: auto !important; /* Let flex determine width, override Leaflet */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.container #location-list-container {
+    flex: 1;
+    min-width: 250px; /* Minimum for list readability */
         height: 100%;
         background: white;
         border-radius: 8px;
@@ -567,12 +570,15 @@ footer {
         flex-direction: column;
         height: auto;
         min-height: 60vh; /* Ensure enough height to push footer down on mobile */
+        width: 100%; /* Fill viewport width on mobile */
+        max-width: 100%; /* Override desktop max-width */
 
         /* --- NATIVE CSS FIX: Added '&' --- */
         & #map {
             height: 50vh;
             min-height: 400px;
             width: 100%;
+            min-width: 340px; /* Minimum for mobile devices */
         }
 
         & #location-list-container {

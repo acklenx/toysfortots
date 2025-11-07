@@ -574,3 +574,223 @@ exports.triggerSyncLocationSuggestions = onRequest( async( req, res ) =>
 	}
 } );
 
+/**
+ * Core cache generation function - reads all locations and writes to static file
+ * Called by both manual trigger and scheduled function
+ */
+async function generateLocationsCache()
+{
+	console.log( '--- generateLocationsCache STARTED ---' );
+	const db = getFirestore();
+	const { getStorage } = require( 'firebase-admin/storage' );
+	const bucket = getStorage().bucket();
+
+	try
+	{
+		// Get all locations
+		const locationsRef = db.collection( LOCATIONS_PATH );
+		const snapshot = await locationsRef.get();
+
+		if( snapshot.empty )
+		{
+			console.log( 'No locations found.' );
+			return { success: true, count: 0, message: 'No locations to cache.' };
+		}
+
+		// Build locations array
+		const locations = [];
+		snapshot.forEach( doc =>
+		{
+			const data = doc.data();
+			locations.push( {
+				id: doc.id,
+				label: data.label,
+				address: data.address,
+				city: data.city,
+				state: data.state,
+				lat: data.lat,
+				lon: data.lon,
+				volunteer: data.volunteer,
+				status: data.status,
+				boxes: data.boxes,
+				created: data.created
+			} );
+		} );
+
+		console.log( `Found ${ locations.length } locations.` );
+
+		// Create cache object with metadata
+		const cacheData = {
+			locations: locations,
+			generatedAt: new Date().toISOString(),
+			count: locations.length,
+			version: 1
+		};
+
+		// Write to Cloud Storage as static JSON
+		const file = bucket.file( 'public/locations-cache.json' );
+		await file.save( JSON.stringify( cacheData ), {
+			metadata: {
+				contentType: 'application/json',
+				cacheControl: 'public, max-age=3600' // Cache for 1 hour
+			},
+			public: true // Make publicly accessible
+		} );
+
+		console.log( `Cache file written successfully: ${ locations.length } locations` );
+
+		return {
+			success: true,
+			count: locations.length,
+			message: `Cached ${ locations.length } locations.`,
+			url: `https://storage.googleapis.com/${ bucket.name }/public/locations-cache.json`
+		};
+	}
+	catch( error )
+	{
+		console.error( 'Error generating locations cache:', error );
+		throw new HttpsError( 'internal', `Cache generation failed: ${ error.message }` );
+	}
+	finally
+	{
+		console.log( '--- generateLocationsCache FINISHED ---' );
+	}
+}
+
+/**
+ * HTTP endpoint to serve cached locations (CORS-enabled)
+ * Usage: fetch('https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache')
+ */
+exports.getLocationsCache = onRequest( { cors: true }, async( req, res ) =>
+{
+	console.log( '--- getLocationsCache STARTED ---' );
+	const { getStorage } = require( 'firebase-admin/storage' );
+	const bucket = getStorage().bucket();
+
+	try
+	{
+		const file = bucket.file( 'public/locations-cache.json' );
+		const [ exists ] = await file.exists();
+
+		if( !exists )
+		{
+			console.log( 'Cache file does not exist. Generating now...' );
+			const result = await generateLocationsCache();
+			const [ contents ] = await file.download();
+			res.status( 200 )
+				.set( 'Content-Type', 'application/json' )
+				.set( 'Cache-Control', 'public, max-age=3600' )
+				.send( contents );
+			return;
+		}
+
+		// Stream the cached file
+		const [ contents ] = await file.download();
+		console.log( `Serving cached locations: ${ contents.length } bytes` );
+
+		res.status( 200 )
+			.set( 'Content-Type', 'application/json' )
+			.set( 'Cache-Control', 'public, max-age=3600' )
+			.send( contents );
+	}
+	catch( error )
+	{
+		console.error( 'getLocationsCache error:', error );
+		res.status( 500 ).json( {
+			success: false,
+			error: error.message
+		} );
+	}
+	finally
+	{
+		console.log( '--- getLocationsCache FINISHED ---' );
+	}
+} );
+
+/**
+ * Manual trigger to regenerate locations cache
+ * Callable by authorized volunteers
+ */
+exports.refreshLocationsCache = onCall( async( request ) =>
+{
+	console.log( '--- refreshLocationsCache (manual) STARTED ---' );
+
+	// Check authentication
+	if( !request.auth || !request.auth.uid )
+	{
+		console.warn( 'refreshLocationsCache: Authentication failed.' );
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to refresh cache.' );
+	}
+
+	const uid = request.auth.uid;
+	const db = getFirestore();
+
+	// Check authorization
+	try
+	{
+		const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
+		const authSnap = await authVolRef.get();
+
+		if( !authSnap.exists )
+		{
+			console.warn( `refreshLocationsCache: User ${ uid } not authorized.` );
+			throw new HttpsError( 'permission-denied', 'Only authorized volunteers can refresh cache.' );
+		}
+
+		console.log( `refreshLocationsCache: User ${ uid } authorized. Refreshing cache...` );
+	}
+	catch( error )
+	{
+		if( error instanceof HttpsError )
+		{
+			throw error;
+		}
+		console.error( 'refreshLocationsCache: Error checking authorization:', error );
+		throw new HttpsError( 'internal', 'Error checking authorization.' );
+	}
+
+	// Generate cache
+	const result = await generateLocationsCache();
+	console.log( '--- refreshLocationsCache (manual) FINISHED ---' );
+	return result;
+} );
+
+/**
+ * Scheduled cache refresh
+ * Runs every 6 hours
+ */
+exports.scheduledRefreshLocationsCache = onSchedule( {
+	schedule: 'every 6 hours',
+	timeZone: 'America/New_York'
+}, async( event ) =>
+{
+	console.log( '--- scheduledRefreshLocationsCache STARTED ---' );
+	const result = await generateLocationsCache();
+	console.log( '--- scheduledRefreshLocationsCache FINISHED ---' );
+	return result;
+} );
+
+/**
+ * HTTP endpoint to trigger cache refresh via curl
+ * Usage: curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache
+ */
+exports.triggerRefreshLocationsCache = onRequest( async( req, res ) =>
+{
+	console.log( '--- triggerRefreshLocationsCache (HTTP) STARTED ---' );
+
+	try
+	{
+		const result = await generateLocationsCache();
+		console.log( '--- triggerRefreshLocationsCache (HTTP) FINISHED ---' );
+		res.status( 200 ).json( result );
+	}
+	catch( error )
+	{
+		console.error( 'triggerRefreshLocationsCache error:', error );
+		res.status( 500 ).json( {
+			success: false,
+			error: error.message
+		} );
+	}
+} );
+

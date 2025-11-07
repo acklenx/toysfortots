@@ -7,7 +7,7 @@
 		<title>Toys for Tots - North Metro Atlanta Area</title>
 		<link rel="preconnect" href="https://unpkg.com" crossorigin>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-		<link rel="stylesheet" href="/css/style.css?v=1.0.8">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.9">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -52,51 +52,136 @@
 					popupAnchor: [ 0, -39 ]
 				} );
 
-				async function loadLocations()
+				let cachedLocationsLoaded = false;
+				let realtimeLocationsLoaded = false;
+
+				// Render locations on map and list
+				function renderLocations( locationsArray, source )
 				{
+					console.log( `Rendering ${ locationsArray.length } locations from ${ source }` );
+
+					if( locationsArray.length === 0 )
+					{
+						if( source === 'realtime' )
+						{
+							locationList.innerHTML = '<p style="padding: 15px; text-align: center;">No donation locations have been set up yet.</p>';
+						}
+						return;
+					}
+
+					// Clear existing markers and list if this is realtime update
+					if( source === 'realtime' && cachedLocationsLoaded )
+					{
+						map.eachLayer( ( layer ) =>
+						{
+							if( layer instanceof L.Marker )
+							{
+								map.removeLayer( layer );
+							}
+						} );
+						locationList.innerHTML = '';
+					}
+					else if( source === 'cache' )
+					{
+						locationList.innerHTML = '';
+					}
+
+					locationsArray.forEach( ( location ) =>
+					{
+						if( location.lat && location.lon )
+						{
+							const marker = L.marker( [ location.lat, location.lon ], { icon: customIcon } ).addTo( map );
+							let popupContent = `<b>${ location.label }</b><br>${ location.address }`;
+							if( location.city && location.state )
+							{
+								popupContent += `<br><small>${ location.city }, ${ location.state }</small>`;
+							}
+							marker.bindPopup( popupContent );
+							const listItem = document.createElement( 'div' );
+							listItem.className = 'location-item';
+							listItem.innerHTML = `
+	                            <h4>${ location.label }</h4>
+	                            <p>${ location.address }</p>
+	                            ${ location.city && location.state ? `<p class="contact-info">${ location.city }, ${ location.state }</p>` : '' }
+	                        `;
+							listItem.addEventListener( 'click', () =>
+							{
+								map.setView( [ location.lat, location.lon ], 14 );
+								marker.openPopup();
+							} );
+							locationList.appendChild( listItem );
+						}
+					} );
+				}
+
+				// Load cached locations first (fast, no auth required)
+				async function loadCachedLocations()
+				{
+					console.log( 'Loading cached locations...' );
 					locationList.innerHTML = '<p style="padding: 15px; text-align: center;">Loading locations...</p>';
+
+					try
+					{
+						// Use mock cache on localhost/emulators, real cache in production
+						const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+						const cacheUrl = isLocalhost
+							? '/mock-locations-cache.json'
+							: 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache';
+
+						console.log( `Fetching from ${ isLocalhost ? 'mock cache (localhost)' : 'production cache' }` );
+						const response = await fetch( cacheUrl );
+
+						if( !response.ok )
+						{
+							throw new Error( `Cache fetch failed: ${ response.status }` );
+						}
+
+						const cacheData = await response.json();
+						console.log( `Loaded ${ cacheData.count } cached locations (generated at ${ cacheData.generatedAt })` );
+
+						// Even if cache is empty (mock returns 0 locations), mark as loaded
+						// This prevents blocking and allows realtime to populate the map
+						renderLocations( cacheData.locations, 'cache' );
+						cachedLocationsLoaded = true;
+					}
+					catch( error )
+					{
+						console.warn( 'Could not load cached locations, falling back to realtime:', error );
+						locationList.innerHTML = '<p style="padding: 15px; text-align: center;">Loading locations...</p>';
+					}
+				}
+
+				// Load realtime locations from Firestore (slower, requires auth)
+				async function loadRealtimeLocations()
+				{
+					console.log( 'Loading realtime locations from Firestore...' );
 					try
 					{
 						const locationsRef = collection( db, locationsCollectionPath );
 						const q = query( locationsRef, orderBy( 'created', 'desc' ) );
 						const querySnapshot = await getDocs( q );
-						if( querySnapshot.empty )
-						{
-							locationList.innerHTML = '<p style="padding: 15px; text-align: center;">No donation locations have been set up yet.</p>';
-							return;
-						}
-						locationList.innerHTML = '';
+
+						const locations = [];
 						querySnapshot.forEach( ( doc ) =>
 						{
-							const location = doc.data();
-							if( location.lat && location.lon )
-							{
-								const marker = L.marker( [ location.lat, location.lon ], { icon: customIcon } ).addTo( map );
-								let popupContent = `<b>${ location.label }</b><br>${ location.address }`;
-								if( location.city && location.state )
-								{
-									popupContent += `<br><small>${ location.city }, ${ location.state }</small>`;
-								}
-								marker.bindPopup( popupContent );
-								const listItem = document.createElement( 'div' );
-								listItem.className = 'location-item';
-								listItem.innerHTML = `
-		                            <h4>${ location.label }</h4>
-		                            <p>${ location.address }</p>
-		                            ${ location.city && location.state ? `<p class="contact-info">${ location.city }, ${ location.state }</p>` : '' }
-		                        `;
-								listItem.addEventListener( 'click', () =>
-								{
-									map.setView( [ location.lat, location.lon ], 14 );
-									marker.openPopup();
-								} );
-								locationList.appendChild( listItem );
-							}
+							const data = doc.data();
+							locations.push( {
+								id: doc.id,
+								...data
+							} );
 						} );
+
+						console.log( `Loaded ${ locations.length } realtime locations from Firestore` );
+						renderLocations( locations, 'realtime' );
+						realtimeLocationsLoaded = true;
 					}
 					catch( error )
 					{
-						locationList.innerHTML = `<p style="padding: 15px; text-align: center; color: red;">Could not load location data: ${ error.message }</p>`;
+						console.error( 'Error loading realtime locations:', error );
+						if( !cachedLocationsLoaded )
+						{
+							locationList.innerHTML = `<p style="padding: 15px; text-align: center; color: red;">Could not load location data: ${ error.message }</p>`;
+						}
 					}
 				}
 
@@ -108,30 +193,45 @@
 						{
 							if( user )
 							{
+								// Auth successful, lazy load realtime data in background
 								setTimeout( () =>
 								{
-									loadLocations();
+									loadRealtimeLocations();
 								}, 500 );
 							}
 							else
 							{
-								signInAnonymously( auth ).catch( () =>
+								// No user, attempt anonymous sign-in for realtime updates
+								signInAnonymously( auth ).catch( ( error ) =>
 								{
-									locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not connect to database.</p>';
+									console.warn( 'Anonymous sign-in failed, cached data only:', error );
+									// If cache loaded, we're fine. Otherwise show error.
+									if( !cachedLocationsLoaded )
+									{
+										locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not connect to database.</p>';
+									}
 								} );
 							}
 						} );
 					}
 					catch( error )
 					{
-						locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not initialize app.</p>';
+						console.error( 'Firebase init error:', error );
+						if( !cachedLocationsLoaded )
+						{
+							locationList.innerHTML = '<p style="padding: 15px; color: red;">Error: Could not initialize app.</p>';
+						}
 					}
 				}
 
+				// Load cached data immediately (no auth required)
+				loadCachedLocations();
+
+				// Then initialize Firebase for realtime updates
 				initFirebase();
 			} );
 		</script>
 		<div id="footer-placeholder"></div>
-		<script src="/js/loader.js" defer></script>
+		<script src="/js/loader.min.js" defer></script>
 	</body>
 </html>
