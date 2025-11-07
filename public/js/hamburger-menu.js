@@ -15,6 +15,22 @@
     hamburgerMenu.setAttribute('aria-hidden', isExpanded);
     hamburgerBtn.classList.toggle('active');
     hamburgerMenu.classList.toggle('active');
+
+    // Update menu item tabindex based on menu state
+    const menuItems = hamburgerMenu.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+      if (!isExpanded) {
+        // Opening menu - make visible items focusable
+        if (item.style.display !== 'none') {
+          item.removeAttribute('tabindex');
+          item.removeAttribute('aria-hidden');
+        }
+      } else {
+        // Closing menu - make all items unfocusable
+        item.setAttribute('tabindex', '-1');
+        item.setAttribute('aria-hidden', 'true');
+      }
+    });
   }
 
   // Close menu
@@ -23,6 +39,13 @@
     hamburgerMenu.setAttribute('aria-hidden', 'true');
     hamburgerBtn.classList.remove('active');
     hamburgerMenu.classList.remove('active');
+
+    // Make all menu items unfocusable when closed
+    const menuItems = hamburgerMenu.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+      item.setAttribute('tabindex', '-1');
+      item.setAttribute('aria-hidden', 'true');
+    });
   }
 
   // Generate random 5-digit box ID

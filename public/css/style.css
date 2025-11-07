@@ -512,15 +512,54 @@ footer {
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
 
+    #header-placeholder:empty {
+        min-height: 90px;
+    }
+
     header {
+        padding: 10px 15px;
+        min-height: 90px;
+
         /* --- NATIVE CSS FIX: Added '&' --- */
         & .header-content {
-            flex-direction: column;
-            gap: 15px;
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        & .header-text {
+            flex: 1;
+            text-align: left;
+
+            h1 {
+                font-size: 1.2rem;
+                line-height: 1.2;
+            }
+
+            h2 {
+                font-size: 1rem;
+                margin: 2px 0;
+            }
+
+            & .sub-header {
+                font-size: 0.75rem;
+                line-height: 1.2;
+            }
         }
 
         & .logo {
-            height: 60px;
+            height: 50px;
+
+            &.t4t-logo {
+                height: 40px;
+            }
+        }
+
+        & .header-right {
+            gap: 10px;
+
+            & .mcl-logo {
+                height: 50px;
+            }
         }
     }
 
