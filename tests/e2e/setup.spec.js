@@ -90,6 +90,9 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
 
+    // Wait for authentication to complete
+    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+
     // Navigate to setup (user is NOT authorized)
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
