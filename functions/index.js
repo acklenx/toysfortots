@@ -369,3 +369,165 @@ exports.authorizeVolunteerV2 = onCall( async( request ) =>
 		throw new HttpsError( 'internal', 'Error saving authorization. Please try again.' );
 	}
 } );
+
+/**
+ * Core sync function - reads Google Sheets and syncs to Firestore
+ * Called by both manual trigger and scheduled function
+ */
+async function syncLocationSuggestionsFromSheets()
+{
+	console.log( '--- syncLocationSuggestionsFromSheets STARTED ---' );
+	const sheets = google.sheets( 'v4' );
+	const db = getFirestore();
+
+	try
+	{
+		// Read spreadsheet data
+		const response = await sheets.spreadsheets.values.get( {
+			spreadsheetId: SPREADSHEET_ID,
+			range: `${ SHEET_NAME }!A2:N` // Skip header row, read columns A through N
+		} );
+
+		const rows = response.data.values;
+		if( !rows || rows.length === 0 )
+		{
+			console.log( 'No data found in spreadsheet.' );
+			return { success: true, synced: 0, message: 'No data to sync.' };
+		}
+
+		console.log( `Found ${ rows.length } rows in spreadsheet.` );
+
+		// Use batch writes for efficiency
+		const batch = db.batch();
+		let syncedCount = 0;
+
+		rows.forEach( ( row, index ) =>
+		{
+			// Map spreadsheet columns to fields
+			const label = ( row[ 0 ] || '' ).trim();
+			const address = ( row[ 1 ] || '' ).trim();
+			const city = ( row[ 2 ] || '' ).trim();
+			const state = ( row[ 3 ] || 'GA' ).trim();
+			const contactName = ( row[ 5 ] || '' ).trim(); // Column F: Owner/Manager Name
+			const contactPhone = ( row[ 6 ] || '' ).trim(); // Column G: Phone
+			const contactEmail = ( row[ 9 ] || '' ).trim(); // Column J: Email
+
+			// Skip rows with no label or address
+			if( !label || !address )
+			{
+				console.log( `Skipping row ${ index + 2 }: missing label or address` );
+				return;
+			}
+
+			// Create normalized search fields (lowercase for case-insensitive search)
+			const searchLabel = label.toLowerCase();
+			const searchAddress = address.toLowerCase();
+
+			// Generate document ID from label+address hash (for idempotency)
+			const docId = Buffer.from( `${ label }|${ address }` )
+				.toString( 'base64' )
+				.replace( /[/+=]/g, '' )
+				.substring( 0, 100 );
+
+			const suggestionData = {
+				label,
+				address,
+				city,
+				state,
+				contactName,
+				contactPhone,
+				contactEmail,
+				searchLabel,
+				searchAddress,
+				syncedAt: FieldValue.serverTimestamp(),
+				sourceRow: index + 2 // Row number in spreadsheet (1-indexed + header)
+			};
+
+			const docRef = db.doc( `${ LOCATION_SUGGESTIONS_PATH }/${ docId }` );
+			batch.set( docRef, suggestionData, { merge: true } );
+			syncedCount++;
+		} );
+
+		// Commit all writes
+		await batch.commit();
+		console.log( `Successfully synced ${ syncedCount } location suggestions.` );
+
+		return {
+			success: true,
+			synced: syncedCount,
+			message: `Synced ${ syncedCount } locations from spreadsheet.`
+		};
+	}
+	catch( error )
+	{
+		console.error( 'Error syncing location suggestions:', error );
+		throw new HttpsError( 'internal', `Sync failed: ${ error.message }` );
+	}
+	finally
+	{
+		console.log( '--- syncLocationSuggestionsFromSheets FINISHED ---' );
+	}
+}
+
+/**
+ * Manual trigger for syncing location suggestions
+ * Callable by authorized volunteers
+ */
+exports.syncLocationSuggestions = onCall( async( request ) =>
+{
+	console.log( '--- syncLocationSuggestions (manual) STARTED ---' );
+
+	// Check authentication
+	if( !request.auth || !request.auth.uid )
+	{
+		console.warn( 'syncLocationSuggestions: Authentication failed.' );
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to sync locations.' );
+	}
+
+	const uid = request.auth.uid;
+	const db = getFirestore();
+
+	// Check authorization
+	try
+	{
+		const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
+		const authSnap = await authVolRef.get();
+
+		if( !authSnap.exists )
+		{
+			console.warn( `syncLocationSuggestions: User ${ uid } not authorized.` );
+			throw new HttpsError( 'permission-denied', 'Only authorized volunteers can sync locations.' );
+		}
+
+		console.log( `syncLocationSuggestions: User ${ uid } authorized. Starting sync...` );
+	}
+	catch( error )
+	{
+		if( error instanceof HttpsError )
+		{
+			throw error;
+		}
+		console.error( 'syncLocationSuggestions: Error checking authorization:', error );
+		throw new HttpsError( 'internal', 'Error checking authorization.' );
+	}
+
+	// Perform sync
+	const result = await syncLocationSuggestionsFromSheets();
+	console.log( '--- syncLocationSuggestions (manual) FINISHED ---' );
+	return result;
+} );
+
+/**
+ * Scheduled sync of location suggestions
+ * Runs every 10 minutes
+ */
+exports.scheduledSyncLocationSuggestions = onSchedule( {
+	schedule: 'every 10 minutes',
+	timeZone: 'America/New_York'
+}, async( event ) =>
+{
+	console.log( '--- scheduledSyncLocationSuggestions STARTED ---' );
+	const result = await syncLocationSuggestionsFromSheets();
+	console.log( '--- scheduledSyncLocationSuggestions FINISHED ---' );
+	return result;
+} );
