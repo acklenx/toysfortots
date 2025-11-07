@@ -49,7 +49,7 @@ test.describe('Home Page', () => {
     await expect(page.locator('#footer-placeholder')).toBeVisible();
   });
 
-  test('should display map element', async ({ page }) => {
+  test('should display map element @smoke', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(2000);
 

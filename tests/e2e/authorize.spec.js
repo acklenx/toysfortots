@@ -32,7 +32,7 @@ test.describe('Authorization Page', () => {
     await clearTestData();
   });
 
-  test('should display authorization page after new user signup', async ({ page }) => {
+  test('should display authorization page after new user signup @smoke', async ({ page }) => {
     // Already on authorize page from beforeEach
     await expect(page).toHaveURL(/\/authorize/);
 
