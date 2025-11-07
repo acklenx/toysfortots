@@ -55,6 +55,24 @@
     display: none;
 }
 
+/* Header and Footer placeholders - reserve space to prevent layout shift */
+#header-placeholder:empty,
+#footer-placeholder:empty {
+    display: block;
+}
+
+#header-placeholder:empty {
+    min-height: 110px;
+    background-color: white;
+    border-bottom: 5px solid var(--t4t-red);
+}
+
+#footer-placeholder:empty {
+    min-height: 160px;
+    background-color: var(--marine-blue);
+    margin-top: auto;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
@@ -81,6 +99,7 @@ header {
     padding: 15px 20px;
     border-bottom: 5px solid var(--t4t-red);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-height: 110px; /* Reserve space to prevent layout shift */
 
     /* --- NATIVE CSS FIX: Added '&' --- */
     & .header-content {
@@ -126,6 +145,7 @@ header {
     /* --- NATIVE CSS FIX: Added '&' --- */
     & .logo {
         height: 80px;
+        width: auto; /* Allow natural aspect ratio with explicit width/height attrs */
 
         /* Nesting with '&' was already correct here */
         &.t4t-logo {
@@ -340,10 +360,12 @@ footer {
     font-size: 0.9rem;
     /* Sticky footer - push to bottom */
     margin-top: auto;
+    min-height: 160px; /* Reserve space to prevent layout shift */
 
     /* --- NATIVE CSS FIX: Added '&' --- */
     & .footer-bear {
         height: 100px;
+        width: auto; /* Allow natural aspect ratio with explicit width/height attrs */
         margin-top: 10px;
         display: block;
         margin-left: auto;
