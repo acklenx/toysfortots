@@ -165,12 +165,43 @@ artifacts/toysfortots-eae4d/private/01/data/01/
 
 ### Frontend Pages
 
+All pages follow a standardized HTML structure for consistency and maintainability:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title - Toys for Tots</title>
+    <link rel="stylesheet" href="/css/style.css?v=1.0.7">
+</head>
+<body class="bg-gray-100">
+    <div id="header-placeholder"></div>
+
+    <main class="page-container">
+        <!-- Page content here -->
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/js/loader.js" defer></script>
+</body>
+</html>
+```
+
+**Page Inventory:**
 - **`/index.html`**: Public map (anonymous auth, shows all locations)
 - **`/login/`**: Standalone auth page (username → email conversion)
 - **`/dashboard/`**: Volunteer logistics (requires authorization)
 - **`/setup/`**: Box provisioning form (requires auth, grants authorization)
 - **`/box/`**: Public reporting (anonymous auth, creates reports)
 - **`/status/`**: Box history (shows all reports for a box)
+
+**Styling Convention:**
+- All pages use `<body class="bg-gray-100">` for consistent background
+- All content wrapped in `<main class="page-container">` for unified layout
+- `.page-container` provides: flex layout, consistent margins/padding, max-width constraint
+- Header and footer loaded dynamically via `/js/loader.js` for DRY principle
 
 ### Dashboard Implementation Detail
 
@@ -342,6 +373,11 @@ The setup page includes an autocomplete system that reduces data entry by auto-f
   - **Escape**: Close dropdown
   - **Mouse/Touch**: Click or tap to select
 
+**Setup Page UX Enhancements**:
+- When user selects autocomplete suggestion, address fields auto-expand if hidden
+- Auto-fill only populates empty fields (preserves user edits)
+- Success message confirms data was loaded from records
+
 **Setup Page Integration**:
 ```javascript
 // After GPS gets address (public/setup/index.html ~line 167)
@@ -433,6 +469,63 @@ const contactEmail = (row[9] || '').trim(); // Column J (Email)
 - **Dropdown too narrow or not visible**: Ensure input field is visible when autocomplete initializes (width is calculated dynamically on display)
 - **Permission denied errors**: Ensure Firestore rules allow authenticated users to read `locationSuggestions` collection
 - **API key errors**: Verify Google Sheets API is enabled on the API key stored in `GEOCODING_API_KEY`
+
+## CSS Architecture
+
+The project uses a unified CSS architecture with semantic variables and consistent styling patterns.
+
+### CSS Variables
+
+All colors and spacing are defined in `/public/css/style.css` using CSS custom properties:
+
+```css
+:root {
+    /* Brand Colors */
+    --t4t-red: #D21F3C;
+    --t4t-red-hover: #a01828;
+    --t4t-red-light: #fef2f2;
+    --marine-blue: #002D62;
+    --t4t-green: #008000;
+    --t4t-green-dark: #15803d;
+
+    /* Neutral Colors */
+    --gray-50 through --gray-900
+
+    /* Semantic Colors */
+    --bg-primary, --bg-success, --bg-error
+    --text-primary, --text-secondary, --text-muted
+    --border-default, --border-focus
+
+    /* Button Colors */
+    --btn-primary, --btn-secondary, --btn-danger
+
+    /* Spacing */
+    --page-spacing: 20px;
+    --border-radius: 8px;
+}
+```
+
+### Container Classes
+
+**Unified Page Container** (`.page-container`):
+- Used on all pages for consistent layout
+- Provides: `flex: 1`, `margin: var(--page-spacing) auto`, `padding: 0 20px`, `max-width: 1200px`
+- Ensures sticky footer layout works properly
+
+**Legacy Aliases** (deprecated but maintained for compatibility):
+- `.page-content` - same as `.page-container`
+- `.form-wrapper` - same as `.page-container`
+
+**Specialized Containers**:
+- `.container` - Used only on home page for map + sidebar flex layout
+- `.form-container` - Green-tinted container for setup form
+- `.box-page-container`, `.status-page-container` - Max-width 28rem for narrower content
+
+### Utility Classes
+
+- `.bg-gray-100` - Standard body background color
+- `.hidden` - Display none
+- `.sr-only` - Screen reader only (accessibility)
 
 ## Common Issues
 
