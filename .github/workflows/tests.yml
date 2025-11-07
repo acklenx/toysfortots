@@ -27,11 +27,26 @@ jobs:
     - name: 🎭 Install Playwright browsers
       run: npx playwright install chromium
 
+    - name: ☕ Setup Java for Firestore emulator
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '23'
+
     - name: 🔥 Setup Firebase emulators
       run: |
         npm install -g firebase-tools
         firebase emulators:start --only auth,firestore,hosting,functions &
-        sleep 10
+        echo "Waiting for emulators to start..."
+        for i in {1..30}; do
+          if curl -s http://localhost:5000 > /dev/null 2>&1; then
+            echo "Emulators are ready!"
+            break
+          fi
+          echo "Waiting... ($i/30)"
+          sleep 2
+        done
+        sleep 2
 
     - name: 🧪 Run smoke tests
       run: npm run test:smoke
