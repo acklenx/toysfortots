@@ -21,7 +21,7 @@ test.describe('Setup Page', () => {
     await clearTestData();
   });
 
-  test('should display box ID from URL parameter', async ({ page }) => {
+  test('should display box ID from URL parameter @smoke', async ({ page }) => {
     // Create and sign in a user first
     const username = generateUsername('testuser');
     const password = 'testpass123';

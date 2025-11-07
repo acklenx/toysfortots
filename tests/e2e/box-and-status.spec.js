@@ -21,7 +21,7 @@ test.describe('Box Action Center and Status Pages', () => {
   });
 
   test.describe('Box Action Center (/box)', () => {
-    test('should redirect to setup if box does not exist', async ({ page }) => {
+    test('should redirect to setup if box does not exist @smoke', async ({ page }) => {
       const boxId = generateBoxId('NONEXISTENT');
       await page.goto(`/box?id=${boxId}`);
 
@@ -29,7 +29,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page).toHaveURL(new RegExp(`/setup/\\?id=${boxId}`), { timeout: 10000 });
     });
 
-    test('should display box information', async ({ page }) => {
+    test('should display box information @smoke', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Market',
@@ -57,7 +57,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.locator('#location-display')).toContainText('John Doe');
     });
 
-    test('should have pickup and problem buttons', async ({ page }) => {
+    test('should have pickup and problem buttons @smoke', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Location'
@@ -77,7 +77,7 @@ test.describe('Box Action Center and Status Pages', () => {
   });
 
   test.describe('Status/History Page (/status)', () => {
-    test('should redirect to setup if box does not exist', async ({ page }) => {
+    test('should redirect to setup if box does not exist @smoke', async ({ page }) => {
       const boxId = generateBoxId('NONEXISTENT');
       await page.goto(`/status?id=${boxId}`);
 
@@ -85,7 +85,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page).toHaveURL(new RegExp(`/setup/\\?id=${boxId}`), { timeout: 10000 });
     });
 
-    test('should display box information', async ({ page }) => {
+    test('should display box information @smoke', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Market',

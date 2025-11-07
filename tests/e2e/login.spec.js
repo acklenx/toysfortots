@@ -13,7 +13,7 @@ test.describe('Login Page', () => {
     await clearTestData();
   });
 
-  test('should display login form', async ({ page }) => {
+  test('should display login form @smoke', async ({ page }) => {
     await page.goto('/login');
 
     // Check that login form elements are visible

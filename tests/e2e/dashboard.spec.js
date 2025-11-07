@@ -47,7 +47,7 @@ test.describe('Dashboard Page', () => {
     await clearTestData();
   });
 
-  test('should redirect unauthenticated users to login', async ({ page }) => {
+  test('should redirect unauthenticated users to login @smoke', async ({ page }) => {
     // This test doesn't need the user created in beforeEach
     // Clear data first to ensure clean state
     await clearTestData();
@@ -59,7 +59,7 @@ test.describe('Dashboard Page', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('should display dashboard for authorized user', async ({ page }) => {
+  test('should display dashboard for authorized user @smoke', async ({ page }) => {
     // User is already logged in from beforeEach, just navigate to dashboard
     await page.goto('/dashboard/');
 

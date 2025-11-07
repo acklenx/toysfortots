@@ -310,7 +310,8 @@ footer {
     max-width: 600px;
     margin: 0 auto;
     padding: 30px;
-    background: white;
+    background-color: #f0fdf4; /* Green tint for setup page */
+    border: 1px solid #bbf7d0; /* Green border */
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     & h1 {
@@ -360,7 +361,7 @@ footer {
     button {
         width: 100%;
         padding: 12px;
-        background-color: var(--t4t-red);
+        background-color: var(--t4t-green);
         color: white;
         border: none;
         border-radius: 4px;
@@ -370,7 +371,7 @@ footer {
         transition: background-color 0.2s;
 
         &:hover {
-            background-color: #a80000;
+            background-color: #15803d;
         }
 
         &:disabled {

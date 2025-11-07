@@ -42,7 +42,7 @@ test.describe('Authorization Page', () => {
     await expect(page.locator('#authorize-btn')).toBeVisible();
   });
 
-  test('should show authorization code input field', async ({ page }) => {
+  test('should show authorization code input field @smoke', async ({ page }) => {
     const codeInput = page.locator('#auth-code');
     await expect(codeInput).toBeVisible();
     await expect(codeInput).toHaveAttribute('type', 'password');

@@ -17,7 +17,7 @@ test.describe('Home Page', () => {
     await clearTestData();
   });
 
-  test('should load home page successfully', async ({ page }) => {
+  test('should load home page successfully @smoke', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(2000);
 
@@ -120,7 +120,7 @@ test.describe('Home Page', () => {
     // Some error styling might exist, but page should be functional
   });
 
-  test('should work with anonymous authentication', async ({ page }) => {
+  test('should work with anonymous authentication @smoke', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(3000);
 
