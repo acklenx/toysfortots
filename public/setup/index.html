@@ -17,11 +17,6 @@
 						<label>Box ID to Set Up</label>
 						<div id="box-id-display">Loading...</div>
 					</div>
-					<div class="form-group">
-						<label for="passcode">Setup Code</label>
-						<input type="password" id="passcode" name="passcode" required>
-						<span id="toggle-passcode" style="display: block; text-align: right; font-size: 0.875rem; color: #3b82f6; cursor: pointer;  margin-bottom: 0.75rem;">show code</span>
-					</div>
 					<div class="hr-divider"></div>
 					<div style="margin-bottom: 1.25rem;">
 						<button id="gps-btn" type="button">
@@ -116,8 +111,6 @@
 				const showAddressBtn = document.getElementById( 'show-address-btn' );
 				const manualAddressFields = document.getElementById( 'manual-address-fields' );
 				const gpsErrorMsg = document.getElementById( 'gps-error-msg' );
-				const passcode = document.getElementById( 'passcode' );
-				const togglePasscode = document.getElementById( 'toggle-passcode' );
 
 
 				async function getGeoLocation()
@@ -232,13 +225,12 @@
 						showMessage( 'error', 'Please provide either a Contact Email or a Contact Phone.' );
 						return; // Stop the submission
 					}
-					if( !auth.currentUser )
+					if( !auth.currentUser || auth.currentUser.isAnonymous )
 					{
 						showMessage( 'error', 'You must be signed in to submit this form.' );
-						console.error( 'Client Error: Submission attempted while user is logged out.' );
+						console.error( 'Client Error: Submission attempted while user is logged out or anonymous.' );
 						return;
 					}
-					// Anonymous users are allowed - they will be authorized via passcode
 					if( !scannedBoxId )
 					{
 						return;
@@ -255,7 +247,7 @@
 						state: formData.get( 'state' ),
 						postalcode: formData.get( 'postalcode' ),
 						boxes: 1,
-						passcode: formData.get( 'passcode' ),
+						passcode: '', // No passcode needed - user is already authorized
 						contactName: contactName,
 						contactEmail: contactEmail,
 						contactPhone: contactPhone,
@@ -285,7 +277,7 @@
 						}
 						else if( error.name === 'FirebaseError' && error.message.includes( 'permission-denied' ) )
 						{
-							displayMessage = 'Permission Denied: Check the volunteer passcode.';
+							displayMessage = 'Permission Denied: Please check your authorization.';
 						}
 						else if( error.name === 'FirebaseError' && error.message.includes( 'UNAUTHENTICATED' ) )
 						{
@@ -313,12 +305,6 @@
 					}
 					isAuthorizedVolunteer = httpsCallable( functions, 'isAuthorizedVolunteerV2' );
 					gpsBtn.onclick = getGeoLocation;
-					togglePasscode.onclick = function()
-					{
-						const type = passcode.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
-						passcode.setAttribute( 'type', type );
-						this.textContent = ( type === 'password' ) ? 'show code' : 'hide code';
-					};
 					showAddressBtn.onclick = () =>
 					{
 						gpsErrorMsg.textContent = '';
@@ -330,91 +316,71 @@
 					form.onsubmit = handleFormSubmit;
 					onAuthStateChanged( auth, async( user ) =>
 					{
-						if( user )
+						// Redirect to login if not authenticated or anonymous
+						if( !user || user.isAnonymous )
 						{
-							if( !scannedBoxId )
+							const returnUrl = encodeURIComponent( window.location.pathname + window.location.search );
+							window.location.href = `/login/?returnUrl=${ returnUrl }`;
+							return;
+						}
+
+						// Check authorization
+						try
+						{
+							const result = await isAuthorizedVolunteer();
+							if( !result.data.isAuthorized )
 							{
-								form.classList.add( 'hidden' );
-								showMessage( 'error', 'No Box ID found in URL. Cannot check status.' );
+								// Not authorized - redirect to authorize page with boxId
+								window.location.href = `/authorize?boxId=${ scannedBoxId }`;
 								return;
 							}
-							try
-							{
-								const locRef = doc( db, locationsCollectionPath, scannedBoxId );
-								const locSnap = await getDoc( locRef );
-								if( locSnap.exists() )
-								{
-									form.classList.add( 'hidden' );
-									showMessage( 'success', 'This box is already set up. Redirecting to status page...' );
-									window.location.href = `/status/?id=${ scannedBoxId }`;
-									return;
-								}
-								form.classList.remove( 'hidden' );
+						}
+						catch( error )
+						{
+							console.error( 'Authorization check failed:', error );
+							// On error, redirect to authorize page
+							window.location.href = `/authorize?boxId=${ scannedBoxId }`;
+							return;
+						}
 
-								// Only show user info if not anonymous
-								if( user.email && !user.isAnonymous )
-								{
-									let displayName = user.email;
-									const atIndex = displayName.indexOf( '@' );
-									if( atIndex !== -1 )
-									{
-										displayName = displayName.substring( 0, atIndex );
-									}
-									userDisplay.textContent = `Signed in as: ${ displayName }`;
-									userDisplay.classList.remove( 'hidden' );
-									signOutBtn.classList.remove( 'hidden' );
-								}
-								else
-								{
-									userDisplay.classList.add( 'hidden' );
-									signOutBtn.classList.add( 'hidden' );
-								}
+						// User is authenticated and authorized - proceed
+						if( !scannedBoxId )
+						{
+							form.classList.add( 'hidden' );
+							showMessage( 'error', 'No Box ID found in URL. Cannot check status.' );
+							return;
+						}
 
-								const passcodeGroup = passcode.parentElement;
-								const passcodeLabel = passcodeGroup.querySelector( 'label' );
-
-								// Check authorization only for authenticated (non-anonymous) users
-								if( !user.isAnonymous )
-								{
-									passcodeLabel.textContent = 'Verifying authorization...';
-									const result = await isAuthorizedVolunteer();
-									if( result.data.isAuthorized )
-									{
-										passcodeGroup.classList.add( 'hidden' );
-										passcode.required = false;
-										passcode.value = '';
-										passcodeLabel.textContent = 'Password (Authorized)';
-									}
-									else
-									{
-										passcodeGroup.classList.remove( 'hidden' );
-										passcode.required = true;
-										passcodeLabel.textContent = 'Setup Code';
-									}
-								}
-								else
-								{
-									// Anonymous users must use passcode
-									passcodeGroup.classList.remove( 'hidden' );
-									passcode.required = true;
-									passcodeLabel.textContent = 'Setup Code';
-								}
-							}
-							catch( error )
+						try
+						{
+							const locRef = doc( db, locationsCollectionPath, scannedBoxId );
+							const locSnap = await getDoc( locRef );
+							if( locSnap.exists() )
 							{
 								form.classList.add( 'hidden' );
-								showMessage( 'error', `An error occurred: ${ error.message }` );
+								showMessage( 'success', 'This box is already set up. Redirecting to status page...' );
+								window.location.href = `/status/?id=${ scannedBoxId }`;
+								return;
 							}
+
+							// Box doesn't exist, show form
+							form.classList.remove( 'hidden' );
+
+							// Show user info
+							let displayName = user.email;
+							const atIndex = displayName.indexOf( '@' );
+							if( atIndex !== -1 )
+							{
+								displayName = displayName.substring( 0, atIndex );
+							}
+							userDisplay.textContent = `Signed in as: ${ displayName }`;
+							userDisplay.classList.remove( 'hidden' );
+							signOutBtn.classList.remove( 'hidden' );
 						}
-						else
+						catch( error )
 						{
-							// No user - sign in anonymously to allow access to setup page
-							console.log( 'No user found. Signing in anonymously for setup page access...' );
-							const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
-							await signInAnonymously( auth ).catch( error => {
-								console.error( 'Anonymous sign-in failed:', error );
-								showMessage( 'error', `Authentication failed: ${ error.message }` );
-							});
+							form.classList.add( 'hidden' );
+							showMessage( 'error', `An error occurred: ${ error.message }` );
 						}
 					} );
 				}
