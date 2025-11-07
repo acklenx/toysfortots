@@ -374,10 +374,25 @@ All pages load `_header.html` and `_footer.html` via `loader.js` for consistent 
   - T4T logo: "Toys for Tots logo with red text and toy train"
   - MCL logo: "Marine Corps League emblem with Eagle, Globe, and Anchor"
   - Gunny bear: "Gunny Bear, the Toys for Tots teddy bear mascot wearing Marine Corps uniform with sunglasses"
-- Hidden menu items use `tabindex="-1"` and `aria-hidden="true"` to prevent keyboard focus traps
-- JavaScript properly manages ARIA attributes when showing/hiding menu elements
-- Hamburger menu button has `aria-label="Menu"` and `aria-expanded` state
-- WCAG 2.1 Level A compliance for Non-text Content, Keyboard, and Name/Role/Value
+  - Map pin: WebP format icon for location markers
+- Hamburger menu keyboard accessibility:
+  - ALL menu items have `tabindex="-1"` and `aria-hidden="true"` when menu is closed
+  - Includes Map, Dashboard, New Box, Sign In, and Sign Out items
+  - JavaScript dynamically toggles `tabindex` and `aria-hidden` when menu opens/closes
+  - Only visible items become focusable when menu is open
+  - Hamburger button has `aria-label="Menu"` and `aria-expanded` state
+  - Nav container properly manages `aria-hidden` state
+- WCAG 2.1 Level A compliance for Non-text Content (1.1.1), Keyboard (2.1.1), and Name/Role/Value (4.1.2)
+
+**Mobile Responsive Design:**
+- Header layout optimized for mobile (768px breakpoint):
+  - Maintains horizontal layout (flex-row) on mobile for better space efficiency
+  - Reduced padding: 10px 15px (vs 15px 20px on desktop)
+  - Reduced logo sizes: T4T 40px, MCL 50px (vs 60px/80px on desktop)
+  - Left-aligned header text for better readability
+  - Scaled-down typography: h1 1.2rem, h2 1rem, sub-header 0.75rem
+  - Header placeholder adjusted to 90px on mobile (vs 110px desktop)
+- Map and location list stack vertically on mobile (50vh each)
 
 ### Location Autocomplete System
 
