@@ -5,13 +5,15 @@ import { defineConfig, devices } from '@playwright/test';
  * Run with: npx playwright test --config=playwright.smoke.config.js
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e', // Only e2e tests, not unit tests
   fullyParallel: false, // Run sequentially to avoid emulator contention
   forbidOnly: !!process.env.CI,
   retries: 1, // One retry for transient failures
   workers: 1, // Single worker for stability
   reporter: 'html',
   timeout: 15000, // 15 seconds per test
+  globalSetup: './tests/global-setup.js',
+  globalTeardown: './tests/global-teardown.js',
 
   use: {
     baseURL: 'http://localhost:5000',
