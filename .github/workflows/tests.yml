@@ -33,8 +33,8 @@ jobs:
         firebase emulators:start --only auth,firestore,hosting,functions &
         sleep 10
 
-    - name: 🧪 Run smart test runner
-      run: npm run test:smart
+    - name: 🧪 Run smoke tests
+      run: npm run test:smoke
 
     - name: 📊 Upload test results
       if: always()
