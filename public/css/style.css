@@ -1297,13 +1297,6 @@ footer {
     border: 1px solid var(--t4t-red);
 }
 
-.form-container {
-    background-color: #fef2f2;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #fecaca;
-}
-
 .form-group {
     margin-bottom: 1rem;
 }
