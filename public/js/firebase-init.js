@@ -34,6 +34,7 @@ const privateBasePath = `artifacts/${ appId }/private/${ publicDocumentId }/data
 
 export const locationsCollectionPath = `${ basePath }/locations`;
 export const reportsCollectionPath = `${ basePath }/totsReports`;
+export const locationSuggestionsCollectionPath = `${ basePath }/locationSuggestions`;
 export const authorizedVolunteersCollectionPath = `${ privateBasePath }/authorizedVolunteers`;
 
 // Make paths available globally for user-display.js

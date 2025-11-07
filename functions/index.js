@@ -1,12 +1,14 @@
 const { onCall, HttpsError } = require( 'firebase-functions/v2/https' );
 const { getFirestore, FieldValue } = require( 'firebase-admin/firestore' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
+const { onSchedule } = require( 'firebase-functions/v2/scheduler' );
 const { initializeApp } = require( 'firebase-admin/app' );
 const admin = require( 'firebase-admin' );
 const { defineString } = require( 'firebase-functions/params' );
 const FormData = require( 'form-data' );
 const { Client } = require( '@googlemaps/google-maps-services-js' );
 const Mailgun = require( 'mailgun.js' );
+const { google } = require( 'googleapis' );
 const mailgun = new Mailgun( FormData );
 const ADMIN_EMAIL = 'toysfortots@qlamail.com';
 const MAILGUN_KEY = defineString( 'MAILGUN_KEY' );
@@ -75,6 +77,11 @@ const AUTH_VOLUNTEERS_PATH = `${ PRIVATE_PATH_PREFIX }/authorizedVolunteers`;
 const PUBLIC_DATA_PREFIX = 'artifacts/toysfortots-eae4d/public/01/data/01';
 const LOCATIONS_PATH = `${ PUBLIC_DATA_PREFIX }/locations`;
 const REPORTS_PATH = `${ PUBLIC_DATA_PREFIX }/totsReports`;
+const LOCATION_SUGGESTIONS_PATH = `${ PUBLIC_DATA_PREFIX }/locationSuggestions`;
+
+// Google Sheets configuration
+const SPREADSHEET_ID = '1XbU6koPSANKaLFN9bFqU11SlNs-9qUhNpkUS6bxFg8k';
+const SHEET_NAME = 'WorkingCopy';
 exports.provisionBoxV2 = onCall( async( request ) =>
 {
 	console.log( '--- provisionBoxV2 STARTED ---' );

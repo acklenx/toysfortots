@@ -25,6 +25,13 @@ service cloud.firestore {
         allow list, get, update: if isAuthorizedVolunteer(); // Uses the new provider-agnostic function
         allow delete: if false;
       }
+
+      // --- LOCATION SUGGESTIONS (for autocomplete) ---
+      // Read-only for authorized volunteers
+      match /locationSuggestions/{suggestionId} {
+        allow get, list: if isAuthorizedVolunteer();
+        allow write: if false; // Only Cloud Functions can write
+      }
     }
 
     // --- Private Data ---
