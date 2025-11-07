@@ -68,7 +68,7 @@
 }
 
 #footer-placeholder:empty {
-    min-height: 160px;
+    min-height: 220px;
     background-color: var(--marine-blue);
     margin-top: auto;
 }
@@ -314,6 +314,7 @@ header .header-right {
 .container #location-list-container #location-list {
     overflow-y: auto;
     flex-grow: 1;
+    min-height: 100vh; /* Reserve full viewport height to prevent layout shift */
 }
 
 /* --- Location List Items --- */

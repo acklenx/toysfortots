@@ -9,7 +9,7 @@
 
       // Don't show anything for anonymous users
       if (user.isAnonymous) {
-        userDisplay.style.display = 'none';
+        userDisplay.style.visibility = 'hidden';
         return;
       }
 
@@ -40,9 +40,9 @@
         userDisplay.textContent = username;
       }
 
-      userDisplay.style.display = 'block';
+      userDisplay.style.visibility = 'visible';
     } else {
-      userDisplay.style.display = 'none';
+      userDisplay.style.visibility = 'hidden';
     }
   }
 
