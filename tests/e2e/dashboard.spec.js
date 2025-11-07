@@ -47,7 +47,7 @@ test.describe('Dashboard Page', () => {
     await clearTestData();
   });
 
-  test('should redirect unauthenticated users to login @smoke', async ({ page }) => {
+  test('should redirect unauthenticated users to login', async ({ page }) => {
     // This test doesn't need the user created in beforeEach
     // Clear data first to ensure clean state
     await clearTestData();
