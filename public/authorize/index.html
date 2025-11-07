@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="description" content="Volunteer authorization for Toys for Tots. Complete registration to help coordinate donation boxes with Marine Corps League Detachment 1311 in North Metro Atlanta. Supporting the Marine Corps Reserve Toys for Tots program.">
 		<title>Volunteer Authorization - Toys for Tots</title>
-		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.7">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -50,12 +50,12 @@
 			</div>
 		</div>
 		<div id="footer-placeholder"></div>
-		<script src="/js/loader.js" defer></script>
+		<script src="/js/loader.min.js" defer></script>
 		<script type="module">
 			import { auth, functions } from '../js/firebase-init.js';
 			import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
-			import { showAuthMessage, clearAuthMessage } from '/js/utils.js';
+			import { showAuthMessage, clearAuthMessage } from '/js/utils.min.js';
 
 			const authCodeInput = document.getElementById('auth-code');
 			const authorizeBtn = document.getElementById('authorize-btn');

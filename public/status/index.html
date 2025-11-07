@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="description" content="View Toys for Tots donation box status and history. Track pickups and issues for donation boxes in North Metro Atlanta. Run by the Marine Corps Reserve with local support from Marine Corps League Detachment 1311.">
 		<title>Box History</title>
-		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.7">
 
 		<script type="module">
 			// --- 1. IMPORTS ---
@@ -24,7 +24,7 @@
 				orderBy
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
-			import { formatDate } from '/js/utils.js';
+			import { formatDate } from '/js/utils.min.js';
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			// Config is now imported
 
@@ -261,6 +261,6 @@
 
 		<div id="footer-placeholder"></div>
 
-		<script src="/js/loader.js" defer></script>
+		<script src="/js/loader.min.js" defer></script>
 	</body>
 </html>

@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="description" content="Register a new Toys for Tots donation box location. Marine Corps League Detachment 1311 volunteers can set up boxes at businesses in North Metro Atlanta. Supporting the Marine Corps Reserve Toys for Tots program.">
 		<title>Set Up New Location</title>
-		<link rel="stylesheet" href="/css/style.css?v=1.0.7">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.7">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -76,13 +76,13 @@
 			</div>
 			<script type="module">
 				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
-				import { showMessage } from '/js/utils.js';
+				import { showMessage } from '/js/utils.min.js';
 			import {
 				findExactMatchByAddress,
 				searchByLabel,
 				autoFillFormFields,
 				createAutocomplete
-			} from '../js/location-autocomplete.js';
+			} from '../js/location-autocomplete.min.js';
 				import {
 					onAuthStateChanged
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -474,6 +474,6 @@
 		</main>
 
 		<div id="footer-placeholder"></div>
-		<script src="/js/loader.js" defer></script>
+		<script src="/js/loader.min.js" defer></script>
 	</body>
 </html>
