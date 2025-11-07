@@ -10,17 +10,29 @@
   - Handle updates when spreadsheet data changes
 
 ### 🎨 **UI/UX Consistency & Polish**
+- [x] ✅ **Layout shift prevention (November 7, 2025)**
+  - Fixed footer layout shift (reserve 224px, use visibility for username)
+  - Fixed header layout shift (remove duplicate border, inline CSS)
+  - Force scrollbar to prevent horizontal shifts
+  - Loading message removal (no reserved space after quick load)
+
+- [x] ✅ **Add hamburger menu for authenticated users**
+  - Replace hidden icon navigation with proper menu
+  - Include: Dashboard, Setup New Box, View All Boxes, Sign Out
+  - Mobile-friendly slide-out design
+  - Accessibility: menu items unfocusable until expanded
+  - Use appropriate icons for menu items
+
+- [x] ✅ **User experience improvements**
+  - White footer username text for better contrast
+  - Store displayName with proper capitalization
+  - Location list always clears when realtime data loads
+  - Loading message disappears after 5 seconds or on data load
+
 - [ ] **Fix page appearance inconsistencies** ⚠️ **HIGH PRIORITY**
   - Audit all pages for visual consistency
   - Standardize header/footer styling across pages
   - Ensure consistent spacing, fonts, and colors
-  - Fix footer positioning (should always be at bottom)
-
-- [ ] **Add hamburger menu for authenticated users**
-  - Replace hidden icon navigation with proper menu
-  - Include: Dashboard, Setup New Box, View All Boxes, Sign Out
-  - Mobile-friendly slide-out design
-  - Use appropriate icons for menu items
 
 ---
 
@@ -138,12 +150,22 @@
   - Audit API key exposure
 
 ### ⚡ Performance & Best Practices
+- [x] ✅ **Asset minification (November 7, 2025)**
+  - Added build scripts for CSS minification (csso)
+  - Added build scripts for JS minification (terser)
+  - All pages updated to use minified assets
+  - Reduced file sizes for faster page loads
+
+- [x] ✅ **Production bug fixes**
+  - Fixed getLocationsCache Cloud Function (explicit bucket name)
+  - Fixed location list not clearing when cache fails but realtime succeeds
+  - Cache function ready for deployment after Storage bucket creation
+
 - [ ] **Lighthouse audit**
   - Run Lighthouse tests on all pages
   - Achieve 90+ scores across all categories
   - Fix performance bottlenecks
-  - Optimize images
-  - Minimize JavaScript
+  - Optimize images (already done for logos)
   - Improve accessibility scores
 
 - [ ] **Code cleanup**
@@ -167,10 +189,15 @@
 - [ ] Add success/error animations for form submissions
 
 ### ♿ Accessibility
-- [ ] Add ARIA labels where needed
+- [x] ✅ **Hamburger menu accessibility (November 7, 2025)**
+  - Menu items have tabindex="-1" and aria-hidden="true" when closed
+  - Attributes removed only when menu expands
+  - Proper keyboard navigation support
+  - ARIA labels on hamburger button
+- [ ] Add ARIA labels where needed (other pages)
 - [ ] Ensure proper heading hierarchy
 - [ ] Test with screen readers
-- [ ] Verify keyboard navigation
+- [ ] Verify keyboard navigation across all pages
 - [ ] Check color contrast ratios
 - [ ] Add focus indicators
 
@@ -204,5 +231,5 @@
 
 ---
 
-*Last Updated: November 6, 2025*
+*Last Updated: November 7, 2025*
 *Maintained with ❤️ for Marine Corps League Detachment #1311*
