@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require( 'firebase-functions/v2/https' );
+const { onCall, onRequest, HttpsError } = require( 'firebase-functions/v2/https' );
 const { getFirestore, FieldValue } = require( 'firebase-admin/firestore' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { onSchedule } = require( 'firebase-functions/v2/scheduler' );
@@ -531,3 +531,37 @@ exports.scheduledSyncLocationSuggestions = onSchedule( {
 	console.log( '--- scheduledSyncLocationSuggestions FINISHED ---' );
 	return result;
 } );
+
+/**
+ * HTTP endpoint to trigger sync via curl
+ * Usage: curl https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
+ * Optional 30s delay: curl https://...?delay=30
+ */
+exports.triggerSyncLocationSuggestions = onRequest( async( req, res ) =>
+{
+	console.log( '--- triggerSyncLocationSuggestions (HTTP) STARTED ---' );
+
+	// Optional delay parameter (in seconds)
+	const delaySeconds = parseInt( req.query.delay || '0', 10 );
+	if( delaySeconds > 0 )
+	{
+		console.log( `Waiting ${ delaySeconds } seconds before sync...` );
+		await new Promise( resolve => setTimeout( resolve, delaySeconds * 1000 ) );
+	}
+
+	try
+	{
+		const result = await syncLocationSuggestionsFromSheets();
+		console.log( '--- triggerSyncLocationSuggestions (HTTP) FINISHED ---' );
+		res.status( 200 ).json( result );
+	}
+	catch( error )
+	{
+		console.error( 'triggerSyncLocationSuggestions error:', error );
+		res.status( 500 ).json( {
+			success: false,
+			error: error.message
+		} );
+	}
+} );
+
