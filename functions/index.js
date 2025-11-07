@@ -583,7 +583,7 @@ async function generateLocationsCache()
 	console.log( '--- generateLocationsCache STARTED ---' );
 	const db = getFirestore();
 	const { getStorage } = require( 'firebase-admin/storage' );
-	const bucket = getStorage().bucket();
+	const bucket = getStorage().bucket( 'toysfortots-eae4d.appspot.com' );
 
 	try
 	{
@@ -665,7 +665,7 @@ exports.getLocationsCache = onRequest( { cors: true }, async( req, res ) =>
 {
 	console.log( '--- getLocationsCache STARTED ---' );
 	const { getStorage } = require( 'firebase-admin/storage' );
-	const bucket = getStorage().bucket();
+	const bucket = getStorage().bucket( 'toysfortots-eae4d.appspot.com' );
 
 	try
 	{
