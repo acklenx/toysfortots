@@ -173,6 +173,7 @@ All pages follow a standardized HTML structure for consistency and maintainabili
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="[SEO description crediting Marine Corps Reserve as primary, MCL 1311 as local support]">
     <title>Page Title - Toys for Tots</title>
     <link rel="stylesheet" href="/css/style.css?v=1.0.7">
 </head>
@@ -196,6 +197,15 @@ All pages follow a standardized HTML structure for consistency and maintainabili
 - **`/setup/`**: Box provisioning form (requires auth, grants authorization)
 - **`/box/`**: Public reporting (anonymous auth, creates reports)
 - **`/status/`**: Box history (shows all reports for a box)
+- **`/authorize/`**: Volunteer authorization page
+- **`/print/`**: QR code sticker generator for boxes
+
+**SEO Meta Descriptions:**
+All pages include meta descriptions that credit:
+1. **Marine Corps Reserve** as the primary organization running Toys for Tots
+2. **Marine Corps League Detachment 1311** as local North Metro Atlanta support
+
+Example: "Run by the Marine Corps Reserve and coordinated locally by Marine Corps League Detachment 1311 in North Metro Atlanta."
 
 **Styling Convention:**
 - All pages use `<body class="bg-gray-100">` for consistent background
@@ -348,6 +358,16 @@ The box page checks if location exists and redirects to setup if not found.
 ### Shared Header/Footer
 
 All pages load `_header.html` and `_footer.html` via `loader.js` for consistent branding.
+
+**Layout Shift Prevention:**
+- All images have explicit `width` and `height` attributes to reserve space before loading
+  - T4T logo: 181×60px
+  - MCL logo: 80×80px
+  - Gunny bear footer: 79×100px
+  - Map pin icon: 40×39px
+- Header and footer have `min-height` set (110px and 160px respectively)
+- Empty `#header-placeholder` and `#footer-placeholder` divs show skeleton styles
+- This reduces Cumulative Layout Shift (CLS) and improves Core Web Vitals
 
 ### Location Autocomplete System
 
