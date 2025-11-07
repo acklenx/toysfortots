@@ -19,9 +19,9 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	const locationList = document.getElementById( 'location-list' );
 	const customIcon = L.icon( {
 		iconUrl: 'images/pin.png',
-		iconSize: [ 40, 40 ],
-		iconAnchor: [ 20, 40 ],
-		popupAnchor: [ 0, -40 ]
+		iconSize: [ 40, 39 ],
+		iconAnchor: [ 20, 39 ],
+		popupAnchor: [ 0, -39 ]
 	} );
 
 	async function loadLocations()
