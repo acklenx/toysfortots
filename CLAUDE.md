@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Commit Message Policy
+
+**DO NOT include Claude Code co-authored text in commit messages!**
+
+The following lines should NEVER appear in commit messages:
+- `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+- `Co-Authored-By: Claude <noreply@anthropic.com>`
+
+A `commit-msg` hook will automatically block commits containing these lines.
+
 ## Project Overview
 
 This is a Firebase-based web application for tracking Toys for Tots donation boxes. Marines use QR codes to provision boxes at business locations, and the public can scan codes to report when boxes need pickup. The system manages location data, status reports, and volunteer authorization.
