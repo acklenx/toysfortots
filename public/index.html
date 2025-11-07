@@ -7,7 +7,7 @@
 		<title>Toys for Tots - North Metro Atlanta Area</title>
 		<link rel="preconnect" href="https://unpkg.com" crossorigin>
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-		<link rel="stylesheet" href="/css/style.min.css?v=1.0.16">
+		<link rel="stylesheet" href="/css/style.min.css?v=1.0.17">
 	</head>
 	<body class="bg-gray-100">
 		<div id="header-placeholder"></div>
@@ -55,10 +55,23 @@
 				let cachedLocationsLoaded = false;
 				let realtimeLocationsLoaded = false;
 
+				// Hide loading message
+				function hideLoadingMessage()
+				{
+					const loadingMsg = document.getElementById( 'loading-message' );
+					if( loadingMsg )
+					{
+						loadingMsg.style.visibility = 'hidden';
+					}
+				}
+
 				// Render locations on map and list
 				function renderLocations( locationsArray, source )
 				{
 					console.log( `Rendering ${ locationsArray.length } locations from ${ source }` );
+
+					// Hide loading message when we get data
+					hideLoadingMessage();
 
 					if( locationsArray.length === 0 )
 					{
@@ -118,7 +131,10 @@
 				async function loadCachedLocations()
 				{
 					console.log( 'Loading cached locations...' );
-					locationList.innerHTML = '<p style="padding: 15px; text-align: center;">Loading locations...</p>';
+					locationList.innerHTML = '<p id="loading-message" style="padding: 5px; text-align: center; font-size: 0.9em; color: #666;">Loading locations...</p>';
+
+					// Hide loading message after 5 seconds
+					setTimeout( hideLoadingMessage, 5000 );
 
 					try
 					{
@@ -147,7 +163,7 @@
 					catch( error )
 					{
 						console.warn( 'Could not load cached locations, falling back to realtime:', error );
-						locationList.innerHTML = '<p style="padding: 15px; text-align: center;">Loading locations...</p>';
+						hideLoadingMessage();
 					}
 				}
 
@@ -178,6 +194,7 @@
 					catch( error )
 					{
 						console.error( 'Error loading realtime locations:', error );
+						hideLoadingMessage();
 						if( !cachedLocationsLoaded )
 						{
 							locationList.innerHTML = `<p style="padding: 15px; text-align: center; color: red;">Could not load location data: ${ error.message }</p>`;
