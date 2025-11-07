@@ -8,7 +8,7 @@
 
 		<script type="module">
 			// --- 1. IMPORTS ---
-			import { auth, db, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
+			import { auth, db, functions, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				signInAnonymously,
 				onAuthStateChanged
@@ -22,6 +22,7 @@
 				where,
 				orderBy
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 			import { formatDate } from '/js/utils.js';
 			// --- 2. CONFIG & TOP-LEVEL VARS ---
 			// Config is now imported
@@ -116,6 +117,31 @@
 					loadingMessage.style.color = 'var(--t4t-red)';
 					loadingMessage.style.fontWeight = '700';
 					loadingMessage.textContent = 'Error: Box ID missing from the link.';
+					return;
+				}
+
+				// Check if user is authenticated and authorized
+				const user = auth.currentUser;
+				if (!user || user.isAnonymous) {
+					// Not authenticated or anonymous - redirect to box page
+					window.location.href = `/box/?id=${ boxId }`;
+					return;
+				}
+
+				// Check authorization
+				try {
+					const isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteerV2');
+					const result = await isAuthorizedVolunteer();
+
+					if (!result.data.isAuthorized) {
+						// Authenticated but not authorized - redirect to box page
+						window.location.href = `/box/?id=${ boxId }`;
+						return;
+					}
+				} catch (error) {
+					console.error('Authorization check failed:', error);
+					// On error, redirect to box page to be safe
+					window.location.href = `/box/?id=${ boxId }`;
 					return;
 				}
 
