@@ -1,3 +1,183 @@
+<style>
+/* Inline header styles to prevent layout shift */
+header {
+    background-color: white;
+    padding: 15px 20px;
+    border-bottom: 5px solid #D21F3C;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-height: 110px;
+}
+header .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+header .header-text {
+    text-align: center;
+}
+header .header-text h1 {
+    color: #002D62;
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+header .header-text h1:hover {
+    text-decoration: underline;
+}
+header .header-text h2 {
+    color: #D21F3C;
+    margin: 5px 0;
+    font-weight: 500;
+}
+header .header-text h2:hover {
+    text-decoration: underline;
+}
+header .header-text .sub-header {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+header .logo {
+    height: 80px;
+    width: auto;
+}
+header .logo.t4t-logo {
+    height: 60px;
+}
+header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.hamburger-menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+.hamburger-menu-btn span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: #002D62;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+.hamburger-menu-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+.hamburger-menu-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger-menu-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+.hamburger-menu-btn:hover span {
+    background-color: #D21F3C;
+}
+.hamburger-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+.hamburger-menu.active {
+    transform: translateX(0);
+}
+.hamburger-menu .menu-content {
+    padding: 80px 0 20px;
+    display: flex;
+    flex-direction: column;
+}
+.hamburger-menu .menu-user-info {
+    padding: 15px 20px;
+    border-bottom: 2px solid #D21F3C;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #002D62;
+    font-size: 1.1rem;
+}
+.hamburger-menu .menu-item {
+    display: block;
+    padding: 15px 20px;
+    color: #333;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 4px solid transparent;
+}
+.hamburger-menu .menu-item:hover {
+    background-color: #f4f4f4;
+    border-left-color: #D21F3C;
+    color: #002D62;
+}
+.hamburger-menu .menu-item span {
+    display: inline-block;
+}
+.hamburger-menu.active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+}
+@media (max-width: 768px) {
+    header {
+        padding: 10px 15px;
+        min-height: 90px;
+    }
+    header .header-content {
+        flex-direction: row;
+        gap: 10px;
+    }
+    header .header-text {
+        flex: 1;
+        text-align: left;
+    }
+    header .header-text h1 {
+        font-size: 1.2rem;
+        line-height: 1.2;
+    }
+    header .header-text h2 {
+        font-size: 1rem;
+        margin: 2px 0;
+    }
+    header .header-text .sub-header {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+    header .logo {
+        height: 50px;
+    }
+    header .logo.t4t-logo {
+        height: 40px;
+    }
+    header .header-right {
+        gap: 10px;
+    }
+    header .header-right .mcl-logo {
+        height: 50px;
+    }
+}
+</style>
 <header>
 	<div class="header-content">
 		<a href="https://www.toysfortots.org" target="_blank" rel="noopener noreferrer">
