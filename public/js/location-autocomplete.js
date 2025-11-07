@@ -176,7 +176,6 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 			max-height: 200px;
 			overflow-y: auto;
 			z-index: 1000;
-			width: ${inputElement.offsetWidth}px;
 			box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 		`;
 		dropdown.style.display = 'none';
@@ -213,8 +212,8 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 					cursor: pointer;
 					border-bottom: 1px solid #eee;
 				">
-					<div style="font-weight: bold;">${result.label}</div>
-					<div style="font-size: 0.875rem; color: #666;">${result.address}, ${result.city}</div>
+					<div style="font-weight: bold;">${result.label || '(No label)'}</div>
+					<div style="font-size: 0.875rem; color: #666;">${result.address || ''}, ${result.city || ''}</div>
 				</div>
 			`).join('');
 
@@ -222,6 +221,7 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 			dropdownElement.style.display = 'block';
 			dropdownElement.style.top = inputElement.offsetHeight + 'px';
 			dropdownElement.style.left = '0';
+			dropdownElement.style.width = inputElement.offsetWidth + 'px';
 
 			// Add hover effect
 			dropdownElement.querySelectorAll('.autocomplete-item').forEach(item => {
