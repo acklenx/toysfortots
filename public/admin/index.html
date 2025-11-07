@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Admin panel for managing Toys for Tots donation boxes, locations, and volunteers. Run by the Marine Corps Reserve and coordinated locally by Marine Corps League Detachment 1311.">
+	<title>Admin Panel - Toys for Tots</title>
+	<link rel="stylesheet" href="/css/style.min.css?v=1.0.20">
+	<style>
+		.admin-container {
+			max-width: 1400px;
+			margin: 20px auto;
+			padding: 0 20px;
+		}
+
+		.admin-header {
+			background: white;
+			padding: 20px;
+			border-radius: 8px;
+			margin-bottom: 30px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+
+		.admin-header h1 {
+			color: var(--marine-blue);
+			margin: 0 0 10px 0;
+		}
+
+		.admin-header p {
+			color: var(--text-secondary);
+			margin: 0;
+		}
+
+		.admin-section {
+			background: white;
+			padding: 20px;
+			border-radius: 8px;
+			margin-bottom: 20px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+
+		.section-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 15px;
+			border-bottom: 2px solid var(--t4t-red);
+		}
+
+		.section-header h2 {
+			color: var(--marine-blue);
+			margin: 0;
+		}
+
+		.danger-btn {
+			background-color: var(--t4t-red);
+			color: white;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		.danger-btn:hover {
+			background-color: var(--t4t-red-hover);
+		}
+
+		.primary-btn {
+			background-color: var(--marine-blue);
+			color: white;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		.primary-btn:hover {
+			background-color: #001a3d;
+		}
+
+		.secondary-btn {
+			background-color: var(--gray-500);
+			color: white;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: 600;
+		}
+
+		.secondary-btn:hover {
+			background-color: var(--gray-600);
+		}
+
+		.data-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 15px;
+		}
+
+		.data-table th {
+			background-color: var(--gray-100);
+			color: var(--marine-blue);
+			padding: 12px;
+			text-align: left;
+			font-weight: 600;
+			border-bottom: 2px solid var(--t4t-red);
+		}
+
+		.data-table td {
+			padding: 12px;
+			border-bottom: 1px solid var(--gray-200);
+		}
+
+		.data-table tr:hover {
+			background-color: var(--gray-50);
+		}
+
+		.action-buttons {
+			display: flex;
+			gap: 8px;
+		}
+
+		.action-buttons button {
+			padding: 6px 12px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 0.9rem;
+		}
+
+		.edit-btn {
+			background-color: var(--marine-blue);
+			color: white;
+		}
+
+		.edit-btn:hover {
+			background-color: #001a3d;
+		}
+
+		.delete-btn {
+			background-color: var(--t4t-red);
+			color: white;
+		}
+
+		.delete-btn:hover {
+			background-color: var(--t4t-red-hover);
+		}
+
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.modal.active {
+			display: flex;
+		}
+
+		.modal-content {
+			background: white;
+			padding: 30px;
+			border-radius: 8px;
+			max-width: 500px;
+			width: 90%;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		}
+
+		.modal-content h3 {
+			color: var(--marine-blue);
+			margin-top: 0;
+		}
+
+		.modal-content p {
+			color: var(--text-secondary);
+			margin: 15px 0;
+		}
+
+		.modal-buttons {
+			display: flex;
+			gap: 10px;
+			justify-content: flex-end;
+			margin-top: 20px;
+		}
+
+		.edit-form {
+			display: none;
+			margin-top: 15px;
+			padding: 20px;
+			background-color: var(--gray-50);
+			border-radius: 8px;
+		}
+
+		.edit-form.active {
+			display: block;
+		}
+
+		.form-group {
+			margin-bottom: 15px;
+		}
+
+		.form-group label {
+			display: block;
+			color: var(--marine-blue);
+			font-weight: 600;
+			margin-bottom: 5px;
+		}
+
+		.form-group input,
+		.form-group select {
+			width: 100%;
+			padding: 10px;
+			border: 1px solid var(--gray-300);
+			border-radius: 4px;
+			font-size: 1rem;
+		}
+
+		.form-buttons {
+			display: flex;
+			gap: 10px;
+			margin-top: 20px;
+		}
+
+		.loading {
+			text-align: center;
+			padding: 20px;
+			color: var(--text-secondary);
+		}
+
+		.error-message {
+			background-color: var(--t4t-red-light);
+			color: var(--t4t-red);
+			padding: 15px;
+			border-radius: 4px;
+			margin-bottom: 15px;
+		}
+
+		.success-message {
+			background-color: #f0fdf4;
+			color: var(--t4t-green-dark);
+			padding: 15px;
+			border-radius: 4px;
+			margin-bottom: 15px;
+		}
+
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 15px;
+			margin-bottom: 20px;
+		}
+
+		.stat-card {
+			background-color: var(--gray-50);
+			padding: 15px;
+			border-radius: 8px;
+			text-align: center;
+		}
+
+		.stat-card .stat-value {
+			font-size: 2rem;
+			font-weight: bold;
+			color: var(--marine-blue);
+		}
+
+		.stat-card .stat-label {
+			color: var(--text-secondary);
+			font-size: 0.9rem;
+			margin-top: 5px;
+		}
+
+		@media (max-width: 768px) {
+			.data-table {
+				font-size: 0.9rem;
+			}
+
+			.data-table th,
+			.data-table td {
+				padding: 8px;
+			}
+
+			.action-buttons {
+				flex-direction: column;
+			}
+
+			.section-header {
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 10px;
+			}
+		}
+	</style>
+</head>
+<body class="bg-gray-100">
+	<div id="header-placeholder"></div>
+
+	<main class="admin-container">
+		<div class="admin-header">
+			<h1>Admin Panel</h1>
+			<p>Manage donation boxes, locations, and volunteers</p>
+		</div>
+
+		<div id="auth-check" class="loading">
+			Checking authorization...
+		</div>
+
+		<div id="admin-content" style="display: none;">
+			<!-- Statistics -->
+			<div class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-value" id="stat-boxes">0</div>
+					<div class="stat-label">Total Boxes</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-value" id="stat-reports">0</div>
+					<div class="stat-label">Total Reports</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-value" id="stat-volunteers">0</div>
+					<div class="stat-label">Authorized Volunteers</div>
+				</div>
+			</div>
+
+			<!-- Box Management -->
+			<div class="admin-section">
+				<div class="section-header">
+					<h2>Box Management</h2>
+					<button class="danger-btn" id="delete-all-boxes-btn">Delete All Boxes</button>
+				</div>
+				<div id="boxes-loading" class="loading">Loading boxes...</div>
+				<div id="boxes-error" class="error-message" style="display: none;"></div>
+				<div id="boxes-container"></div>
+			</div>
+
+			<!-- Report Management -->
+			<div class="admin-section">
+				<div class="section-header">
+					<h2>Report Management</h2>
+					<button class="danger-btn" id="delete-all-reports-btn">Delete All Reports</button>
+				</div>
+				<div id="reports-loading" class="loading">Loading reports...</div>
+				<div id="reports-error" class="error-message" style="display: none;"></div>
+				<div id="reports-container"></div>
+			</div>
+
+			<!-- Volunteer Management -->
+			<div class="admin-section">
+				<div class="section-header">
+					<h2>Volunteer Management</h2>
+					<button class="danger-btn" id="delete-all-volunteers-btn">Delete All Volunteers</button>
+				</div>
+				<div id="volunteers-loading" class="loading">Loading volunteers...</div>
+				<div id="volunteers-error" class="error-message" style="display: none;"></div>
+				<div id="volunteers-container"></div>
+			</div>
+		</div>
+	</main>
+
+	<!-- Confirmation Modal -->
+	<div id="confirmation-modal" class="modal">
+		<div class="modal-content">
+			<h3 id="modal-title">Confirm Action</h3>
+			<p id="modal-message">Are you sure you want to proceed?</p>
+			<div class="modal-buttons">
+				<button class="secondary-btn" id="modal-cancel">Cancel</button>
+				<button class="danger-btn" id="modal-confirm">Confirm</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Edit Box Modal -->
+	<div id="edit-box-modal" class="modal">
+		<div class="modal-content">
+			<h3>Edit Box</h3>
+			<form id="edit-box-form">
+				<div class="form-group">
+					<label for="edit-box-label">Location Name</label>
+					<input type="text" id="edit-box-label" required>
+				</div>
+				<div class="form-group">
+					<label for="edit-box-address">Address</label>
+					<input type="text" id="edit-box-address" required>
+				</div>
+				<div class="form-group">
+					<label for="edit-box-city">City</label>
+					<input type="text" id="edit-box-city" required>
+				</div>
+				<div class="form-group">
+					<label for="edit-box-state">State</label>
+					<input type="text" id="edit-box-state" value="GA" required>
+				</div>
+				<div class="form-group">
+					<label for="edit-box-contact-name">Contact Name</label>
+					<input type="text" id="edit-box-contact-name">
+				</div>
+				<div class="form-group">
+					<label for="edit-box-contact-phone">Contact Phone</label>
+					<input type="tel" id="edit-box-contact-phone">
+				</div>
+				<div class="form-group">
+					<label for="edit-box-contact-email">Contact Email</label>
+					<input type="email" id="edit-box-contact-email">
+				</div>
+				<div class="form-buttons">
+					<button type="button" class="secondary-btn" id="edit-box-cancel">Cancel</button>
+					<button type="submit" class="primary-btn">Save Changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Edit Volunteer Modal -->
+	<div id="edit-volunteer-modal" class="modal">
+		<div class="modal-content">
+			<h3>Edit Volunteer</h3>
+			<form id="edit-volunteer-form">
+				<div class="form-group">
+					<label for="edit-volunteer-name">Display Name</label>
+					<input type="text" id="edit-volunteer-name" required>
+				</div>
+				<div class="form-group">
+					<label for="edit-volunteer-email">Email</label>
+					<input type="email" id="edit-volunteer-email" disabled>
+				</div>
+				<div class="form-buttons">
+					<button type="button" class="secondary-btn" id="edit-volunteer-cancel">Cancel</button>
+					<button type="submit" class="primary-btn">Save Changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div id="footer-placeholder"></div>
+	<script src="/js/loader.min.js" defer></script>
+	<script type="module">
+		import { db, auth, functions, locationsCollectionPath, reportsCollectionPath } from '/js/firebase-init.js';
+		import {
+			collection,
+			getDocs,
+			doc,
+			updateDoc,
+			deleteDoc,
+			query,
+			orderBy
+		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+		import {
+			onAuthStateChanged
+		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+		import {
+			httpsCallable
+		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+
+		let currentUser = null;
+		let currentEditBoxId = null;
+		let currentEditVolunteerId = null;
+		let confirmCallback = null;
+
+		// Authorization check
+		onAuthStateChanged(auth, async (user) => {
+			if (!user || user.isAnonymous) {
+				window.location.href = '/login';
+				return;
+			}
+
+			currentUser = user;
+
+			// Check if authorized
+			try {
+				const isAuthorized = httpsCallable(functions, 'isAuthorizedVolunteerV2');
+				const result = await isAuthorized();
+
+				if (!result.data.isAuthorized) {
+					document.getElementById('auth-check').innerHTML = '<div class="error-message">You are not authorized to access the admin panel.</div>';
+					return;
+				}
+
+				document.getElementById('auth-check').style.display = 'none';
+				document.getElementById('admin-content').style.display = 'block';
+
+				// Load all data
+				loadBoxes();
+				loadReports();
+				loadVolunteers();
+			} catch (error) {
+				document.getElementById('auth-check').innerHTML = '<div class="error-message">Error checking authorization: ' + error.message + '</div>';
+			}
+		});
+
+		// Load boxes
+		async function loadBoxes() {
+			try {
+				const locationsRef = collection(db, locationsCollectionPath);
+				const q = query(locationsRef, orderBy('created', 'desc'));
+				const snapshot = await getDocs(q);
+
+				document.getElementById('stat-boxes').textContent = snapshot.size;
+				document.getElementById('boxes-loading').style.display = 'none';
+
+				if (snapshot.empty) {
+					document.getElementById('boxes-container').innerHTML = '<p class="loading">No boxes found.</p>';
+					return;
+				}
+
+				let tableHTML = '<table class="data-table"><thead><tr>';
+				tableHTML += '<th>Box ID</th><th>Location</th><th>Address</th><th>City</th><th>Volunteer</th><th>Actions</th>';
+				tableHTML += '</tr></thead><tbody>';
+
+				snapshot.forEach((doc) => {
+					const box = doc.data();
+					tableHTML += '<tr>';
+					tableHTML += `<td>${doc.id}</td>`;
+					tableHTML += `<td>${box.label || 'N/A'}</td>`;
+					tableHTML += `<td>${box.address || 'N/A'}</td>`;
+					tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
+					tableHTML += `<td>${box.volunteerEmail || 'N/A'}</td>`;
+					tableHTML += `<td><div class="action-buttons">`;
+					tableHTML += `<button class="edit-btn" onclick="window.editBox('${doc.id}')">Edit</button>`;
+					tableHTML += `<button class="delete-btn" onclick="window.deleteBox('${doc.id}', '${box.label}')">Delete</button>`;
+					tableHTML += `</div></td>`;
+					tableHTML += '</tr>';
+				});
+
+				tableHTML += '</tbody></table>';
+				document.getElementById('boxes-container').innerHTML = tableHTML;
+			} catch (error) {
+				document.getElementById('boxes-loading').style.display = 'none';
+				document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
+				document.getElementById('boxes-error').style.display = 'block';
+			}
+		}
+
+		// Load reports
+		async function loadReports() {
+			try {
+				const reportsRef = collection(db, reportsCollectionPath);
+				const q = query(reportsRef, orderBy('timestamp', 'desc'));
+				const snapshot = await getDocs(q);
+
+				document.getElementById('stat-reports').textContent = snapshot.size;
+				document.getElementById('reports-loading').style.display = 'none';
+
+				if (snapshot.empty) {
+					document.getElementById('reports-container').innerHTML = '<p class="loading">No reports found.</p>';
+					return;
+				}
+
+				let tableHTML = '<table class="data-table"><thead><tr>';
+				tableHTML += '<th>Report ID</th><th>Box ID</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th>';
+				tableHTML += '</tr></thead><tbody>';
+
+				snapshot.forEach((doc) => {
+					const report = doc.data();
+					const date = report.timestamp ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : 'N/A';
+					tableHTML += '<tr>';
+					tableHTML += `<td>${doc.id}</td>`;
+					tableHTML += `<td>${report.boxId || 'N/A'}</td>`;
+					tableHTML += `<td>${report.reportType || 'N/A'}</td>`;
+					tableHTML += `<td>${report.status || 'N/A'}</td>`;
+					tableHTML += `<td>${date}</td>`;
+					tableHTML += `<td><div class="action-buttons">`;
+					tableHTML += `<button class="delete-btn" onclick="window.deleteReport('${doc.id}')">Delete</button>`;
+					tableHTML += `</div></td>`;
+					tableHTML += '</tr>';
+				});
+
+				tableHTML += '</tbody></table>';
+				document.getElementById('reports-container').innerHTML = tableHTML;
+			} catch (error) {
+				document.getElementById('reports-loading').style.display = 'none';
+				document.getElementById('reports-error').textContent = 'Error loading reports: ' + error.message;
+				document.getElementById('reports-error').style.display = 'block';
+			}
+		}
+
+		// Load volunteers
+		async function loadVolunteers() {
+			try {
+				const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+				const volunteersRef = collection(db, volunteersPath);
+				const snapshot = await getDocs(volunteersRef);
+
+				document.getElementById('stat-volunteers').textContent = snapshot.size;
+				document.getElementById('volunteers-loading').style.display = 'none';
+
+				if (snapshot.empty) {
+					document.getElementById('volunteers-container').innerHTML = '<p class="loading">No volunteers found.</p>';
+					return;
+				}
+
+				let tableHTML = '<table class="data-table"><thead><tr>';
+				tableHTML += '<th>User ID</th><th>Display Name</th><th>Email</th><th>Actions</th>';
+				tableHTML += '</tr></thead><tbody>';
+
+				snapshot.forEach((doc) => {
+					const volunteer = doc.data();
+					const isCurrentUser = doc.id === currentUser.uid;
+					tableHTML += '<tr>';
+					tableHTML += `<td>${doc.id}</td>`;
+					tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
+					tableHTML += `<td>${volunteer.email || 'N/A'}</td>`;
+					tableHTML += `<td><div class="action-buttons">`;
+					tableHTML += `<button class="edit-btn" onclick="window.editVolunteer('${doc.id}')" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
+					tableHTML += `<button class="delete-btn" onclick="window.deleteVolunteer('${doc.id}', '${volunteer.displayName || volunteer.email}')" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+					tableHTML += `</div></td>`;
+					tableHTML += '</tr>';
+				});
+
+				tableHTML += '</tbody></table>';
+				document.getElementById('volunteers-container').innerHTML = tableHTML;
+			} catch (error) {
+				document.getElementById('volunteers-loading').style.display = 'none';
+				document.getElementById('volunteers-error').textContent = 'Error loading volunteers: ' + error.message;
+				document.getElementById('volunteers-error').style.display = 'block';
+			}
+		}
+
+		// Edit box
+		window.editBox = async function(boxId) {
+			currentEditBoxId = boxId;
+			const docRef = doc(db, locationsCollectionPath, boxId);
+			const docSnap = await getDocs(query(collection(db, locationsCollectionPath)));
+
+			let boxData = null;
+			docSnap.forEach((d) => {
+				if (d.id === boxId) {
+					boxData = d.data();
+				}
+			});
+
+			if (!boxData) return;
+
+			document.getElementById('edit-box-label').value = boxData.label || '';
+			document.getElementById('edit-box-address').value = boxData.address || '';
+			document.getElementById('edit-box-city').value = boxData.city || '';
+			document.getElementById('edit-box-state').value = boxData.state || 'GA';
+			document.getElementById('edit-box-contact-name').value = boxData.contactName || '';
+			document.getElementById('edit-box-contact-phone').value = boxData.contactPhone || '';
+			document.getElementById('edit-box-contact-email').value = boxData.contactEmail || '';
+
+			document.getElementById('edit-box-modal').classList.add('active');
+		};
+
+		// Save box changes
+		document.getElementById('edit-box-form').addEventListener('submit', async (e) => {
+			e.preventDefault();
+
+			try {
+				const docRef = doc(db, locationsCollectionPath, currentEditBoxId);
+				await updateDoc(docRef, {
+					label: document.getElementById('edit-box-label').value,
+					address: document.getElementById('edit-box-address').value,
+					city: document.getElementById('edit-box-city').value,
+					state: document.getElementById('edit-box-state').value,
+					contactName: document.getElementById('edit-box-contact-name').value,
+					contactPhone: document.getElementById('edit-box-contact-phone').value,
+					contactEmail: document.getElementById('edit-box-contact-email').value
+				});
+
+				document.getElementById('edit-box-modal').classList.remove('active');
+				loadBoxes();
+			} catch (error) {
+				alert('Error updating box: ' + error.message);
+			}
+		});
+
+		document.getElementById('edit-box-cancel').addEventListener('click', () => {
+			document.getElementById('edit-box-modal').classList.remove('active');
+		});
+
+		// Delete box
+		window.deleteBox = function(boxId, label) {
+			showConfirmation(
+				'Delete Box',
+				`Are you sure you want to delete "${label}"? This action cannot be undone.`,
+				async () => {
+					try {
+						const docRef = doc(db, locationsCollectionPath, boxId);
+						await deleteDoc(docRef);
+						loadBoxes();
+					} catch (error) {
+						alert('Error deleting box: ' + error.message);
+					}
+				}
+			);
+		};
+
+		// Delete all boxes
+		document.getElementById('delete-all-boxes-btn').addEventListener('click', () => {
+			showConfirmation(
+				'Delete ALL Boxes',
+				'⚠️ WARNING: This will permanently delete ALL boxes and cannot be undone. Are you absolutely sure?',
+				async () => {
+					try {
+						const snapshot = await getDocs(collection(db, locationsCollectionPath));
+						const deletePromises = [];
+						snapshot.forEach((doc) => {
+							deletePromises.push(deleteDoc(doc.ref));
+						});
+						await Promise.all(deletePromises);
+						loadBoxes();
+					} catch (error) {
+						alert('Error deleting boxes: ' + error.message);
+					}
+				}
+			);
+		});
+
+		// Delete report
+		window.deleteReport = function(reportId) {
+			showConfirmation(
+				'Delete Report',
+				'Are you sure you want to delete this report?',
+				async () => {
+					try {
+						const docRef = doc(db, reportsCollectionPath, reportId);
+						await deleteDoc(docRef);
+						loadReports();
+					} catch (error) {
+						alert('Error deleting report: ' + error.message);
+					}
+				}
+			);
+		};
+
+		// Delete all reports
+		document.getElementById('delete-all-reports-btn').addEventListener('click', () => {
+			showConfirmation(
+				'Delete ALL Reports',
+				'⚠️ WARNING: This will permanently delete ALL reports and cannot be undone. Are you absolutely sure?',
+				async () => {
+					try {
+						const snapshot = await getDocs(collection(db, reportsCollectionPath));
+						const deletePromises = [];
+						snapshot.forEach((doc) => {
+							deletePromises.push(deleteDoc(doc.ref));
+						});
+						await Promise.all(deletePromises);
+						loadReports();
+					} catch (error) {
+						alert('Error deleting reports: ' + error.message);
+					}
+				}
+			);
+		});
+
+		// Edit volunteer
+		window.editVolunteer = async function(volunteerId) {
+			if (volunteerId === currentUser.uid) {
+				alert('You cannot edit your own account.');
+				return;
+			}
+
+			currentEditVolunteerId = volunteerId;
+			const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+			const docRef = doc(db, volunteersPath, volunteerId);
+			const docSnap = await getDocs(query(collection(db, volunteersPath)));
+
+			let volunteerData = null;
+			docSnap.forEach((d) => {
+				if (d.id === volunteerId) {
+					volunteerData = d.data();
+				}
+			});
+
+			if (!volunteerData) return;
+
+			document.getElementById('edit-volunteer-name').value = volunteerData.displayName || '';
+			document.getElementById('edit-volunteer-email').value = volunteerData.email || '';
+
+			document.getElementById('edit-volunteer-modal').classList.add('active');
+		};
+
+		// Save volunteer changes
+		document.getElementById('edit-volunteer-form').addEventListener('submit', async (e) => {
+			e.preventDefault();
+
+			try {
+				const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+				const docRef = doc(db, volunteersPath, currentEditVolunteerId);
+				await updateDoc(docRef, {
+					displayName: document.getElementById('edit-volunteer-name').value
+				});
+
+				document.getElementById('edit-volunteer-modal').classList.remove('active');
+				loadVolunteers();
+			} catch (error) {
+				alert('Error updating volunteer: ' + error.message);
+			}
+		});
+
+		document.getElementById('edit-volunteer-cancel').addEventListener('click', () => {
+			document.getElementById('edit-volunteer-modal').classList.remove('active');
+		});
+
+		// Delete volunteer
+		window.deleteVolunteer = function(volunteerId, name) {
+			if (volunteerId === currentUser.uid) {
+				alert('You cannot delete your own account.');
+				return;
+			}
+
+			showConfirmation(
+				'Delete Volunteer',
+				`Are you sure you want to delete volunteer "${name}"? This will remove their access to the system.`,
+				async () => {
+					try {
+						const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+						const docRef = doc(db, volunteersPath, volunteerId);
+						await deleteDoc(docRef);
+						loadVolunteers();
+					} catch (error) {
+						alert('Error deleting volunteer: ' + error.message);
+					}
+				}
+			);
+		};
+
+		// Delete all volunteers
+		document.getElementById('delete-all-volunteers-btn').addEventListener('click', () => {
+			showConfirmation(
+				'Delete ALL Volunteers',
+				'⚠️ WARNING: This will delete all volunteers EXCEPT you. This action cannot be undone. Are you absolutely sure?',
+				async () => {
+					try {
+						const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+						const snapshot = await getDocs(collection(db, volunteersPath));
+						const deletePromises = [];
+						snapshot.forEach((doc) => {
+							if (doc.id !== currentUser.uid) {
+								deletePromises.push(deleteDoc(doc.ref));
+							}
+						});
+						await Promise.all(deletePromises);
+						loadVolunteers();
+					} catch (error) {
+						alert('Error deleting volunteers: ' + error.message);
+					}
+				}
+			);
+		});
+
+		// Confirmation modal
+		function showConfirmation(title, message, callback) {
+			document.getElementById('modal-title').textContent = title;
+			document.getElementById('modal-message').textContent = message;
+			confirmCallback = callback;
+			document.getElementById('confirmation-modal').classList.add('active');
+		}
+
+		document.getElementById('modal-confirm').addEventListener('click', async () => {
+			document.getElementById('confirmation-modal').classList.remove('active');
+			if (confirmCallback) {
+				await confirmCallback();
+				confirmCallback = null;
+			}
+		});
+
+		document.getElementById('modal-cancel').addEventListener('click', () => {
+			document.getElementById('confirmation-modal').classList.remove('active');
+			confirmCallback = null;
+		});
+	</script>
+</body>
+</html>

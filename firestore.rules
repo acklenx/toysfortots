@@ -13,17 +13,18 @@ service cloud.firestore {
     match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
       // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
+      // Authorized volunteers can update and delete for admin panel
       match /locations/{boxId} {
         allow get, list: if request.auth != null;
-        allow create, update, delete: if false;
+        allow create: if false;
+        allow update, delete: if isAuthorizedVolunteer();
       }
 
       // --- TOTSREPORTS RULE ---
-      // Authorized volunteers (any provider) can list, get, and update (e.g., clear status).
+      // Authorized volunteers (any provider) can list, get, update, and delete (for admin panel).
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get, update: if isAuthorizedVolunteer(); // Uses the new provider-agnostic function
-        allow delete: if false;
+        allow list, get, update, delete: if isAuthorizedVolunteer(); // Uses the new provider-agnostic function
       }
 
       // --- LOCATION SUGGESTIONS (for autocomplete) ---
@@ -48,10 +49,12 @@ service cloud.firestore {
       }
 
       // This is the collection checked by the isAuthorizedVolunteer function.
+      // Authorized volunteers can read and update for admin panel (but not delete themselves)
       match /authorizedVolunteers/{userId} {
-        // This rule is currently restricted to 'if false' preventing client-side access,
-        // which is what you had before.
-        allow read, write: if false;
+        allow list, get: if isAuthorizedVolunteer();
+        allow update: if isAuthorizedVolunteer();
+        allow delete: if isAuthorizedVolunteer() && userId != request.auth.uid; // Cannot delete self
+        allow create: if false; // Only Cloud Functions can create
       }
     }
 
