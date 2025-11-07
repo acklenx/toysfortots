@@ -51,8 +51,16 @@ async function seedTestConfig(passcode = 'TEST_PASSCODE') {
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });
 
-  // Verify write
-  const verifyDoc = await configRef.get();
+  // Verify write with retry for emulator race conditions
+  let retries = 3;
+  let verifyDoc;
+  while (retries > 0) {
+    verifyDoc = await configRef.get();
+    if (verifyDoc.exists) break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+    retries--;
+  }
+
   if (!verifyDoc.exists) {
     throw new Error('Failed to verify config was created');
   }
