@@ -108,15 +108,12 @@
       hamburgerBtn.style.display = 'flex';
       menuUserInfo.style.display = 'block';
       menuDashboard.style.display = 'block';
-      menuDashboard.removeAttribute('tabindex');
-      menuDashboard.removeAttribute('aria-hidden');
       menuNewBox.style.display = 'block';
-      menuNewBox.removeAttribute('tabindex');
-      menuNewBox.removeAttribute('aria-hidden');
       menuSignOut.style.display = 'block';
-      menuSignOut.removeAttribute('tabindex');
-      menuSignOut.removeAttribute('aria-hidden');
       menuSignIn.style.display = 'none';
+
+      // Keep tabindex and aria-hidden until menu is expanded
+      // (They are removed by toggleMenu when menu opens)
     } else {
       // Not authenticated or anonymous - hide hamburger button
       hamburgerBtn.style.display = 'none';
