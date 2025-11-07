@@ -163,6 +163,8 @@ export function autoFillFormFields(location, fieldIds = {}) {
 export function createAutocomplete(inputElement, searchFunction, onSelect, debounceMs = 300) {
 	let debounceTimer;
 	let dropdownElement;
+	let selectedIndex = -1;
+	let currentResults = [];
 
 	// Create dropdown element
 	function createDropdown() {
@@ -186,22 +188,47 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 
 	dropdownElement = createDropdown();
 
+	// Helper to highlight selected item
+	function updateSelectedItem() {
+		const items = dropdownElement.querySelectorAll('.autocomplete-item');
+		items.forEach((item, index) => {
+			if (index === selectedIndex) {
+				item.style.backgroundColor = '#e3f2fd';
+			} else {
+				item.style.backgroundColor = 'white';
+			}
+		});
+	}
+
+	// Helper to select current item
+	function selectCurrentItem() {
+		if (selectedIndex >= 0 && selectedIndex < currentResults.length) {
+			onSelect(currentResults[selectedIndex]);
+			dropdownElement.style.display = 'none';
+			selectedIndex = -1;
+		}
+	}
+
 	// Handle input changes
 	inputElement.addEventListener('input', (e) => {
 		const value = e.target.value;
 
 		clearTimeout(debounceTimer);
+		selectedIndex = -1; // Reset selection on new input
 
 		if (value.length < 2) {
 			dropdownElement.style.display = 'none';
+			currentResults = [];
 			return;
 		}
 
 		debounceTimer = setTimeout(async () => {
 			const results = await searchFunction(value);
+			currentResults = results;
 
 			if (results.length === 0) {
 				dropdownElement.style.display = 'none';
+				currentResults = [];
 				return;
 			}
 
@@ -223,13 +250,11 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 			dropdownElement.style.left = '0';
 			dropdownElement.style.width = inputElement.offsetWidth + 'px';
 
-			// Add hover effect
-			dropdownElement.querySelectorAll('.autocomplete-item').forEach(item => {
+			// Add hover and click effects
+			dropdownElement.querySelectorAll('.autocomplete-item').forEach((item, index) => {
 				item.addEventListener('mouseenter', () => {
-					item.style.backgroundColor = '#f0f0f0';
-				});
-				item.addEventListener('mouseleave', () => {
-					item.style.backgroundColor = 'white';
+					selectedIndex = index;
+					updateSelectedItem();
 				});
 				item.addEventListener('click', () => {
 					const selectedId = item.getAttribute('data-id');
@@ -237,6 +262,7 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 					if (selectedResult) {
 						onSelect(selectedResult);
 						dropdownElement.style.display = 'none';
+						selectedIndex = -1;
 					}
 				});
 			});
@@ -247,13 +273,51 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 	document.addEventListener('click', (e) => {
 		if (e.target !== inputElement && !dropdownElement.contains(e.target)) {
 			dropdownElement.style.display = 'none';
+			selectedIndex = -1;
 		}
 	});
 
-	// Hide dropdown on ESC key
+	// Keyboard navigation
 	inputElement.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape') {
-			dropdownElement.style.display = 'none';
+		const isVisible = dropdownElement.style.display === 'block';
+
+		if (!isVisible) return;
+
+		switch (e.key) {
+			case 'ArrowDown':
+				e.preventDefault();
+				selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
+				updateSelectedItem();
+				break;
+
+			case 'ArrowUp':
+				e.preventDefault();
+				selectedIndex = Math.max(selectedIndex - 1, 0);
+				updateSelectedItem();
+				break;
+
+			case 'Enter':
+				e.preventDefault();
+				selectCurrentItem();
+				break;
+
+			case 'Tab':
+				// Auto-select first item on Tab if nothing selected
+				if (selectedIndex === -1 && currentResults.length > 0) {
+					e.preventDefault();
+					selectedIndex = 0;
+					selectCurrentItem();
+				} else if (selectedIndex >= 0) {
+					e.preventDefault();
+					selectCurrentItem();
+				}
+				break;
+
+			case 'Escape':
+				e.preventDefault();
+				dropdownElement.style.display = 'none';
+				selectedIndex = -1;
+				break;
 		}
 	});
 }
