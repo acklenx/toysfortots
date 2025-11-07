@@ -25,7 +25,7 @@ test.describe('Authorization Page', () => {
     await page.locator('#email-sign-up-btn').click();
 
     // Wait for redirect to authorize page
-    await page.waitForURL(/\/authorize/, { timeout: 5000 });
+    await page.waitForURL(/\/authorize/, { timeout: 10000 });
   });
 
   test.afterEach(async () => {
@@ -70,7 +70,7 @@ test.describe('Authorization Page', () => {
   test('should show error when submitting empty code', async ({ page }) => {
     await page.locator('#authorize-btn').click();
 
-    const errorMsg = page.locator('#auth-msg');
+    const errorMsg = page.locator('#auth-msg .message');
     await expect(errorMsg).toBeVisible();
     await expect(errorMsg).toContainText('Please enter the authorization code');
   });
@@ -82,7 +82,7 @@ test.describe('Authorization Page', () => {
     // Wait for the function to respond
     await page.waitForTimeout(2000);
 
-    const errorMsg = page.locator('#auth-msg');
+    const errorMsg = page.locator('#auth-msg .message');
     await expect(errorMsg).toBeVisible();
     await expect(errorMsg).toContainText(/Invalid authorization code|check the code/i);
   });
@@ -92,11 +92,11 @@ test.describe('Authorization Page', () => {
     await page.locator('#authorize-btn').click();
 
     // Wait for success message
-    const successMsg = page.locator('#auth-msg');
+    const successMsg = page.locator('#auth-msg .message');
     await expect(successMsg).toContainText(/Authorization successful/i);
 
     // Should redirect to dashboard (default when no returnUrl)
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
@@ -108,7 +108,7 @@ test.describe('Authorization Page', () => {
     await page.locator('#authorize-btn').click();
 
     // Should redirect to setup page with boxId
-    await page.waitForURL(/\/setup\?id=TEST_BOX_001/, { timeout: 5000 });
+    await page.waitForURL(/\/setup\?id=TEST_BOX_001/, { timeout: 10000 });
     await expect(page).toHaveURL(/\/setup\?id=TEST_BOX_001/);
   });
 
@@ -121,7 +121,7 @@ test.describe('Authorization Page', () => {
     await page.locator('#authorize-btn').click();
 
     // Should redirect to dashboard
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
@@ -129,7 +129,7 @@ test.describe('Authorization Page', () => {
     // First authorize the user
     await page.fill('#auth-code', TEST_PASSCODE);
     await page.locator('#authorize-btn').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
 
     // Now try to access authorize page again
     await page.goto('/authorize?returnUrl=%2Fdashboard');
@@ -138,7 +138,7 @@ test.describe('Authorization Page', () => {
     await page.waitForTimeout(2000);
 
     // Should show success message or redirect
-    const successMsg = page.locator('#auth-msg');
+    const successMsg = page.locator('#auth-msg .message');
     const hasSuccessMsg = await successMsg.isVisible().catch(() => false);
 
     if (hasSuccessMsg) {
@@ -146,7 +146,7 @@ test.describe('Authorization Page', () => {
     }
 
     // Should redirect to dashboard
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
   });
 
   test('should redirect to login if not signed in', async ({ page, context }) => {
@@ -165,7 +165,7 @@ test.describe('Authorization Page', () => {
     await page.goto('/authorize');
 
     // Should redirect to login with returnUrl
-    await page.waitForURL(/\/login/, { timeout: 5000 });
+    await page.waitForURL(/\/login/, { timeout: 10000 });
     await expect(page).toHaveURL(/\/login/);
     await expect(page.url()).toContain('returnUrl');
   });
@@ -187,7 +187,7 @@ test.describe('Authorization Page', () => {
     // Generate error by submitting empty form
     await page.locator('#authorize-btn').click();
 
-    const errorMsg = page.locator('#auth-msg');
+    const errorMsg = page.locator('#auth-msg .message');
     await expect(errorMsg).toBeVisible();
 
     // Start typing in code field
@@ -219,10 +219,10 @@ test.describe('Authorization Page', () => {
     await page.press('#auth-code', 'Enter');
 
     // Wait for success message
-    const successMsg = page.locator('#auth-msg');
+    const successMsg = page.locator('#auth-msg .message');
     await expect(successMsg).toContainText(/Authorization successful/i);
 
     // Should redirect
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
   });
 });

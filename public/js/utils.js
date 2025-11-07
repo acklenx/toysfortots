@@ -55,6 +55,6 @@ export function showAuthMessage(type, text) {
 export function clearAuthMessage() {
 	const msgDiv = document.getElementById('auth-msg');
 	if (msgDiv) {
-		msgDiv.remove();
+		msgDiv.innerHTML = '';
 	}
 }

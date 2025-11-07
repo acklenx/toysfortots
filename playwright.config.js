@@ -34,16 +34,16 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 10000, // 10 seconds for actions (increased for parallel execution)
-    navigationTimeout: 10000, // 10 seconds for page navigations (increased for parallel execution)
+    actionTimeout: 3000, // 3 seconds for actions
+    navigationTimeout: 3000, // 3 seconds for page navigations
   },
 
   // Global timeout for each test
-  timeout: 30 * 1000, // 30 seconds total per test (increased for parallel execution)
+  timeout: 15 * 1000, // 15 seconds total per test
 
   // Timeout for assertions (expect calls)
   expect: {
-    timeout: 10000, // 10 seconds for assertions (increased for parallel execution)
+    timeout: 3000, // 3 seconds for assertions
   },
 
   projects: [
