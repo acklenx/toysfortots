@@ -68,7 +68,7 @@
 }
 
 #footer-placeholder:empty {
-    min-height: 160px;
+    min-height: 224px;
     background-color: var(--marine-blue);
     margin-top: auto;
 }
