@@ -380,12 +380,21 @@ async function syncLocationSuggestionsFromSheets()
 	const sheets = google.sheets( 'v4' );
 	const db = getFirestore();
 
+	// Get API key
+	const apiKey = GEOCODING_API_KEY.value();
+	if( !apiKey )
+	{
+		console.error( 'GEOCODING_API_KEY is not set!' );
+		throw new HttpsError( 'internal', 'Google API key not configured.' );
+	}
+
 	try
 	{
-		// Read spreadsheet data
+		// Read spreadsheet data using API key
 		const response = await sheets.spreadsheets.values.get( {
 			spreadsheetId: SPREADSHEET_ID,
-			range: `${ SHEET_NAME }!A2:N` // Skip header row, read columns A through N
+			range: `${ SHEET_NAME }!A2:N`, // Skip header row, read columns A through N
+			key: apiKey
 		} );
 
 		const rows = response.data.values;
