@@ -75,6 +75,12 @@
 			<script type="module">
 				import { auth, db, functions, locationsCollectionPath } from '../js/firebase-init.js';
 				import { showMessage } from '/js/utils.js';
+			import {
+				findExactMatchByAddress,
+				searchByLabel,
+				autoFillFormFields,
+				createAutocomplete
+			} from '../js/location-autocomplete.js';
 				import {
 					onAuthStateChanged
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -156,6 +162,15 @@
 									labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
 								}
 								showMessage( 'success', 'Location and Address captured!' );
+							
+							// Auto-lookup by address after GPS
+							const match = await findExactMatchByAddress( addressInput.value );
+							if( match )
+							{
+								console.log( 'Found matching location from spreadsheet!', match );
+								autoFillFormFields( match );
+								showMessage( 'success', 'Location info auto-filled from records!' );
+							}
 							}
 							else
 							{
@@ -305,6 +320,19 @@
 						addressInput.focus();
 					};
 					form.onsubmit = handleFormSubmit;
+				
+				// Setup autocomplete on label field
+				const labelInput = document.getElementById( 'label' );
+				createAutocomplete(
+					labelInput,
+					searchByLabel,
+					( selected ) =>
+					{
+						console.log( 'User selected:', selected );
+						autoFillFormFields( selected );
+						showMessage( 'success', 'Location info filled from records!' );
+					}
+				);
 					onAuthStateChanged( auth, async( user ) =>
 					{
 						// Redirect to login if not authenticated or anonymous
