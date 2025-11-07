@@ -331,6 +331,14 @@
 					{
 						console.log( 'User selected:', selected );
 						autoFillFormFields( selected );
+
+						// Auto-expand address fields if they're hidden
+						if( manualAddressFields.classList.contains( 'hidden' ) )
+						{
+							manualAddressFields.classList.remove( 'hidden' );
+							showAddressBtn.classList.add( 'hidden' );
+						}
+
 						showMessage( 'success', 'Location info filled from records!' );
 					}
 				);
