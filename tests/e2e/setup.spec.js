@@ -21,8 +21,8 @@ test.describe('Setup Page', () => {
     await clearTestData();
   });
 
-  test('should display box ID from URL parameter @smoke', async ({ page }) => {
-    // Create and sign in a user first
+  // Helper function to create and authorize a user
+  async function createAuthorizedUser(page) {
     const username = generateUsername('testuser');
     const password = 'testpass123';
 
@@ -31,6 +31,19 @@ test.describe('Setup Page', () => {
     await page.fill('#auth-email', username);
     await page.fill('#auth-password', password);
     await page.locator('#email-sign-up-btn').click();
+
+    // Wait for auth and get UID
+    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+    const uid = await page.evaluate(() => window.auth?.currentUser?.uid);
+
+    // Authorize the user
+    await authorizeVolunteer(uid, `${username}@toysfortots.mcl1311.com`, username);
+
+    return { username, password, uid };
+  }
+
+  test('should display box ID from URL parameter @smoke', async ({ page }) => {
+    await createAuthorizedUser(page);
 
     // Navigate to setup with box ID
     const boxId = generateBoxId('TESTBOX');
@@ -41,14 +54,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should show error when no box ID in URL', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     // Navigate without box ID
     await page.goto('/setup');
@@ -64,14 +70,7 @@ test.describe('Setup Page', () => {
       label: 'Existing Location'
     });
 
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     // Try to setup existing box
     await page.goto(`/setup?id=${boxId}`);
@@ -80,39 +79,11 @@ test.describe('Setup Page', () => {
     await page.waitForURL(new RegExp(`/status/\\?id=${boxId}`), { timeout: 10000 });
   });
 
-  test('should hide passcode field for authorized volunteers', async ({ page }) => {
-    const username = generateUsername('volunteer');
-    const password = 'testpass123';
-
-    // Create user
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
-
-    // Get UID and authorize
-    const uid = await page.evaluate(() => {
-      return window.auth?.currentUser?.uid;
-    });
-
-    if (uid) {
-      await authorizeVolunteer(uid, `${username}@toysfortots.mcl1311.com`, username);
-    }
-
-    // Navigate to setup
-    const boxId = generateBoxId('NEWBOX');
-    await page.goto(`/setup?id=${boxId}`);
-
-    // Passcode field should be hidden
-    const passcodeGroup = page.locator('#passcode').locator('..');
-    await expect(passcodeGroup).toBeHidden();
-  });
-
-  test('should show passcode field for non-authorized users', async ({ page }) => {
+  test('should redirect unauthorized users to authorize page', async ({ page }) => {
     const username = generateUsername('newuser');
     const password = 'testpass123';
 
+    // Create user but don't authorize
     await page.goto('/login');
     await page.locator('#toggle-sign-up-btn').click();
     await page.fill('#auth-email', username);
@@ -123,55 +94,25 @@ test.describe('Setup Page', () => {
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
 
-    // Passcode field should be visible
-    const passcodeGroup = page.locator('#passcode').locator('..');
-    await expect(passcodeGroup).toBeVisible();
-    await expect(page.locator('label[for="passcode"]')).toContainText('Setup Code');
+    // Should redirect to authorize page with boxId
+    await page.waitForURL(/\/authorize/, { timeout: 5000 });
+    await expect(page).toHaveURL(new RegExp(`/authorize\\?boxId=${boxId}`));
   });
 
-  test('should show/hide passcode when toggle clicked', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
-
+  test('should redirect unauthenticated users to login page', async ({ page }) => {
     const boxId = generateBoxId('NEWBOX');
+
+    // Navigate to setup without being logged in
     await page.goto(`/setup?id=${boxId}`);
 
-    const passcodeInput = page.locator('#passcode');
-
-    // Initially should be password type
-    await expect(passcodeInput).toHaveAttribute('type', 'password');
-
-    // Click toggle
-    await page.locator('#toggle-passcode').click();
-
-    // Should change to text type
-    await expect(passcodeInput).toHaveAttribute('type', 'text');
-
-    // Click again
-    await page.locator('#toggle-passcode').click();
-
-    // Should change back to password
-    await expect(passcodeInput).toHaveAttribute('type', 'password');
+    // Should redirect to login page with returnUrl
+    await page.waitForURL(/\/login/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.url()).toContain('returnUrl');
   });
 
   test('should display signed in user name', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
-
-    // Wait for auth to complete
-    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+    const { username } = await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -183,14 +124,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should show/hide manual address fields', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -209,14 +143,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should validate required fields on form submission', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -232,14 +159,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should require contact info on submission', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -256,7 +176,6 @@ test.describe('Setup Page', () => {
       document.getElementById('contactName').removeAttribute('required');
     });
     await page.fill('#contactName', ''); // Empty name
-    await page.fill('#passcode', TEST_PASSCODE);
 
     await page.locator('#submit-btn').click();
 
@@ -265,17 +184,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should have sign out button', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
-
-    // Wait for auth to complete
-    await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -284,14 +193,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should have GPS location button', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -301,14 +203,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should have default state value of GA', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
@@ -320,14 +215,7 @@ test.describe('Setup Page', () => {
   });
 
   test('should display form fields correctly', async ({ page }) => {
-    const username = generateUsername('testuser');
-    const password = 'testpass123';
-
-    await page.goto('/login');
-    await page.locator('#toggle-sign-up-btn').click();
-    await page.fill('#auth-email', username);
-    await page.fill('#auth-password', password);
-    await page.locator('#email-sign-up-btn').click();
+    await createAuthorizedUser(page);
 
     const boxId = generateBoxId('NEWBOX');
     await page.goto(`/setup?id=${boxId}`);
