@@ -332,6 +332,11 @@ footer {
     flex: 1; /* Grow to fill space and push footer down */
 }
 
+/* Generic page container for sticky footer */
+.page-container {
+    flex: 1; /* Grow to fill space and push footer down */
+}
+
 .form-wrapper {
     margin: var(--page-spacing) auto;
     padding: 0 20px;
