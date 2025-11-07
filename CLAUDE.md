@@ -156,6 +156,13 @@ artifacts/toysfortots-eae4d/private/01/data/01/
 - **Spreadsheet**: [Master Toys for Tots Box tracker](https://docs.google.com/spreadsheets/d/1XbU6koPSANKaLFN9bFqU11SlNs-9qUhNpkUS6bxFg8k/) (sheet: WorkingCopy)
 - **Columns mapped**: Label, Address, City, State, Owner/Manager Name, Phone, Email
 
+**triggerSyncLocationSuggestions** (HTTP endpoint):
+- Manual trigger via HTTP POST request (no authentication required)
+- URL: `https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions`
+- Optional `delay` query parameter (in seconds): `?delay=30`
+- Returns: `{ success: boolean, synced: number, message: string }`
+- Usage: `curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions`
+
 ### Frontend Pages
 
 - **`/index.html`**: Public map (anonymous auth, shows all locations)
@@ -317,17 +324,23 @@ The setup page includes an autocomplete system that reduces data entry by auto-f
 
 **How it works**:
 1. **Scheduled Sync**: Every 10 minutes, `scheduledSyncLocationSuggestions` reads the spreadsheet and syncs to Firestore `locationSuggestions` collection
-2. **Manual Trigger**: Authorized volunteers can call `syncLocationSuggestions` via Firebase Console to force immediate sync
+2. **Manual Trigger**: Can trigger sync via HTTP endpoint or callable function (see below)
 3. **GPS Auto-Fill**: When user clicks "Use My GPS Location" and address is retrieved, system searches for exact match and silently auto-fills all fields
 4. **Dropdown Search**: When user types in "Location Name (Label)" field, dropdown shows matching locations from spreadsheet
 5. **Smart Fill**: Only fills fields that are currently empty - never overwrites user input
+6. **Keyboard Navigation**: Desktop users can use Tab/Enter to select, Arrow keys to navigate, Escape to close
 
 **Autocomplete Library** (`/public/js/location-autocomplete.js`):
 - `searchByAddress(address, maxResults)` - Prefix search on address field
 - `searchByLabel(label, maxResults)` - Prefix search on location name
 - `findExactMatchByAddress(address)` - Returns single exact match (for GPS)
 - `autoFillFormFields(location, fieldIds)` - Fills form fields (only empty ones)
-- `createAutocomplete(inputElement, searchFunction, onSelect, debounceMs)` - Dropdown UI builder
+- `createAutocomplete(inputElement, searchFunction, onSelect, debounceMs)` - Dropdown UI builder with keyboard navigation
+  - **Tab**: Auto-select first/highlighted item
+  - **Enter**: Select highlighted item
+  - **Arrow Up/Down**: Navigate suggestions
+  - **Escape**: Close dropdown
+  - **Mouse/Touch**: Click or tap to select
 
 **Setup Page Integration**:
 ```javascript
@@ -373,6 +386,18 @@ orderBy('searchLabel'),
 limit(maxResults)
 ```
 
+**Triggering Manual Sync**:
+```bash
+# HTTP endpoint (no authentication required)
+curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
+
+# With optional delay (in seconds)
+curl -X POST "https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions?delay=30"
+
+# Callable function (requires authorization)
+# Use Firebase Console → Functions → syncLocationSuggestions → Test
+```
+
 **Deploying Autocomplete Updates**:
 ```bash
 # After modifying Cloud Functions
@@ -381,12 +406,11 @@ firebase deploy --only functions
 # After modifying Firestore rules
 firebase deploy --only firestore:rules
 
-# After modifying frontend
+# After modifying frontend autocomplete
 firebase deploy --only hosting
 
-# Trigger initial sync
-# Option 1: Firebase Console → Functions → syncLocationSuggestions → Test
-# Option 2: Wait up to 10 minutes for scheduled sync
+# Trigger sync after deployment
+curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
 ```
 
 **Modifying Spreadsheet Mapping**:
@@ -406,6 +430,9 @@ const contactEmail = (row[9] || '').trim(); // Column J (Email)
 - **Sync failing**: Check Cloud Functions logs for Google Sheets API errors
 - **Wrong data shown**: Verify spreadsheet tab name is exactly "WorkingCopy" (case-sensitive)
 - **Performance issues**: Default limit is 10 results - increase only if needed
+- **Dropdown too narrow or not visible**: Ensure input field is visible when autocomplete initializes (width is calculated dynamically on display)
+- **Permission denied errors**: Ensure Firestore rules allow authenticated users to read `locationSuggestions` collection
+- **API key errors**: Verify Google Sheets API is enabled on the API key stored in `GEOCODING_API_KEY`
 
 ## Common Issues
 
