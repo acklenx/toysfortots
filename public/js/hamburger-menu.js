@@ -85,16 +85,28 @@
       hamburgerBtn.style.display = 'flex';
       menuUserInfo.style.display = 'block';
       menuDashboard.style.display = 'block';
+      menuDashboard.removeAttribute('tabindex');
+      menuDashboard.removeAttribute('aria-hidden');
       menuNewBox.style.display = 'block';
+      menuNewBox.removeAttribute('tabindex');
+      menuNewBox.removeAttribute('aria-hidden');
       menuSignOut.style.display = 'block';
+      menuSignOut.removeAttribute('tabindex');
+      menuSignOut.removeAttribute('aria-hidden');
       menuSignIn.style.display = 'none';
     } else {
       // Not authenticated or anonymous - hide hamburger button
       hamburgerBtn.style.display = 'none';
       menuUserInfo.style.display = 'none';
       menuDashboard.style.display = 'none';
+      menuDashboard.setAttribute('tabindex', '-1');
+      menuDashboard.setAttribute('aria-hidden', 'true');
       menuNewBox.style.display = 'none';
+      menuNewBox.setAttribute('tabindex', '-1');
+      menuNewBox.setAttribute('aria-hidden', 'true');
       menuSignOut.style.display = 'none';
+      menuSignOut.setAttribute('tabindex', '-1');
+      menuSignOut.setAttribute('aria-hidden', 'true');
       menuSignIn.style.display = 'block';
 
       // Close menu if it's open
