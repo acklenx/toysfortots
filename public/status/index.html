@@ -56,6 +56,17 @@
 				}
 			};
 
+			// XSS Protection: Escape HTML to prevent script injection
+			const escapeHtml = (unsafe) => {
+				if (!unsafe) return '';
+				return String(unsafe)
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#039;');
+			};
+
 			// --- MODIFIED: Uses new CSS classes ---
 			const renderReportItem = ( report ) =>
 			{
@@ -71,8 +82,8 @@
 					reporterInfoHtml = `
                 <div class="report-reporter-info">
                    <p><strong>Reported by:</strong></p>
-                   ${ report.reporterName ? `<p>Name: ${ report.reporterName }</p>` : '' }
-                   ${ report.reporterEmail ? `<p>Email: ${ report.reporterEmail }</p>` : '' }
+                   ${ report.reporterName ? `<p>Name: ${ escapeHtml(report.reporterName) }</p>` : '' }
+                   ${ report.reporterEmail ? `<p>Email: ${ escapeHtml(report.reporterEmail) }</p>` : '' }
                 </div>
             `;
 				}
@@ -85,14 +96,17 @@
 					itemClasses += ' is-problem';
 				}
 
+				const reportTypeDisplay = escapeHtml(reportTypeName).replace( /_/g, ' ' );
+				const reportDesc = escapeHtml(report.description || report.notes || 'No details provided.');
+
 				return `
                 <li class="${ itemClasses }">
                     <div class="report-item-header">
-                        <span class="report-title">${ reportTypeName.replace( /_/g, ' ' ) }</span>
+                        <span class="report-title">${ reportTypeDisplay }</span>
                         <span class="report-status ${ report.status === 'new' ? 'is-new' : 'is-cleared' }">${ statusText }</span>
                     </div>
                     <p class="report-description">
-                        ${ report.description || report.notes || 'No details provided.' }
+                        ${ reportDesc }
                     </p>
                     <p class="report-timestamp">
                        Report Time: ${ formatDate( report.timestamp ) }
@@ -174,15 +188,15 @@
 						// --- MODIFIED: Uses new CSS ---
 						listDiv.innerHTML = `
                         <div class="bg-tots-light">
-                            <h2>${ location.label }</h2>
-                            <p>${ location.address }, ${ location.city }, ${ location.state }</p>
-                            <p class="box-id">Box ID: <span>${ boxId }</span></p>
-                            <p class="volunteer">Assigned Volunteer: ${ volunteerDisplayName }</p>
+                            <h2>${ escapeHtml(location.label) }</h2>
+                            <p>${ escapeHtml(location.address) }, ${ escapeHtml(location.city) }, ${ escapeHtml(location.state) }</p>
+                            <p class="box-id">Box ID: <span>${ escapeHtml(boxId) }</span></p>
+                            <p class="volunteer">Assigned Volunteer: ${ escapeHtml(volunteerDisplayName) }</p>
                             <div class="contact-info">
                                 <h3>Location Contact:</h3>
-                                <p><strong>Name:</strong> ${ location.contactName || 'N/A' }</p>
-                                <p><strong>Email:</strong> ${ location.contactEmail || 'N/A' }</p>
-                                <p><strong>Phone:</strong> ${ location.contactPhone || 'N/A' }</p>
+                                <p><strong>Name:</strong> ${ escapeHtml(location.contactName || 'N/A') }</p>
+                                <p><strong>Email:</strong> ${ escapeHtml(location.contactEmail || 'N/A') }</p>
+                                <p><strong>Phone:</strong> ${ escapeHtml(location.contactPhone || 'N/A') }</p>
                             </div>
                         </div>
                     `;

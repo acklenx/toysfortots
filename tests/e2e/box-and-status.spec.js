@@ -417,6 +417,72 @@ test.describe('Box Action Center and Status Pages', () => {
         await expect(page.locator('text=pickup alert')).toBeVisible();
         await expect(page.locator('text=pickup details')).toBeVisible();
       });
+
+      test('should prevent XSS attacks by escaping HTML in location and report data', async ({ page }) => {
+        const xssBoxId = generateBoxId('XSS');
+
+        // Create location with XSS payloads
+        await createTestLocation(xssBoxId, {
+          label: '<script>alert("XSS-Label")</script>Evil Store',
+          address: '<img src=x onerror=alert("XSS-Addr")>666 Hack Ave',
+          city: '<b>Decatur</b>',
+          state: '<i>GA</i>',
+          contactName: '<script>alert("XSS-Contact")</script>Evil Manager',
+          contactEmail: '<img src=x onerror=alert("XSS-Email")>evil@test.com',
+          contactPhone: '<script>555-HACK</script>',
+          volunteer: 'Test Volunteer'
+        });
+
+        // Create report with XSS payloads
+        await createTestReport(xssBoxId, {
+          reportType: '<script>alert("XSS-Type")</script>pickup_alert',
+          description: '<img src=x onerror=alert("XSS-Desc")>Needs immediate pickup',
+          reporterName: '<script>alert("XSS-Reporter")</script>Hacker',
+          reporterEmail: '<img src=x onerror=alert("XSS-Email2")>hacker@evil.com',
+          status: 'new'
+        });
+
+        // Listen for any alert dialogs (should not appear if XSS is prevented)
+        page.on('dialog', async dialog => {
+          throw new Error(`Unexpected dialog appeared: ${dialog.message()}`);
+        });
+
+        await page.goto(`/status?id=${xssBoxId}`);
+
+        // Wait for page to load
+        await expect(page.locator('#location-display')).toBeVisible();
+        await expect(page.locator('.report-item').first()).toBeVisible();
+
+        const locationDisplay = page.locator('#location-display');
+        // Get the XSS report (not the box_registered report)
+        const reportItem = page.locator('.report-item').filter({ hasText: 'pickup alert' }).first();
+
+        // Verify malicious scripts in location data are rendered as text
+        await expect(locationDisplay).toContainText('<script>alert("XSS-Label")</script>Evil Store');
+        await expect(locationDisplay).toContainText('<img src=x onerror=alert("XSS-Addr")>666 Hack Ave');
+        await expect(locationDisplay).toContainText('<script>alert("XSS-Contact")</script>Evil Manager');
+
+        // Verify malicious scripts in report data are rendered as text
+        await expect(reportItem).toContainText('<img src=x onerror=alert("XSS-Desc")>Needs immediate pickup');
+        await expect(reportItem).toContainText('<script>alert("XSS-Reporter")</script>Hacker');
+
+        // Verify no script tags were actually rendered in the DOM
+        const scriptTags = await page.locator('script:has-text("alert")').count();
+        expect(scriptTags).toBe(0);
+
+        // Verify HTML tags are escaped in the DOM
+        const locationHTML = await locationDisplay.innerHTML();
+        expect(locationHTML).toContain('&lt;script&gt;');
+        expect(locationHTML).toContain('&lt;img');
+        expect(locationHTML).not.toContain('<script>alert');
+        expect(locationHTML).not.toContain('<img src=x onerror');
+
+        const reportHTML = await reportItem.innerHTML();
+        expect(reportHTML).toContain('&lt;script&gt;');
+        expect(reportHTML).toContain('&lt;img');
+        expect(reportHTML).not.toContain('<script>alert');
+        expect(reportHTML).not.toContain('<img src=x onerror');
+      });
     });
   });
 });
