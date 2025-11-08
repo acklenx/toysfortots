@@ -22,7 +22,12 @@
 				getDocs,
 				query,
 				where,
-				orderBy
+				orderBy,
+				updateDoc,
+				increment,
+				setDoc,
+				addDoc,
+				serverTimestamp
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 			import { formatDate } from '/js/utils.min.js';
@@ -69,7 +74,7 @@
 			};
 
 			// --- MODIFIED: Uses new CSS classes ---
-			const renderReportItem = ( report ) =>
+			const renderReportItem = ( reportId, report ) =>
 			{
 				const reportTypeName = report.reportType || report[ 'report-type' ] || 'unknown_report';
 				const STATUS_RESOLVED_TEXT = 'Resolved'; // Variable for status text
@@ -87,6 +92,16 @@
                    ${ report.reporterEmail ? `<p>Email: ${ escapeHtml(report.reporterEmail) }</p>` : '' }
                 </div>
             `;
+				}
+
+				// Add Resolve button for unresolved reports
+				let resolveButtonHtml = '';
+				if (report.status === 'new') {
+					resolveButtonHtml = `
+						<button class="resolve-report-btn" data-report-id="${ escapeHtml(reportId) }" style="margin-top: 10px; padding: 8px 16px; background-color: var(--t4t-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+							Mark as Resolved
+						</button>
+					`;
 				}
 
 				// Apply styling: problem reports stay red, resolved reports get green, new pickups stay white
@@ -113,6 +128,7 @@
                        Report Time: ${ formatDate( report.timestamp ) }
                     </p>
                     ${reporterInfoHtml}
+                    ${resolveButtonHtml}
                 </li>
             `;
 			};
@@ -234,7 +250,7 @@
 					let historyHtml = '';
 					querySnapshot.forEach( docSnap =>
 					{
-						historyHtml += renderReportItem( docSnap.data() );
+						historyHtml += renderReportItem( docSnap.id, docSnap.data() );
 					} );
 					historyContainer.innerHTML = historyHtml;
 

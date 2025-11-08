@@ -347,12 +347,17 @@
 							const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
 							const volunteerRef = doc(db, volunteersPath, auth.currentUser.uid);
 
+							console.log('[ANALYTICS] Incrementing resolvedCount for user:', auth.currentUser.uid);
+							console.log('[ANALYTICS] Volunteer ref path:', volunteersPath + '/' + auth.currentUser.uid);
+
 							// Update aggregate count (use setDoc with merge to create field if it doesn't exist)
 							await setDoc(volunteerRef, {
 								analytics: {
 									resolvedCount: increment(1)
 								}
 							}, { merge: true });
+
+							console.log('[ANALYTICS] setDoc completed successfully');
 
 							// Store detailed event for historical tracking
 							const actionsPath = `${volunteersPath}/${auth.currentUser.uid}/actions`;
