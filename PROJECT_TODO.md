@@ -182,6 +182,16 @@
   - Can be run safely without affecting real data
   - Scheduled daily runs with notifications
 
+### ⚡ Test Performance Optimization
+- [ ] **Implement shared test fixtures for common scenarios**
+  - Create preconfigured test states with data loaded once
+  - Run multiple read-only tests against same fixture (faster)
+  - Examples: "dashboard with 3 boxes", "box with 5 reports", "homepage with 10 locations"
+  - Only create new data for tests that specifically test data creation/mutation
+  - Current problem: Every test creates its own data, even for simple "is text visible" checks
+  - Solution: Fixture setup → run all tests that need it → teardown
+  - Could reduce test suite time from ~60s to ~20s for full run
+
 ---
 
 ## 📱 **Progressive Web App (PWA)**
