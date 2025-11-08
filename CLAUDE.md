@@ -16,6 +16,72 @@ A `commit-msg` hook will automatically block commits containing these lines.
 
 This is a Firebase-based web application for tracking Toys for Tots donation boxes. Marines use QR codes to provision boxes at business locations, and the public can scan codes to report when boxes need pickup. The system manages location data, status reports, and volunteer authorization.
 
+## Security Guidelines
+
+### XSS (Cross-Site Scripting) Prevention
+
+**CRITICAL: Always escape user-generated content before rendering to prevent XSS attacks.**
+
+When displaying data from Firestore or user input using `innerHTML`, you **MUST** escape HTML special characters.
+
+**BAD (Vulnerable to XSS):**
+```javascript
+// DON'T DO THIS - Allows script injection!
+element.innerHTML = `<h2>${location.label}</h2>`;
+element.innerHTML = `<p>${report.description}</p>`;
+```
+
+**GOOD (XSS Protected):**
+```javascript
+// Always use this escapeHtml function before inserting user data
+const escapeHtml = (unsafe) => {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
+element.innerHTML = `<h2>${escapeHtml(location.label)}</h2>`;
+element.innerHTML = `<p>${escapeHtml(report.description)}</p>`;
+```
+
+**When to escape:**
+- ANY data from Firestore (locations, reports, user profiles, etc.)
+- URL parameters (boxId, search queries, etc.)
+- Form inputs that get re-displayed
+- API responses from external services
+
+**Safe alternatives to `innerHTML`:**
+- Use `textContent` for plain text (automatically escapes HTML)
+- Use `setAttribute()` for attribute values
+- Use `createElement()` and `appendChild()` for DOM manipulation
+
+**Example with textContent:**
+```javascript
+const heading = document.createElement('h2');
+heading.textContent = location.label; // Automatically safe
+element.appendChild(heading);
+```
+
+**Testing XSS fixes:**
+Test with malicious payloads like:
+- `<script>alert("XSS")</script>`
+- `<img src=x onerror=alert("XSS")>`
+- `<iframe src="javascript:alert('XSS')"></iframe>`
+
+See `tests/e2e/box-and-status.spec.js` for XSS test examples.
+
+### Other Security Best Practices
+
+1. **Never log sensitive data** - Passcodes, passwords, API keys should never appear in console.log()
+2. **Validate all inputs** - Both client-side and server-side (Cloud Functions)
+3. **Use Firestore Security Rules** - Enforce authorization at the database level
+4. **Rate limiting** - Protect Cloud Functions from abuse
+5. **HTTPS only** - Never allow HTTP connections in production
+
 ## Development Commands
 
 ### Testing

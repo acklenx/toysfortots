@@ -96,12 +96,24 @@
 							volunteerDisplayName = volunteerDisplayName.substring( 0, atIndex );
 						}
 					}
+
+					// XSS Protection: Escape HTML to prevent script injection
+					const escapeHtml = (unsafe) => {
+						if (!unsafe) return '';
+						return String(unsafe)
+							.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;')
+							.replace(/"/g, '&quot;')
+							.replace(/'/g, '&#039;');
+					};
+
 					listDiv.innerHTML = `
                    <div class="info-box">
-                       <h2 class="info-title">${ location.label }</h2>
-                       <p class="info-text">${ location.address }, ${ location.city }, ${ location.state }</p>
-                       <p class="info-detail">Box ID: <span class="text-tots-red font-semibold">${ boxId }</span></p>
-                       <p class="info-detail">Assigned Volunteer: <span class="font-semibold">${ volunteerDisplayName }</span></p>
+                       <h2 class="info-title">${ escapeHtml(location.label) }</h2>
+                       <p class="info-text">${ escapeHtml(location.address) }, ${ escapeHtml(location.city) }, ${ escapeHtml(location.state) }</p>
+                       <p class="info-detail">Box ID: <span class="text-tots-red font-semibold">${ escapeHtml(boxId) }</span></p>
+                       <p class="info-detail">Assigned Volunteer: <span class="font-semibold">${ escapeHtml(volunteerDisplayName) }</span></p>
                    </div>
                `;
 					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;

@@ -76,6 +76,44 @@ test.describe('Box Action Center and Status Pages', () => {
 
       await expect(page.locator('#loading-message')).toContainText('ID missing');
     });
+
+    test('should prevent XSS attacks by escaping HTML in location data', async ({ page }) => {
+      const boxId = generateBoxId('XSS_TEST');
+
+      // Create location with XSS payloads in various fields
+      await createTestLocation(boxId, {
+        label: '<script>alert("XSS")</script>Malicious Store',
+        address: '<img src=x onerror=alert("XSS")>123 Evil St',
+        city: '<b>Atlanta</b>',
+        state: '<i>GA</i>',
+        volunteer: '<script>alert("XSS")</script>Hacker'
+      });
+
+      // Listen for any alert dialogs (should not appear if XSS is prevented)
+      page.on('dialog', async dialog => {
+        throw new Error(`Unexpected dialog appeared: ${dialog.message()}`);
+      });
+
+      await page.goto(`/box?id=${boxId}`);
+
+      // Verify the malicious scripts are rendered as text, not executed
+      const locationDisplay = page.locator('#location-display');
+
+      // The escaped HTML should be visible as text
+      await expect(locationDisplay).toContainText('<script>alert("XSS")</script>Malicious Store');
+      await expect(locationDisplay).toContainText('<img src=x onerror=alert("XSS")>123 Evil St');
+
+      // Verify no script tags were actually rendered in the DOM
+      const scriptTags = await page.locator('script:has-text("alert")').count();
+      expect(scriptTags).toBe(0);
+
+      // Verify HTML tags are escaped (visible as text, not rendered as HTML)
+      const innerHTML = await locationDisplay.innerHTML();
+      expect(innerHTML).toContain('&lt;script&gt;');
+      expect(innerHTML).toContain('&lt;img');
+      expect(innerHTML).not.toContain('<script>alert');
+      expect(innerHTML).not.toContain('<img src=x');
+    });
   });
 
   test.describe('Status/History Page (/status)', () => {
