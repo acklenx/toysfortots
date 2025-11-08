@@ -1301,7 +1301,7 @@ No Action: ${noActionViews}`;
 			tableHTML += '<th class="sortable" data-sort="boxes" onclick="sortVolunteers(\'boxes\')">Boxes</th>';
 			tableHTML += '<th class="sortable" data-sort="undeployed" onclick="sortVolunteers(\'undeployed\')">Undeployed</th>';
 			tableHTML += '<th class="sortable" data-sort="lastLogin" onclick="sortVolunteers(\'lastLogin\')">Last Seen</th>';
-			tableHTML += '<th class="sortable" data-sort="pending" onclick="sortVolunteers(\'pending\')">Pending</th>';
+			tableHTML += '<th class="sortable" data-sort="pending" onclick="sortVolunteers(\'pending\')">Open</th>';
 			tableHTML += '<th class="sortable" data-sort="resolved" onclick="sortVolunteers(\'resolved\')">Resolved</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
@@ -1315,17 +1315,30 @@ No Action: ${noActionViews}`;
 				// Count boxes deployed by this volunteer
 				const boxCount = allBoxes.filter(box => box.volunteer === volunteer.displayName).length;
 
-				// Count undeployed boxes (in Google Sheets but not deployed by this volunteer)
-				// Compare Google Sheets suggestions with deployed boxes
+				// Loose matching helper: checks if either string contains the other (case-insensitive)
+				const looseMatch = (str1, str2) => {
+					if (!str1 || !str2) return false;
+					const s1 = str1.toLowerCase().trim();
+					const s2 = str2.toLowerCase().trim();
+					return s1.includes(s2) || s2.includes(s1);
+				};
+
+				// Count undeployed boxes (in Google Sheets assigned to this volunteer but not yet deployed)
+				// Use loose matching: "Q" matches "Quincy", "Quincy" matches "Quincy Acklen"
 				let undeployedCount = 0;
 				locationSuggestions.forEach(suggestion => {
-					// Check if this suggestion is NOT deployed by this volunteer
-					const isDeployed = allBoxes.some(box =>
-						box.volunteer === volunteer.displayName &&
-						(box.label === suggestion.label || box.address === suggestion.address)
-					);
-					if (!isDeployed) {
-						undeployedCount++;
+					// Check if this suggestion is assigned to this volunteer (loose match on contactName)
+					const isAssignedToVolunteer = looseMatch(volunteer.displayName, suggestion.contactName);
+
+					if (isAssignedToVolunteer) {
+						// Check if this volunteer has already deployed this box
+						const isDeployed = allBoxes.some(box =>
+							box.volunteer === volunteer.displayName &&
+							(box.label === suggestion.label || box.address === suggestion.address)
+						);
+						if (!isDeployed) {
+							undeployedCount++;
+						}
 					}
 				});
 
@@ -1375,7 +1388,6 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td style="text-align: center;">${pendingCount}</td>`;
 				tableHTML += `<td style="text-align: center;">${resolvedCount}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
-				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline; margin-right: 12px;">View Boxes</a>`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 				tableHTML += `</div></td>`;
