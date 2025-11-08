@@ -341,6 +341,23 @@
 						const provisionBoxV2 = httpsCallable( functions, 'provisionBoxV2' );
 						const result = await provisionBoxV2( payload );
 						const newBoxId = result.data.boxId;
+
+						// Trigger cache refresh after box registration
+						// Small delay ensures box is fully written to Firestore first
+						setTimeout( async () =>
+						{
+							try
+							{
+								const cacheRefreshUrl = 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
+								await fetch( cacheRefreshUrl, { method: 'POST' } );
+								console.log( 'Cache refresh triggered after new box registration' );
+							}
+							catch( error )
+							{
+								console.warn( 'Cache refresh failed (non-critical):', error );
+							}
+						}, 1000 );
+
 						form.reset();
 						boxIdDisplay.textContent = scannedBoxId;
 						setTimeout( () =>
