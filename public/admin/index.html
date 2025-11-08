@@ -717,6 +717,7 @@
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((box) => {
+				const escapedLabel = (box.label || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 				tableHTML += '<tr>';
 				tableHTML += `<td>${box.id}</td>`;
 				tableHTML += `<td>${box.label || 'N/A'}</td>`;
@@ -724,14 +725,26 @@
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
 				tableHTML += `<td>${box.volunteerEmail || 'N/A'}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" onclick="window.editBox('${box.id}')">Edit</button>`;
-				tableHTML += `<button class="delete-btn" onclick="window.deleteBox('${box.id}', '${box.label}')">Delete</button>`;
+				tableHTML += `<button class="edit-btn" data-box-id="${box.id}">Edit</button>`;
+				tableHTML += `<button class="delete-btn" data-box-id="${box.id}" data-box-label="${escapedLabel}">Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
 
 			tableHTML += '</tbody></table>';
 			container.innerHTML = tableHTML;
+
+			// Add event listeners to buttons
+			container.querySelectorAll('.edit-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.editBox(btn.dataset.boxId);
+				});
+			});
+			container.querySelectorAll('.delete-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.deleteBox(btn.dataset.boxId, btn.dataset.boxLabel);
+				});
+			});
 
 			// Update sort indicators
 			if (boxesSortColumn) {
@@ -886,13 +899,20 @@
 				tableHTML += `<td>${report.status || 'N/A'}</td>`;
 				tableHTML += `<td>${date}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="delete-btn" onclick="window.deleteReport('${report.id}')">Delete</button>`;
+				tableHTML += `<button class="delete-btn" data-report-id="${report.id}">Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
 
 			tableHTML += '</tbody></table>';
 			container.innerHTML = tableHTML;
+
+			// Add event listeners to buttons
+			container.querySelectorAll('.delete-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.deleteReport(btn.dataset.reportId);
+				});
+			});
 
 			// Update sort indicators
 			if (reportsSortColumn) {
@@ -1043,19 +1063,36 @@
 
 			pageData.forEach((volunteer) => {
 				const isCurrentUser = volunteer.id === currentUser.uid;
+				const escapedDisplayName = (volunteer.displayName || volunteer.email || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 				tableHTML += '<tr>';
 				tableHTML += `<td>${volunteer.id}</td>`;
 				tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
 				tableHTML += `<td>${volunteer.email || 'N/A'}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" onclick="window.editVolunteer('${volunteer.id}')" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
-				tableHTML += `<button class="delete-btn" onclick="window.deleteVolunteer('${volunteer.id}', '${volunteer.displayName || volunteer.email}')" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
+				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
 
 			tableHTML += '</tbody></table>';
 			container.innerHTML = tableHTML;
+
+			// Add event listeners to buttons
+			container.querySelectorAll('.edit-btn').forEach(btn => {
+				if (!btn.disabled) {
+					btn.addEventListener('click', () => {
+						window.editVolunteer(btn.dataset.volunteerId);
+					});
+				}
+			});
+			container.querySelectorAll('.delete-btn').forEach(btn => {
+				if (!btn.disabled) {
+					btn.addEventListener('click', () => {
+						window.deleteVolunteer(btn.dataset.volunteerId, btn.dataset.volunteerName);
+					});
+				}
+			});
 
 			// Update sort indicators
 			if (volunteersSortColumn) {
