@@ -194,12 +194,56 @@ npx playwright test --config=playwright.smoke.config.js --workers=1
 - Faster normal case (4 workers when tests pass)
 - More reliable commit process
 
+## Zombie Process Management
+
+**IMPORTANT**: Regularly check for and kill stale Playwright processes, especially after test runs or when performance degrades.
+
+**Problem**: Playwright processes can become zombies when:
+- Tests are interrupted (Ctrl+C, timeout, crash)
+- Multiple test runs overlap
+- Background test processes aren't properly cleaned up
+
+**Impact**: During this session, 13 zombie Playwright processes were found running simultaneously, causing:
+- Commit times >60 seconds (should be 12-15s)
+- Firebase emulator contention and resource exhaustion
+- Test flakiness and random failures
+
+**How to check**:
+```bash
+# Count zombie Playwright processes
+ps aux | grep playwright | grep -v grep | wc -l
+
+# See all Playwright processes with details
+ps aux | grep playwright | grep -v grep
+```
+
+**How to fix**:
+```bash
+# Kill all Playwright processes
+pkill -f "playwright test"
+
+# Verify they're gone
+ps aux | grep playwright | grep -v grep
+```
+
+**Recommendation**: Run `pkill -f "playwright test"` regularly, especially:
+- Before starting a test run
+- After interrupted test runs
+- When commits take longer than 15 seconds
+- When experiencing unexplained test flakiness
+
+**Other common zombie processes to watch for**:
+- `firebase emulators` - Can accumulate if not shut down cleanly
+- `node` processes from interrupted npm scripts
+- `chrome`/`chromium` browser processes from failed tests
+
 ## Recommendations
 
 1. ~~**Update smoke test config to use 1 worker**~~ - ✅ Implemented via smart retry in pre-commit hook
 2. **Add build scripts to package.json** - Make it easier to build all minified files consistently
 3. **Consider CI/CD verification** - Ensure minified files are built before deployment
 4. **Document the data attribute pattern** - For future developers adding admin features
+5. **Kill zombie processes regularly** - Run `pkill -f "playwright test"` before test runs and when performance degrades
 
 ## Statistics
 
