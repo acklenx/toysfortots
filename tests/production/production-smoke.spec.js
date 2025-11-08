@@ -16,16 +16,45 @@ import { test, expect } from '@playwright/test';
 test.describe('Production Site Health', () => {
 
   test('homepage should load and JavaScript should execute', async ({ page }) => {
-    const consoleErrors = [];
+    const consoleMessages = [];
+    const cspViolations = [];
 
-    // Monitor console for errors (CSP violations show here)
+    // Monitor ALL console messages (CSP violations might be warnings, not errors)
     page.on('console', msg => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
+      const text = msg.text();
+      const type = msg.type();
+      consoleMessages.push({ type, text });
+
+      // Detect CSP violations in any message type
+      if (text.includes('Content Security Policy') || text.includes('CSP') ||
+          text.toLowerCase().includes('blocked') || text.includes('refused to') ||
+          text.includes('violates the following')) {
+        cspViolations.push(`[${type}] ${text}`);
       }
     });
 
+    // Expose function to collect CSP violations
+    await page.exposeFunction('reportCSPViolation', (violation) => {
+      cspViolations.push(`${violation.directive}: ${violation.uri}`);
+    });
+
+    // Capture CSP violations via the browser API
+    await page.addInitScript(() => {
+      window.cspViolations = [];
+      document.addEventListener('securitypolicyviolation', (e) => {
+        const v = {
+          directive: e.violatedDirective,
+          uri: e.blockedURI
+        };
+        window.cspViolations.push(v);
+        window.reportCSPViolation(v);
+      });
+    });
+
     await page.goto('/');
+
+    // Wait a bit for all resources to load and violations to be logged
+    await page.waitForTimeout(5000);
 
     // Verify page loaded
     await expect(page).toHaveTitle(/Toys for Tots/);
@@ -44,11 +73,33 @@ test.describe('Production Site Health', () => {
     const header = page.locator('header img[alt*="Toys for Tots"]');
     await expect(header).toBeVisible();
 
-    // Fail test if console errors detected
-    if (consoleErrors.length > 0) {
-      console.error('❌ Console errors detected in production:');
-      consoleErrors.forEach(err => console.error('  ', err));
-      throw new Error(`Console errors detected: ${consoleErrors.join('; ')}`);
+    // Get CSP violations from the page
+    const capturedViolations = await page.evaluate(() => window.cspViolations || []);
+    if (capturedViolations.length > 0) {
+      console.error('❌ CSP VIOLATIONS (via API):');
+      capturedViolations.forEach(v => {
+        console.error(`  Directive: ${v.directive}, Blocked: ${v.uri}`);
+        cspViolations.push(`${v.directive}: ${v.uri}`);
+      });
+    }
+
+    // Print all console messages for debugging
+    console.log('\n📋 All console messages:');
+    consoleMessages.forEach(msg => {
+      const preview = msg.text.length > 150 ? msg.text.substring(0, 150) + '...' : msg.text;
+      console.log(`  [${msg.type}] ${preview}`);
+
+      // Check specifically for "Refused to connect" CSP violations
+      if (msg.text.includes('Refused to connect') || msg.text.includes('refused to')) {
+        cspViolations.push(`[${msg.type}] ${msg.text}`);
+      }
+    });
+
+    // Report CSP violations if detected
+    if (cspViolations.length > 0) {
+      console.error(`\n❌ ${cspViolations.length} CSP VIOLATIONS DETECTED:`);
+      cspViolations.forEach(violation => console.error('  ', violation));
+      throw new Error(`${cspViolations.length} CSP violations detected`);
     }
   });
 
