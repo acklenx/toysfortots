@@ -886,6 +886,7 @@
 			tableHTML += '<th class="sortable" data-sort="address" onclick="sortBoxes(\'address\')">Address</th>';
 			tableHTML += '<th class="sortable" data-sort="city" onclick="sortBoxes(\'city\')">City</th>';
 			tableHTML += '<th class="sortable" data-sort="volunteer" onclick="sortBoxes(\'volunteer\')">Volunteer</th>';
+			tableHTML += '<th class="sortable" data-sort="clicks" onclick="sortBoxes(\'clicks\')">Clicks</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
@@ -895,12 +896,21 @@
 				const fullAddress = `${box.address || ''}, ${box.city || ''}, ${box.state || 'GA'}`;
 				const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
 
+				// Calculate analytics data
+				const analytics = box.analytics || {};
+				const views = analytics.views || 0;
+				const pickupRequests = analytics.pickupRequests || 0;
+				const problemReports = analytics.problemReports || 0;
+				const noActionViews = Math.max(0, views - pickupRequests - problemReports);
+				const tooltipText = `Views: ${views}\\nPickup Requests: ${pickupRequests}\\nProblem Reports: ${problemReports}\\nNo Action: ${noActionViews}`;
+
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${box.id}" target="_blank">${box.id}</a></td>`;
 				tableHTML += `<td>${box.label || 'N/A'}</td>`;
 				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${box.address || 'N/A'}</a></td>`;
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
 				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
+				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${views}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-box-id="${box.id}">Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-box-id="${box.id}" data-box-label="${escapedLabel}">Delete</button>`;
@@ -955,8 +965,15 @@
 			}
 
 			filteredBoxes.sort((a, b) => {
-				const aVal = a[column] || '';
-				const bVal = b[column] || '';
+				let aVal, bVal;
+				if (column === 'clicks') {
+					// Sort by total views count
+					aVal = (a.analytics && a.analytics.views) || 0;
+					bVal = (b.analytics && b.analytics.views) || 0;
+				} else {
+					aVal = a[column] || '';
+					bVal = b[column] || '';
+				}
 				if (aVal < bVal) return boxesSortDirection === 'asc' ? -1 : 1;
 				if (aVal > bVal) return boxesSortDirection === 'asc' ? 1 : -1;
 				return 0;
@@ -1265,6 +1282,7 @@
 			tableHTML += '<th class="sortable" data-sort="boxes" onclick="sortVolunteers(\'boxes\')">Boxes</th>';
 			tableHTML += '<th class="sortable" data-sort="undeployed" onclick="sortVolunteers(\'undeployed\')">Undeployed</th>';
 			tableHTML += '<th class="sortable" data-sort="lastLogin" onclick="sortVolunteers(\'lastLogin\')">Last Seen</th>';
+			tableHTML += '<th class="sortable" data-sort="resolved" onclick="sortVolunteers(\'resolved\')">Resolved</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
@@ -1314,12 +1332,26 @@
 					}
 				}
 
+				// Calculate analytics: resolved actions and pending
+				const analytics = volunteer.analytics || {};
+				const resolvedCount = analytics.resolvedCount || 0;
+
+				// Count pending reports for this volunteer's boxes
+				const volunteerBoxIds = allBoxes.filter(box => box.volunteer === volunteer.displayName).map(box => box.id);
+				const pendingCount = allReports.filter(report =>
+					report.status === 'new' && volunteerBoxIds.includes(report.boxId)
+				).length;
+
+				const resolvedTooltip = `Resolved: ${resolvedCount}\\nPending: ${pendingCount}`;
+
+
 				tableHTML += '<tr>';
 				tableHTML += `<td title="${volunteer.id}">${volunteer.displayName || 'N/A'}</td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
 				tableHTML += `<td style="text-align: center;">${boxCount}</td>`;
 				tableHTML += `<td style="text-align: center;">${undeployedCount}</td>`;
 				tableHTML += `<td>${lastSeenText}</td>`;
+				tableHTML += `<td style="text-align: center;" title="${resolvedTooltip}">${resolvedCount}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
 				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline; margin-right: 12px;">View Boxes</a>`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
@@ -1397,6 +1429,10 @@
 					// Sort by number of undeployed boxes
 					aVal = locationSuggestions.filter(s => !allBoxes.some(box => box.volunteer === a.displayName && (box.label === s.label || box.address === s.address))).length;
 					bVal = locationSuggestions.filter(s => !allBoxes.some(box => box.volunteer === b.displayName && (box.label === s.label || box.address === s.address))).length;
+				} else if (column === 'resolved') {
+					// Sort by resolved count
+					aVal = (a.analytics && a.analytics.resolvedCount) || 0;
+					bVal = (b.analytics && b.analytics.resolvedCount) || 0;
 				} else {
 					aVal = a[column] || '';
 					bVal = b[column] || '';

@@ -23,7 +23,7 @@ test.describe('Box Action Center and Status Pages', () => {
   test.describe('Box Action Center (/box)', () => {
     test('should redirect to login via setup if box does not exist @smoke', async ({ page }) => {
       const boxId = generateBoxId('NONEXISTENT');
-      await page.goto(`/box?id=${boxId}`);
+      await page.goto(`/box?id=${boxId}`, { timeout: 5000 });
 
       // Should redirect to setup, then to login (since setup requires auth)
       await expect(page).toHaveURL(/\/login/, { timeout: 10000 });

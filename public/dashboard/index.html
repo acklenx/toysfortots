@@ -49,7 +49,11 @@
 				orderBy,
 				where,
 				doc,
-				updateDoc
+				updateDoc,
+				getDoc,
+				increment,
+				addDoc,
+				serverTimestamp
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 			import {
 				httpsCallable
@@ -323,9 +327,36 @@
 					try
 					{
 						const reportRef = doc( db, reportsCollectionPath, reportId );
+
+						// Get report data before updating to track analytics
+						const reportSnap = await getDoc(reportRef);
+						const reportData = reportSnap.exists() ? reportSnap.data() : null;
+
+						// Update report status
 						await updateDoc( reportRef, {
 							status: 'cleared'
 						} );
+
+						// Track volunteer action analytics (Hybrid: aggregates + events)
+						if (reportData && auth.currentUser) {
+							const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+							const volunteerRef = doc(db, volunteersPath, auth.currentUser.uid);
+
+							// Update aggregate count
+							await updateDoc(volunteerRef, {
+								'analytics.resolvedCount': increment(1)
+							});
+
+							// Store detailed event for historical tracking
+							const actionsPath = `${volunteersPath}/${auth.currentUser.uid}/actions`;
+							await addDoc(collection(db, actionsPath), {
+								actionType: reportData.reportType === 'pickup_alert' ? 'resolve_pickup' : 'resolve_problem',
+								reportId: reportId,
+								boxId: reportData.boxId,
+								timestamp: serverTimestamp()
+							});
+						}
+
 						location.reload();
 					}
 					catch( err )

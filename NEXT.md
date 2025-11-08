@@ -1,5 +1,25 @@
 # Admin Panel Enhancements - Implementation Plan
 
+---
+
+## 📋 INSTRUCTIONS FOR CLAUDE (READ THIS FIRST)
+
+**When the user says "let's continue" or references this work:**
+
+1. **Read this entire document** to understand context
+2. **Check "What Was Actually Completed"** - Phase 1 & 2 are DONE (commit `3a0cfd0`)
+3. **Focus on Phase 3** - Analytics Tracking (see below)
+4. **Ask the user to answer the questions** in "Questions to Address" section before implementing
+5. **Use Option A (Lightweight)** unless user specifies otherwise
+6. **Start implementation** only after user confirms the approach
+
+**Quick Summary:**
+- ✅ Phase 1 & 2: Complete - clickable links, Google Sheets sync, volunteer stats
+- ⏸️ Phase 3: Not started - needs analytics tracking (clicks, actions, tooltips)
+- ❓ Waiting on: User's answers to questions in Phase 3 section
+
+---
+
 ## Original Request
 
 on admin, on box management: clicking on the address should open a new google maps window at that address. We should underline the address on mouseover so people know it's clickable. clicking on box id should take us to the box status page. and we should add a column for clicks that displays the total number of clicks on boxid (the title text should show the number of pickup requests, problem reports, and clicks with no request (they just landed on the page but didn't click either button). on report management click report id should take us to the report page. clicking on the box id should take us to the box status page. The volunteer management should show the number of boxes each volunteer has assigned. It should show the number of "undeployed" boxes (read from the google sheets (cached version is ok) and use the count of how many boxes don't match (either name or address) what is actively deployed. And add a column for Actions (this will be the total count of all the times the clicked "Resolve". the tool tip on hover should show the number of pickups, problems, and currently pending actions that have not yet been cleared). And for the page as a whole - Add a button at the top to go fetch/update from the google sheets doc.

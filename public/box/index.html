@@ -15,13 +15,44 @@
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
 				doc,
-				getDoc
+				getDoc,
+				updateDoc,
+				increment
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 			import {
 				httpsCallable
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 			let currentBoxInfo;
+
+			// Track analytics for box interactions (Hybrid: aggregates + events)
+			const trackAnalytics = async (boxId, eventType) => {
+				try {
+					const locRef = doc(db, locationsCollectionPath, boxId);
+					const userId = auth.currentUser?.uid || 'anonymous';
+
+					// Update aggregate counts in location document
+					const aggregateField = eventType === 'view' ? 'views' :
+					                       eventType === 'pickup_request' ? 'pickupRequests' :
+					                       'problemReports';
+					await updateDoc(locRef, {
+						[`analytics.${aggregateField}`]: increment(1)
+					});
+
+					// Store detailed event in subcollection for historical tracking
+					const eventsPath = `${locationsCollectionPath}/${boxId}/events`;
+					const { addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+					await addDoc(collection(db, eventsPath), {
+						eventType: eventType,
+						timestamp: serverTimestamp(),
+						userId: userId
+					});
+				} catch (error) {
+					console.error(`Error tracking ${eventType}:`, error);
+					// Don't block user interaction if analytics fail
+				}
+			};
+
 			const setupFirebase = () =>
 			{
 				try
@@ -116,6 +147,9 @@
 					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;
 					pickupBtn.disabled = false;
 					problemBtn.disabled = false;
+
+					// Track page view
+					trackAnalytics(boxId, 'views');
 					const getFormData = ( form ) =>
 					{
 						const formData = new FormData( form );
@@ -147,6 +181,9 @@
 					};
 					pickupBtn.addEventListener( 'click', () =>
 					{
+						// Track pickup request
+						trackAnalytics(boxId, 'pickup_request');
+
 						const quickReport = {
 							reportType: 'pickup_alert',
 							description: 'Immediate pickup requested via button click.'
@@ -193,6 +230,9 @@
 							const success = await submitReportToFirestore( reportData, boxId, location );
 							if( success )
 							{
+								// Track problem report
+								trackAnalytics(boxId, 'problem_report');
+
 								problemDetailsSuccess.classList.remove( 'hidden' );
 								submitButton.textContent = 'Report Sent!';
 							}

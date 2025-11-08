@@ -37,6 +37,7 @@
     "perf:compare": "node scripts/web-performance-agent-v2.cjs --compare",
     "perf:page": "node scripts/web-performance-agent-v2.cjs --page",
     "perf:audit:v1": "node scripts/web-performance-agent.cjs",
+    "visual:audit": "node scripts/visual-audit.js",
     "build": "npm run build:css && npm run build:js",
     "build:css": "npx csso public/css/style.css --output public/css/style.min.css",
     "build:js": "npm run build:js:loader && npm run build:js:hamburger && npm run build:js:user && npm run build:js:utils && npm run build:js:autocomplete",
