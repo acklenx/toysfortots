@@ -110,13 +110,14 @@
   - Restricted to production domain only: https://toysfortots.mcl1311.com
   - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only functions**
 
-- [x] ✅ **Add Content Security Policy and security headers** (November 7, 2025 - commit: e0bfdec)
+- [x] ✅ **Add Content Security Policy and security headers** (November 7, 2025 - commits: e0bfdec, d98c8bb, ebc0022)
   - Content-Security-Policy: Restrict script/style/connect sources to trusted domains
   - X-Frame-Options: DENY (prevents clickjacking)
   - X-Content-Type-Options: nosniff (prevents MIME-type sniffing)
   - Referrer-Policy: strict-origin-when-cross-origin (privacy protection)
-  - Permissions-Policy: geolocation=(self), camera=(), microphone=()
-  - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only hosting**
+  - Permissions-Policy: Comprehensive blocking of 19+ unused browser features
+  - Fixed header routing pattern to match all HTML responses (not just .html files)
+  - **✅ DEPLOYED TO PRODUCTION: All security headers now active**
 
 - [ ] **Implement rate limiting**
   - Protect Cloud Functions from abuse
