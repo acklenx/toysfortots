@@ -902,7 +902,10 @@
 				const pickupRequests = analytics.pickupRequests || 0;
 				const problemReports = analytics.problemReports || 0;
 				const noActionViews = Math.max(0, views - pickupRequests - problemReports);
-				const tooltipText = `Views: ${views}\\nPickup Requests: ${pickupRequests}\\nProblem Reports: ${problemReports}\\nNo Action: ${noActionViews}`;
+				const tooltipText = `Views: ${views}
+Pickup Requests: ${pickupRequests}
+Problem Reports: ${problemReports}
+No Action: ${noActionViews}`;
 
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${box.id}" target="_blank">${box.id}</a></td>`;
@@ -1342,7 +1345,8 @@
 					report.status === 'new' && volunteerBoxIds.includes(report.boxId)
 				).length;
 
-				const resolvedTooltip = `Resolved: ${resolvedCount}\\nPending: ${pendingCount}`;
+				const resolvedTooltip = `Resolved: ${resolvedCount}
+Pending: ${pendingCount}`;
 
 
 				tableHTML += '<tr>';
