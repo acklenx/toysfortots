@@ -14,7 +14,7 @@
   "scripts": {
     "test": "playwright test",
     "test:smart": "./run-tests-smart.sh",
-    "test:smoke": "playwright test --config=playwright.smoke.config.js",
+    "test:smoke": "./run-smoke-tests.sh",
     "test:production": "playwright test --config=playwright.production.config.cjs",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
