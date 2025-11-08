@@ -262,7 +262,112 @@
 				}
 			};
 
-			// --- 6. CALL SETUP FUNCTION ---
+			// --- 6. EVENT HANDLERS FOR RESOLVE BUTTONS ---
+			document.addEventListener('click', async (e) => {
+				// Handle individual resolve button
+				if (e.target && e.target.classList.contains('resolve-report-btn')) {
+					const button = e.target;
+					const reportId = button.dataset.reportId;
+					button.disabled = true;
+					button.textContent = 'Resolving...';
+
+					try {
+						const reportRef = doc(db, reportsCollectionPath, reportId);
+						const reportSnap = await getDoc(reportRef);
+						const reportData = reportSnap.exists() ? reportSnap.data() : null;
+
+						await updateDoc(reportRef, { status: 'cleared' });
+
+						// Track analytics
+						if (reportData && auth.currentUser && !auth.currentUser.isAnonymous) {
+							const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+							const volunteerRef = doc(db, volunteersPath, auth.currentUser.uid);
+
+							await setDoc(volunteerRef, {
+								analytics: { resolvedCount: increment(1) }
+							}, { merge: true });
+
+							const actionsPath = `${volunteersPath}/${auth.currentUser.uid}/actions`;
+							await addDoc(collection(db, actionsPath), {
+								actionType: reportData.reportType === 'pickup_alert' ? 'resolve_pickup' : 'resolve_problem',
+								reportId: reportId,
+								boxId: reportData.boxId,
+								timestamp: serverTimestamp()
+							});
+						}
+
+						location.reload();
+					} catch (err) {
+						console.error('Error resolving report:', err);
+						alert('Error resolving report. Please try again.');
+						button.disabled = false;
+						button.textContent = 'Mark as Resolved';
+					}
+				}
+
+				// Handle resolve all button
+				if (e.target && e.target.id === 'resolve-all-btn') {
+					const button = e.target;
+					if (!confirm('Are you sure you want to resolve ALL open reports for this box?')) {
+						return;
+					}
+
+					button.disabled = true;
+					button.textContent = 'Resolving...';
+
+					try {
+						const params = new URLSearchParams(window.location.search);
+						const boxId = params.get('id');
+
+						const reportsRef = collection(db, reportsCollectionPath);
+						const q = query(reportsRef, where('boxId', '==', boxId), where('status', '==', 'new'));
+						const querySnapshot = await getDocs(q);
+
+						const updatePromises = [];
+						querySnapshot.forEach((docSnap) => {
+							const reportRef = doc(db, reportsCollectionPath, docSnap.id);
+							updatePromises.push(updateDoc(reportRef, { status: 'cleared' }));
+						});
+
+						await Promise.all(updatePromises);
+
+						// Track analytics for each resolved report
+						if (auth.currentUser && !auth.currentUser.isAnonymous) {
+							const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+							const volunteerRef = doc(db, volunteersPath, auth.currentUser.uid);
+
+							await setDoc(volunteerRef, {
+								analytics: { resolvedCount: increment(querySnapshot.size) }
+							}, { merge: true });
+						}
+
+						location.reload();
+					} catch (err) {
+						console.error('Error resolving all reports:', err);
+						alert('Error resolving all reports. Please try again.');
+						button.disabled = false;
+						button.textContent = 'Resolve All';
+					}
+				}
+			});
+
+			// Show/hide Resolve All button based on whether there are unresolved reports
+			window.addEventListener('load', () => {
+				const observer = new MutationObserver(() => {
+					const unresolvedButtons = document.querySelectorAll('.resolve-report-btn');
+					const resolveAllBtn = document.getElementById('resolve-all-btn');
+					if (resolveAllBtn) {
+						resolveAllBtn.style.display = unresolvedButtons.length > 0 ? 'block' : 'none';
+					}
+				});
+
+				const historyContainer = document.getElementById('history-container');
+				if (historyContainer) {
+					observer.observe(historyContainer, { childList: true, subtree: true });
+				}
+			});
+
+			// --- 7. CALL SETUP FUNCTION ---
 			setupFirebase();
 		</script>
 
@@ -282,7 +387,12 @@
 				</section>
 
 				<section id="history">
-					<h2>Report Log</h2>
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+					<h2 style="margin: 0;">Report Log</h2>
+					<button id="resolve-all-btn" style="display: none; padding: 10px 20px; background-color: var(--t4t-green); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">
+						Resolve All
+					</button>
+				</div>
 					<p id="history-loading">Loading history...</p>
 					<ul id="history-container">
 					</ul>

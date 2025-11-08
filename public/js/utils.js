@@ -4,12 +4,33 @@
  * Displays a formatted date.
  * Used by status/index.html
  */
-export const formatDate = (isoString) => {
-	if (!isoString) {
+export const formatDate = (timestamp) => {
+	if (!timestamp) {
 		return 'No date';
 	}
+
+	let date;
+
+	// Handle Firestore Timestamp objects (has seconds and nanoseconds)
+	if (timestamp.seconds !== undefined) {
+		date = new Date(timestamp.seconds * 1000);
+	}
+	// Handle Date objects
+	else if (timestamp instanceof Date) {
+		date = timestamp;
+	}
+	// Handle ISO strings or timestamps
+	else {
+		date = new Date(timestamp);
+	}
+
+	// Check if date is valid
+	if (isNaN(date.getTime())) {
+		return 'Invalid date';
+	}
+
 	const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-	return new Date(isoString).toLocaleString(undefined, options);
+	return date.toLocaleString(undefined, options);
 };
 
 /**

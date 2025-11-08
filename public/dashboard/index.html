@@ -165,9 +165,16 @@
                     <div class="status-wrapper">
                         ${ statusHtml }
                     </div>
-                    <a href="/status/?id=${ encodeURIComponent(box.boxId) }" class="view-history-btn">
-                        View Full History
-                    </a>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <a href="/status/?id=${ encodeURIComponent(box.boxId) }" class="view-history-btn" style="flex: 1;">
+                            View Full History
+                        </a>
+                        ${ box.latestPendingReport ? `
+                            <button class="resolve-all-box-btn" data-box-id="${ escapeHtml(box.boxId) }" style="flex: 1; padding: 10px; background-color: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: center;">
+                                Resolve All
+                            </button>
+                        ` : '' }
+                    </div>
                 </div>
             `;
 			};
@@ -377,6 +384,57 @@
 						alert( 'Error resolving status. Please try again.' );
 						button.disabled = false;
 						button.textContent = `Mark as ${ STATUS_RESOLVED_TEXT }`;
+					}
+				}
+
+				// Handle resolve all button for a box
+				if( e.target && e.target.classList.contains( 'resolve-all-box-btn' ) )
+				{
+					const button = e.target;
+					const boxId = button.dataset.boxId;
+
+					if( !confirm( 'Are you sure you want to resolve ALL open reports for this box?' ) )
+					{
+						return;
+					}
+
+					button.disabled = true;
+					button.textContent = 'Resolving...';
+
+					try
+					{
+						const reportsRef = collection( db, reportsCollectionPath );
+						const q = query( reportsRef, where( 'boxId', '==', boxId ), where( 'status', '==', 'new' ) );
+						const querySnapshot = await getDocs( q );
+
+						const updatePromises = [];
+						querySnapshot.forEach( ( docSnap ) =>
+						{
+							const reportRef = doc( db, reportsCollectionPath, docSnap.id );
+							updatePromises.push( updateDoc( reportRef, { status: 'cleared' } ) );
+						} );
+
+						await Promise.all( updatePromises );
+
+						// Track analytics for current user
+						if( auth.currentUser )
+						{
+							const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+							const volunteerRef = doc( db, volunteersPath, auth.currentUser.uid );
+
+							await setDoc( volunteerRef, {
+								analytics: { resolvedCount: increment( querySnapshot.size ) }
+							}, { merge: true } );
+						}
+
+						location.reload();
+					}
+					catch( err )
+					{
+						console.error( 'Error resolving all reports for box:', err );
+						alert( 'Error resolving reports. Please try again.' );
+						button.disabled = false;
+						button.textContent = 'Resolve All';
 					}
 				}
 			} );
