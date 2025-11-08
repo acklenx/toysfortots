@@ -96,18 +96,24 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 	const signInProvider = request.auth.token.firebase.sign_in_provider;
 	console.log( `User Authenticated. UID: ${ uid }, Email: ${ userEmail }, Provider: ${ signInProvider }` );
 
-	// Get user's displayName from Firebase Auth (preserves original casing)
-	const auth = getAuth();
-	let userName = userEmail;
-	try {
-		const userRecord = await auth.getUser(uid);
-		userName = userRecord.displayName || userEmail;
-		console.log( `Retrieved displayName from Auth: ${ userName }` );
-	} catch (error) {
-		console.warn( `Could not retrieve user record for displayName, using email: ${ error.message }` );
-	}
-
 	const data = request.data;
+
+	// Get displayName - prefer client-provided value, fallback to Firebase Auth
+	let userName = data.displayName;
+	if (!userName) {
+		// Fallback: Try to get from Firebase Auth
+		const auth = getAuth();
+		try {
+			const userRecord = await auth.getUser(uid);
+			userName = userRecord.displayName || userEmail;
+			console.log( `Retrieved displayName from Auth: ${ userName }` );
+		} catch (error) {
+			console.warn( `Could not retrieve user record for displayName, using email: ${ error.message }` );
+			userName = userEmail;
+		}
+	} else {
+		console.log( `Using displayName from client: ${ userName }` );
+	}
 	const db = getFirestore();
 	let isAlreadyAuthorized = false;
 	const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );

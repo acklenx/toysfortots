@@ -313,6 +313,11 @@
 					submitBtn.disabled = true;
 					submitBtn.textContent = 'Submitting...';
 					showMessage( '', '' );
+
+					// Get current user's displayName (preserves original casing)
+					const currentUser = auth.currentUser;
+					const displayName = currentUser?.displayName || currentUser?.email || 'Unknown';
+
 					const payload = {
 						boxId: scannedBoxId,
 						label: formData.get( 'label' ),
@@ -323,6 +328,7 @@
 						postalcode: formData.get( 'postalcode' ),
 						boxes: 1,
 						passcode: '', // No passcode needed - user is already authorized
+						displayName: displayName, // Pass displayName explicitly
 						contactName: contactName,
 						contactEmail: contactEmail,
 						contactPhone: contactPhone,
