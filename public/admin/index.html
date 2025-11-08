@@ -755,7 +755,7 @@
 					(box.label || '').toLowerCase().includes(searchTerm) ||
 					(box.address || '').toLowerCase().includes(searchTerm) ||
 					(box.city || '').toLowerCase().includes(searchTerm) ||
-					(box.volunteerEmail || '').toLowerCase().includes(searchTerm)
+					(box.volunteer || '').toLowerCase().includes(searchTerm)
 				);
 			});
 
@@ -781,7 +781,7 @@
 			tableHTML += '<th class="sortable" data-sort="label" onclick="sortBoxes(\'label\')">Location</th>';
 			tableHTML += '<th class="sortable" data-sort="address" onclick="sortBoxes(\'address\')">Address</th>';
 			tableHTML += '<th class="sortable" data-sort="city" onclick="sortBoxes(\'city\')">City</th>';
-			tableHTML += '<th class="sortable" data-sort="volunteerEmail" onclick="sortBoxes(\'volunteerEmail\')">Volunteer</th>';
+			tableHTML += '<th class="sortable" data-sort="volunteer" onclick="sortBoxes(\'volunteer\')">Volunteer</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
@@ -792,7 +792,7 @@
 				tableHTML += `<td>${box.label || 'N/A'}</td>`;
 				tableHTML += `<td>${box.address || 'N/A'}</td>`;
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
-				tableHTML += `<td>${box.volunteerEmail || 'N/A'}</td>`;
+				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-box-id="${box.id}">Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-box-id="${box.id}" data-box-label="${escapedLabel}">Delete</button>`;
@@ -866,14 +866,14 @@
 		};
 
 		function exportBoxesToCSV() {
-			const headers = ['Box ID', 'Location', 'Address', 'City', 'State', 'Volunteer Email', 'Created'];
+			const headers = ['Box ID', 'Location', 'Address', 'City', 'State', 'Volunteer', 'Created'];
 			const rows = filteredBoxes.map(box => [
 				box.id,
 				box.label || '',
 				box.address || '',
 				box.city || '',
 				box.state || '',
-				box.volunteerEmail || '',
+				box.volunteer || '',
 				box.created ? new Date(box.created.seconds * 1000).toLocaleString() : ''
 			]);
 
