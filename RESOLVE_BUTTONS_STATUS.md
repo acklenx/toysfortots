@@ -1,6 +1,6 @@
 # Resolve Buttons Implementation Status
 
-## Current State (Commit: 13b5e9d)
+## ✅ COMPLETED (Commit: a10ac27)
 
 ### ✅ Completed Features:
 
@@ -25,7 +25,33 @@
      - `[ANALYTICS] setDoc completed successfully`
    - These logs confirmed the system is working correctly
 
-### 🚧 Remaining TODOs:
+2. **Resolve All Button on Status Page**
+   - Added button next to "Report Log" heading
+   - Location: `/public/status/index.html` (lines 285-290)
+   - Event handlers at lines 266-368
+   - MutationObserver automatically shows/hides button based on unresolved reports
+   - Confirmation dialog before execution
+   - Tracks analytics for logged-in user
+
+3. **Resolve All Button on Dashboard**
+   - Added gray button next to "View Full History" link in each box card
+   - Location: `/public/dashboard/index.html` (lines 168-177)
+   - Event handler at lines 390-439
+   - Only displays when box has pending reports
+   - Confirmation dialog before execution
+   - Tracks analytics for logged-in user
+
+4. **Timestamp Display Fix**
+   - Fixed `formatDate()` function to handle Firestore Timestamp objects
+   - Location: `/public/js/utils.js` (lines 7-34)
+   - Now properly handles:
+     - Firestore Timestamp objects (with `.seconds` property)
+     - JavaScript Date objects
+     - ISO strings
+     - Invalid/missing timestamps
+   - Returns "Invalid date" instead of displaying "Invalid Date" to users
+
+### 🚧 Previous TODOs (Now Completed):
 
 #### 1. Add "Resolve All" Button to Status Page
 **Location**: `/public/status/index.html` (line 285 - `<h2>Report Log</h2>`)
