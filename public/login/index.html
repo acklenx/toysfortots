@@ -126,9 +126,14 @@
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 					// Store the username as typed (with proper capitalization) as displayName
+					// IMPORTANT: Wait for updateProfile to complete before setting isNewSignup
+					// This ensures the displayName is saved to Firebase Auth before the
+					// onAuthStateChanged handler processes the new user
 					await updateProfile(userCredential.user, {
 						displayName: username
 					});
+					// Force a token refresh to ensure displayName is in the ID token
+					await userCredential.user.getIdToken(true);
 					isNewSignup = true; // Mark as new signup
 				} catch (error) {
 					console.error('Email Sign Up Error:', error);
