@@ -1,5 +1,6 @@
 const { onCall, onRequest, HttpsError } = require( 'firebase-functions/v2/https' );
 const { getFirestore, FieldValue } = require( 'firebase-admin/firestore' );
+const { getAuth } = require( 'firebase-admin/auth' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { onSchedule } = require( 'firebase-functions/v2/scheduler' );
 const { initializeApp } = require( 'firebase-admin/app' );
@@ -92,9 +93,20 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 	}
 	const uid = request.auth.uid;
 	const userEmail = request.auth.token.email;
-	const userName = request.auth.token.name || userEmail;
 	const signInProvider = request.auth.token.firebase.sign_in_provider;
 	console.log( `User Authenticated. UID: ${ uid }, Email: ${ userEmail }, Provider: ${ signInProvider }` );
+
+	// Get user's displayName from Firebase Auth (preserves original casing)
+	const auth = getAuth();
+	let userName = userEmail;
+	try {
+		const userRecord = await auth.getUser(uid);
+		userName = userRecord.displayName || userEmail;
+		console.log( `Retrieved displayName from Auth: ${ userName }` );
+	} catch (error) {
+		console.warn( `Could not retrieve user record for displayName, using email: ${ error.message }` );
+	}
+
 	const data = request.data;
 	const db = getFirestore();
 	let isAlreadyAuthorized = false;
@@ -260,7 +272,8 @@ exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 		if( docSnap.exists )
 		{
 			console.log( 'isAuthorizedVolunteerV2: User is authorized.' );
-			return { isAuthorized: true, displayName: request.auth.token.name };
+			const userData = docSnap.data();
+			return { isAuthorized: true, displayName: userData.displayName || request.auth.token.name };
 		}
 		else
 		{
