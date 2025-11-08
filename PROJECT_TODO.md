@@ -36,6 +36,29 @@
 
 ---
 
+## ⚡ **Performance & Optimization**
+
+### 🗺️ Homepage Cache Improvements
+- [x] ✅ **Auto-refresh cache after box registration** (November 7, 2025 - commit: 7439f88)
+  - Trigger cache refresh 1 second after provisionBoxV2 completes
+  - New boxes appear on homepage map within 2 seconds
+  - Eliminates 6-hour delay for new box visibility
+  - Uses existing triggerRefreshLocationsCache HTTP endpoint
+
+- [x] ✅ **Admin panel cache refresh button** (November 7, 2025 - commit: ec75640)
+  - Manual "Refresh Map Cache" button in admin header
+  - Displays detailed results: box count, cache URL, success/error messages
+  - Button shows loading state while refreshing
+  - Success messages auto-hide after 10 seconds
+  - Useful for bulk imports and urgent updates
+
+**Cache Refresh Ecosystem:**
+- 🔄 Automatic: Every 6 hours (scheduled Cloud Function)
+- 🆕 Auto-trigger: After new box registration (instant)
+- 👨‍💼 Manual: Admin panel button (on-demand)
+
+---
+
 ## 🔒 **Security**
 
 ### 🛡️ XSS (Cross-Site Scripting) Protection
