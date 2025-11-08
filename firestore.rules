@@ -18,6 +18,12 @@ service cloud.firestore {
         allow get, list: if request.auth != null;
         allow create: if false;
         allow update, delete: if isAuthorizedVolunteer();
+
+        // Allow any authenticated user to create analytics events (page views, clicks)
+        match /events/{eventId} {
+          allow create: if request.auth != null;
+          allow read: if isAuthorizedVolunteer();
+        }
       }
 
       // --- TOTSREPORTS RULE ---
@@ -55,6 +61,17 @@ service cloud.firestore {
         allow update: if isAuthorizedVolunteer();
         allow delete: if isAuthorizedVolunteer() && userId != request.auth.uid; // Cannot delete self
         allow create: if false; // Only Cloud Functions can create
+
+        // Allow authorized volunteers to write analytics events to their own subcollections
+        match /actions/{actionId} {
+          allow create: if isAuthorizedVolunteer() && userId == request.auth.uid;
+          allow read: if isAuthorizedVolunteer();
+        }
+
+        match /events/{eventId} {
+          allow create: if isAuthorizedVolunteer() && userId == request.auth.uid;
+          allow read: if isAuthorizedVolunteer();
+        }
       }
     }
 
