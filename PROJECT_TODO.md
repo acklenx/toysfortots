@@ -248,12 +248,16 @@
 - [ ] **Conduct security audit**
   - Review Firestore security rules
   - Check for XSS vulnerabilities
-  - [x] ✅ **Validate all user inputs** (November 7, 2025 - commit: c125e0a)
-    - Added comprehensive validation to provisionBoxV2
-    - Type checking, length limits, format validation (email, phone, boxId)
-    - Input sanitization (trim whitespace)
-    - Range validation for numeric fields
-    - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only functions**
+  - [x] ✅ **Validate all user inputs** (November 7, 2025 - commits: c125e0a, 11bd44c)
+    - Server-side: Comprehensive validation in provisionBoxV2
+      - Type checking, length limits, format validation (email, phone, boxId)
+      - Input sanitization (trim whitespace)
+      - Range validation for numeric fields
+    - Client-side: HTML5 validation attributes on setup form
+      - Matches server-side rules exactly
+      - Instant feedback before submission
+      - Browser-native validation UI
+    - **🚀 REQUIRES DEPLOYMENT: firebase deploy**
   - Review authentication flows
   - Ensure no sensitive data in client code
   - Check for CSRF protections
