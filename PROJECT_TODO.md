@@ -117,7 +117,9 @@
   - Referrer-Policy: strict-origin-when-cross-origin (privacy protection)
   - Permissions-Policy: Comprehensive blocking of 19+ unused browser features
   - Fixed header routing pattern to match all HTML responses (not just .html files)
+  - **⚠️ TEMPORARY WORKAROUND**: Added 'unsafe-inline' to script-src for inline module scripts
   - **✅ DEPLOYED TO PRODUCTION: All security headers now active**
+  - **📋 TODO**: Refactor to external scripts (see "Refactor inline scripts" below)
 
 - [ ] **Implement rate limiting**
   - Protect Cloud Functions from abuse
@@ -211,6 +213,20 @@
 ---
 
 ## 🏗️ **Architecture Improvements**
+
+### 📜 JavaScript Architecture
+- [ ] **Refactor inline scripts to external files** ⚠️ **HIGH PRIORITY - Security Improvement**
+  - Move all inline `<script>` blocks to external `.js` files
+  - Remove `'unsafe-inline'` from CSP script-src directive
+  - Options:
+    1. Keep ES modules with external files (`<script type="module" src="...">`)
+    2. Use traditional global scope scripts (no modules)
+  - Benefits:
+    - Stronger CSP protection (no unsafe-inline needed)
+    - Better caching (scripts cached separately from HTML)
+    - Easier testing (scripts can be unit tested independently)
+  - Estimated effort: 4-6 hours to refactor all 11 HTML pages
+  - Current workaround: Using 'unsafe-inline' to allow inline module scripts
 
 ### 🎯 Single Page Application (SPA)
 - [ ] **Migrate to SPA architecture**
