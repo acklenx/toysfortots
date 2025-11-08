@@ -290,4 +290,57 @@ test.describe('Home Page', () => {
     const bodyText = await page.locator('body').textContent();
     expect(bodyText).toBeTruthy();
   });
+
+  test('should prevent XSS attacks by escaping HTML in location data', async ({ page }) => {
+    const xssBoxId = generateBoxId('XSS');
+
+    // Create location with XSS payloads
+    await createTestLocation(xssBoxId, {
+      label: '<script>alert("XSS-Label")</script>Evil Store',
+      address: '<img src=x onerror=alert("XSS-Addr")>666 Hack Ave',
+      city: '<b>Atlanta</b>',
+      state: '<i>GA</i>',
+      lat: 33.7490,
+      lon: -84.3880
+    });
+
+    // Listen for any alert dialogs (should not appear if XSS is prevented)
+    page.on('dialog', async dialog => {
+      throw new Error(`Unexpected dialog appeared: ${dialog.message()}`);
+    });
+
+    await page.goto('/');
+
+    // Wait for locations to load
+    await page.waitForTimeout(3000);
+
+    // Verify the malicious scripts are rendered as text in the sidebar
+    const locationList = page.locator('#location-list');
+    await expect(locationList).toContainText('<script>alert("XSS-Label")</script>Evil Store');
+    await expect(locationList).toContainText('<img src=x onerror=alert("XSS-Addr")>666 Hack Ave');
+
+    // Verify no script tags were actually rendered in the DOM
+    const scriptTags = await page.locator('script:has-text("alert")').count();
+    expect(scriptTags).toBe(0);
+
+    // Verify HTML tags are escaped in the location list
+    const listHTML = await locationList.innerHTML();
+    expect(listHTML).toContain('&lt;script&gt;');
+    expect(listHTML).toContain('&lt;img');
+    expect(listHTML).not.toContain('<script>alert');
+    expect(listHTML).not.toContain('<img src=x onerror');
+
+    // Click on location to open map popup and verify popup is also escaped
+    const locationItem = page.locator('.location-item').first();
+    await locationItem.click();
+    await page.waitForTimeout(500);
+
+    // Check popup content is escaped (Leaflet renders popup in .leaflet-popup-content)
+    const popupContent = page.locator('.leaflet-popup-content');
+    if (await popupContent.isVisible()) {
+      const popupHTML = await popupContent.innerHTML();
+      expect(popupHTML).toContain('&lt;script&gt;');
+      expect(popupHTML).not.toContain('<script>alert');
+    }
+  });
 });
