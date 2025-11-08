@@ -315,4 +315,56 @@ test.describe('Dashboard Page', () => {
     const optionValue = await myBoxesOption.getAttribute('value');
     expect(optionValue).not.toContain('@');
   });
+
+  test('should prevent XSS attacks by escaping HTML in box and report data', async ({ page }) => {
+    // Get the displayName for creating test data
+    const displayName = await page.evaluate(() => {
+      return window.auth.currentUser ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null;
+    });
+
+    const xssBoxId = generateBoxId('XSS');
+
+    // Create location with XSS payloads
+    await createTestLocation(xssBoxId, {
+      label: '<script>alert("XSS-Label")</script>Evil Store',
+      address: '<img src=x onerror=alert("XSS-Addr")>123 Hack St',
+      city: '<b>Atlanta</b>',
+      volunteer: displayName
+    });
+
+    // Create report with XSS payload in description
+    await createTestReport(xssBoxId, {
+      reportType: 'pickup_alert',
+      description: '<script>alert("XSS-Desc")</script>Please pick up',
+      status: 'new'
+    });
+
+    // Listen for any alert dialogs (should not appear if XSS is prevented)
+    page.on('dialog', async dialog => {
+      throw new Error(`Unexpected dialog appeared: ${dialog.message()}`);
+    });
+
+    await page.goto('/dashboard');
+
+    // Wait for boxes to load
+    await expect(page.locator('.box-card')).toBeVisible();
+
+    const boxCard = page.locator('.box-card').first();
+
+    // Verify the malicious scripts are rendered as text, not executed
+    await expect(boxCard).toContainText('<script>alert("XSS-Label")</script>Evil Store');
+    await expect(boxCard).toContainText('<img src=x onerror=alert("XSS-Addr")>123 Hack St');
+    await expect(boxCard).toContainText('<script>alert("XSS-Desc")</script>Please pick up');
+
+    // Verify no script tags were actually rendered in the DOM
+    const scriptTags = await page.locator('script:has-text("alert")').count();
+    expect(scriptTags).toBe(0);
+
+    // Verify HTML tags are escaped in the DOM
+    const innerHTML = await boxCard.innerHTML();
+    expect(innerHTML).toContain('&lt;script&gt;');
+    expect(innerHTML).toContain('&lt;img');
+    expect(innerHTML).not.toContain('<script>alert');
+    expect(innerHTML).not.toContain('<img src=x onerror');
+  });
 });

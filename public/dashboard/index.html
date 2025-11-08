@@ -104,6 +104,18 @@
 					console.error( 'Firebase Initialization Error:', error );
 				}
 			};
+
+			// XSS Protection: Escape HTML to prevent script injection
+			const escapeHtml = (unsafe) => {
+				if (!unsafe) return '';
+				return String(unsafe)
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#039;');
+			};
+
 			const renderBoxCard = ( box ) =>
 			{
 				const STATUS_RESOLVED_TEXT = 'Resolved'; // Variable for status text
@@ -112,15 +124,17 @@
 				{
 					const report = box.latestPendingReport;
 					const isProblem = report.reportType.includes( 'problem' );
+					const reportTypeDisplay = escapeHtml(report.reportType).replace( /_/g, ' ' );
+					const reportDesc = escapeHtml(report.description || report.notes || 'No details provided.');
 					statusHtml = `
                     <div class="status-problem">
                         <p class="status-title ${ isProblem ? '' : 'text-yellow-700' }">
-                            Status: ${ report.reportType.replace( /_/g, ' ' ) }
+                            Status: ${ reportTypeDisplay }
                         </p>
-                        <p class="status-desc">${ report.description || report.notes || 'No details provided.' }</p>
+                        <p class="status-desc">${ reportDesc }</p>
                         <button
                             class="clear-status-btn"
-                            data-report-id="${ report.id }">
+                            data-report-id="${ escapeHtml(report.id) }">
                             Mark as ${ STATUS_RESOLVED_TEXT }
                         </button>
                     </div>
@@ -138,14 +152,14 @@
 				return `
                 <div class="box-card">
                     <div>
-                        <h3>${ box.label }</h3>
-                        <p class="address">${ box.address }, ${ box.city }</p>
-                        <p class="box-id">ID: ${ box.boxId }</p>
+                        <h3>${ escapeHtml(box.label) }</h3>
+                        <p class="address">${ escapeHtml(box.address) }, ${ escapeHtml(box.city) }</p>
+                        <p class="box-id">ID: ${ escapeHtml(box.boxId) }</p>
                     </div>
                     <div class="status-wrapper">
                         ${ statusHtml }
                     </div>
-                    <a href="/status/?id=${ box.boxId }" class="view-history-btn">
+                    <a href="/status/?id=${ encodeURIComponent(box.boxId) }" class="view-history-btn">
                         View Full History
                     </a>
                 </div>
