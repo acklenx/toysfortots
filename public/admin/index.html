@@ -352,6 +352,16 @@
 			color: var(--marine-blue);
 		}
 
+		.data-table a {
+			color: inherit;
+			text-decoration: none;
+		}
+
+		.data-table a:hover {
+			text-decoration: underline;
+			color: var(--marine-blue);
+		}
+
 		.pagination {
 			display: flex;
 			justify-content: center;
@@ -414,11 +424,17 @@
 					<h1>Admin Panel</h1>
 					<p>Manage donation boxes, locations, and volunteers</p>
 				</div>
-				<button id="refresh-cache-btn" class="primary-btn">
-					Refresh Map Cache
-				</button>
+				<div style="display: flex; gap: 10px;">
+					<button id="sync-sheets-btn" class="primary-btn">
+						Sync Google Sheets
+					</button>
+					<button id="refresh-cache-btn" class="primary-btn">
+						Refresh Map Cache
+					</button>
+				</div>
 			</div>
 			<div id="cache-refresh-result" style="margin-top: 15px; display: none;"></div>
+			<div id="sheets-sync-result" style="margin-top: 15px; display: none;"></div>
 		</div>
 
 		<div id="auth-check" class="loading">
@@ -617,6 +633,7 @@
 		let filteredReports = [];
 		let allVolunteers = [];
 		let filteredVolunteers = [];
+		let locationSuggestions = []; // Google Sheets data
 
 		// Pagination settings
 		const PAGE_SIZE = 20;
@@ -655,11 +672,66 @@
 				document.getElementById('admin-content').style.display = 'block';
 
 				// Load all data
+				loadLocationSuggestions();
 				loadBoxes();
 				loadReports();
 				loadVolunteers();
 			} catch (error) {
 				document.getElementById('auth-check').innerHTML = '<div class="error-message">Error checking authorization: ' + error.message + '</div>';
+			}
+		});
+
+		// Google Sheets sync functionality
+		document.getElementById('sync-sheets-btn').addEventListener('click', async () => {
+			const btn = document.getElementById('sync-sheets-btn');
+			const resultDiv = document.getElementById('sheets-sync-result');
+
+			btn.disabled = true;
+			btn.textContent = 'Syncing...';
+			resultDiv.style.display = 'none';
+
+			try {
+				// Get Firebase ID token for authorization
+				const idToken = await window.auth.currentUser.getIdToken();
+
+				const response = await fetch('https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions', {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${idToken}`
+					}
+				});
+
+				const data = await response.json();
+
+				if (data.success) {
+					resultDiv.className = 'success-message';
+					resultDiv.innerHTML = `
+						<strong>✅ Google Sheets Synced Successfully</strong><br>
+						<div style="margin-top: 8px; font-size: 0.9em;">
+							• Locations synced: ${data.synced || 0}<br>
+							• Message: ${data.message || 'Data synced from spreadsheet'}
+						</div>
+					`;
+					// Reload volunteers data to update undeployed count
+					loadVolunteers();
+				} else {
+					resultDiv.className = 'error-message';
+					resultDiv.innerHTML = `<strong>❌ Sync Failed</strong><br>${data.message || 'Unknown error'}`;
+				}
+			} catch (error) {
+				resultDiv.className = 'error-message';
+				resultDiv.innerHTML = `<strong>❌ Request Failed</strong><br>${error.message}`;
+			} finally {
+				btn.disabled = false;
+				btn.textContent = 'Sync Google Sheets';
+				resultDiv.style.display = 'block';
+
+				// Auto-hide success message after 10 seconds
+				if (resultDiv.className === 'success-message') {
+					setTimeout(() => {
+						resultDiv.style.display = 'none';
+					}, 10000);
+				}
 			}
 		});
 
@@ -715,6 +787,24 @@
 				}
 			}
 		});
+
+		// Load location suggestions from Google Sheets
+		async function loadLocationSuggestions() {
+			try {
+				const suggestionsPath = 'artifacts/toysfortots-eae4d/public/01/data/01/locationSuggestions';
+				const suggestionsRef = collection(db, suggestionsPath);
+				const snapshot = await getDocs(suggestionsRef);
+
+				locationSuggestions = [];
+				snapshot.forEach((doc) => {
+					locationSuggestions.push({ id: doc.id, ...doc.data() });
+				});
+
+				console.log(`Loaded ${locationSuggestions.length} location suggestions from Google Sheets`);
+			} catch (error) {
+				console.error('Error loading location suggestions:', error);
+			}
+		}
 
 		// Load boxes
 		async function loadBoxes() {
@@ -801,10 +891,14 @@
 
 			pageData.forEach((box) => {
 				const escapedLabel = (box.label || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+				// Build Google Maps search URL
+				const fullAddress = `${box.address || ''}, ${box.city || ''}, ${box.state || 'GA'}`;
+				const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+
 				tableHTML += '<tr>';
-				tableHTML += `<td>${box.id}</td>`;
+				tableHTML += `<td><a href="/status?id=${box.id}" target="_blank">${box.id}</a></td>`;
 				tableHTML += `<td>${box.label || 'N/A'}</td>`;
-				tableHTML += `<td>${box.address || 'N/A'}</td>`;
+				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${box.address || 'N/A'}</a></td>`;
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
 				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
@@ -990,8 +1084,8 @@
 			pageData.forEach((report) => {
 				const date = report.timestamp ? (report.timestamp.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : new Date(report.timestamp).toLocaleDateString()) : 'N/A';
 				tableHTML += '<tr>';
-				tableHTML += `<td>${report.id}</td>`;
-				tableHTML += `<td>${report.boxId || 'N/A'}</td>`;
+				tableHTML += `<td><a href="/status?id=${report.boxId}#report-${report.id}" target="_blank">${report.id}</a></td>`;
+				tableHTML += `<td><a href="/status?id=${report.boxId}" target="_blank">${report.boxId || 'N/A'}</a></td>`;
 				tableHTML += `<td>${report.reportType || 'N/A'}</td>`;
 				tableHTML += `<td>${report.status || 'N/A'}</td>`;
 				tableHTML += `<td>${date}</td>`;
@@ -1168,6 +1262,8 @@
 			let tableHTML = '<table class="data-table"><thead><tr>';
 			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Display Name</th>';
 			tableHTML += '<th class="sortable" data-sort="isOAuth" onclick="sortVolunteers(\'isOAuth\')">OAuth</th>';
+			tableHTML += '<th class="sortable" data-sort="boxes" onclick="sortVolunteers(\'boxes\')">Boxes</th>';
+			tableHTML += '<th class="sortable" data-sort="undeployed" onclick="sortVolunteers(\'undeployed\')">Undeployed</th>';
 			tableHTML += '<th class="sortable" data-sort="lastLogin" onclick="sortVolunteers(\'lastLogin\')">Last Seen</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
@@ -1177,6 +1273,24 @@
 				const escapedDisplayName = (volunteer.displayName || volunteer.email || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 				// Check if using OAuth (email not from custom domain @toysfortots.mcl1311.com)
 				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
+
+				// Count boxes deployed by this volunteer
+				const boxCount = allBoxes.filter(box => box.volunteer === volunteer.displayName).length;
+
+				// Count undeployed boxes (in Google Sheets but not deployed by this volunteer)
+				// Compare Google Sheets suggestions with deployed boxes
+				let undeployedCount = 0;
+				locationSuggestions.forEach(suggestion => {
+					// Check if this suggestion is NOT deployed by this volunteer
+					const isDeployed = allBoxes.some(box =>
+						box.volunteer === volunteer.displayName &&
+						(box.label === suggestion.label || box.address === suggestion.address)
+					);
+					if (!isDeployed) {
+						undeployedCount++;
+					}
+				});
+
 				// Format last login time
 				let lastSeenText = 'Never';
 				if (volunteer.lastLogin) {
@@ -1203,6 +1317,8 @@
 				tableHTML += '<tr>';
 				tableHTML += `<td title="${volunteer.id}">${volunteer.displayName || 'N/A'}</td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
+				tableHTML += `<td style="text-align: center;">${boxCount}</td>`;
+				tableHTML += `<td style="text-align: center;">${undeployedCount}</td>`;
 				tableHTML += `<td>${lastSeenText}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
 				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline; margin-right: 12px;">View Boxes</a>`;
@@ -1273,6 +1389,14 @@
 					// Sort by last login timestamp (most recent first when desc)
 					aVal = a.lastLogin ? (a.lastLogin.seconds || new Date(a.lastLogin).getTime() / 1000) : 0;
 					bVal = b.lastLogin ? (b.lastLogin.seconds || new Date(b.lastLogin).getTime() / 1000) : 0;
+				} else if (column === 'boxes') {
+					// Sort by number of boxes deployed
+					aVal = allBoxes.filter(box => box.volunteer === a.displayName).length;
+					bVal = allBoxes.filter(box => box.volunteer === b.displayName).length;
+				} else if (column === 'undeployed') {
+					// Sort by number of undeployed boxes
+					aVal = locationSuggestions.filter(s => !allBoxes.some(box => box.volunteer === a.displayName && (box.label === s.label || box.address === s.address))).length;
+					bVal = locationSuggestions.filter(s => !allBoxes.some(box => box.volunteer === b.displayName && (box.label === s.label || box.address === s.address))).length;
 				} else {
 					aVal = a[column] || '';
 					bVal = b[column] || '';
