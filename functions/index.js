@@ -607,9 +607,9 @@ async function generateLocationsCache()
 
 	try
 	{
-		// Get all locations
+		// Get all locations, sorted by newest first
 		const locationsRef = db.collection( LOCATIONS_PATH );
-		const snapshot = await locationsRef.get();
+		const snapshot = await locationsRef.orderBy( 'created', 'desc' ).get();
 
 		if( snapshot.empty )
 		{
@@ -617,7 +617,7 @@ async function generateLocationsCache()
 			return { success: true, count: 0, message: 'No locations to cache.' };
 		}
 
-		// Build locations array
+		// Build locations array (already sorted by query, but explicit sort for safety)
 		const locations = [];
 		snapshot.forEach( doc =>
 		{
@@ -637,7 +637,15 @@ async function generateLocationsCache()
 			} );
 		} );
 
-		console.log( `Found ${ locations.length } locations.` );
+		// Ensure consistent sort order (newest first)
+		locations.sort( ( a, b ) =>
+		{
+			const aTime = a.created?.toMillis ? a.created.toMillis() : 0;
+			const bTime = b.created?.toMillis ? b.created.toMillis() : 0;
+			return bTime - aTime; // Descending order (newest first)
+		} );
+
+		console.log( `Found ${ locations.length } locations (sorted by newest first).` );
 
 		// Create cache object with metadata
 		const cacheData = {

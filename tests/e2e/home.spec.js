@@ -120,7 +120,9 @@ test.describe('Home Page', () => {
     // Some error styling might exist, but page should be functional
   });
 
-  test('should work with anonymous authentication @smoke', async ({ page }) => {
+  test.skip('should work with anonymous authentication (DEPRECATED - homepage uses cache only)', async ({ page }) => {
+    // This test is deprecated since homepage no longer uses Firebase authentication
+    // Homepage uses cache-only for optimal performance (no auth required)
     await page.goto('/');
     await page.waitForTimeout(3000);
 

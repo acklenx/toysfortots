@@ -253,8 +253,10 @@
 				// Load cached data immediately (no auth required)
 				loadCachedLocations();
 
-				// Then initialize Firebase for realtime updates
-				initFirebase();
+				// Homepage uses cache-only for optimal performance
+				// Cache is refreshed: every 6 hours (automatic) + after new box registration (triggered)
+				// Realtime Firebase loading disabled - cache provides sufficient freshness
+				// initFirebase();
 			} );
 		</script>
 		<div id="footer-placeholder"></div>
