@@ -43,7 +43,7 @@ test.describe('Admin Panel', () => {
     await clearTestData();
   });
 
-  test('should load admin panel for authorized users @smoke', async ({ page }) => {
+  test('should load admin panel for authorized users', async ({ page }) => {
     // Navigate to admin panel
     await page.goto('/admin');
 
@@ -61,7 +61,7 @@ test.describe('Admin Panel', () => {
     await expect(page.locator('#volunteers-search')).toBeVisible();
   });
 
-  test('should display data in all three tables when items exist @smoke', async ({ page }) => {
+  test('should display data in all three tables when items exist', async ({ page }) => {
     // Create test data
     const boxId = generateBoxId('ADMIN_TEST');
 
