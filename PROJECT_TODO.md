@@ -52,10 +52,18 @@
   - Success messages auto-hide after 10 seconds
   - Useful for bulk imports and urgent updates
 
+- [x] ✅ **Cache-only homepage loading with consistent sorting** (November 7, 2025 - commit: 413d131)
+  - Homepage now uses cache-only (disabled Firebase realtime loading)
+  - Cache generation sorts by newest first (orderBy created DESC)
+  - Eliminates duplicate requests and inconsistent ordering
+  - Performance: ~150ms cache load vs ~1200ms cache+realtime
+  - Deprecated anonymous authentication test (no longer needed)
+
 **Cache Refresh Ecosystem:**
 - 🔄 Automatic: Every 6 hours (scheduled Cloud Function)
 - 🆕 Auto-trigger: After new box registration (instant)
 - 👨‍💼 Manual: Admin panel button (on-demand)
+- 🎯 **Homepage uses cache-only** for optimal performance
 
 ---
 
