@@ -82,6 +82,8 @@ See `tests/e2e/box-and-status.spec.js` for XSS test examples.
 4. **Rate limiting** - Protect Cloud Functions from abuse
 5. **HTTPS only** - Never allow HTTP connections in production
 
+For a complete list of security accomplishments and remaining tasks, see `PROJECT_TODO.md`.
+
 ## Development Commands
 
 ### Testing

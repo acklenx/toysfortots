@@ -36,6 +36,59 @@
 
 ---
 
+## 🔒 **Security**
+
+### 🛡️ XSS (Cross-Site Scripting) Protection
+- [x] ✅ **Fix XSS in box page** (November 7, 2025 - commit: 9f5dec5)
+  - Escape all location data (labels, addresses, cities, states)
+  - Escape box IDs and volunteer names
+  - Add comprehensive XSS security test
+
+- [x] ✅ **Fix XSS in dashboard page** (November 7, 2025 - commit: 7bf632d)
+  - Escape box labels, addresses, cities
+  - Escape report descriptions and notes
+  - Escape report types and IDs
+  - Add comprehensive XSS security test
+
+- [x] ✅ **Fix XSS in status page** (November 7, 2025 - commit: e4125fc)
+  - Escape location labels, addresses, contact information
+  - Escape report descriptions, notes, reporter information
+  - Escape volunteer names and box IDs
+  - Add comprehensive XSS security test
+
+- [x] ✅ **Add XSS prevention guidelines to CLAUDE.md** (November 7, 2025 - commit: 9f5dec5)
+  - Document escapeHtml() function pattern
+  - Provide safe/unsafe code examples
+  - List when to escape user data
+
+- [ ] **Fix XSS in home page** ⚠️ **CRITICAL**
+  - Escape location data in map markers
+  - Escape location data in sidebar list
+
+- [ ] **Remove sensitive data from logs** ⚠️ **CRITICAL**
+  - Remove passcode from Cloud Function logs (functions/index.js:149)
+
+### 🔐 Infrastructure Security
+- [ ] **Add Content Security Policy headers**
+  - Configure CSP in firebase.json
+  - Prevent inline script execution
+  - Restrict resource loading sources
+
+- [ ] **Add security headers**
+  - X-Frame-Options
+  - X-Content-Type-Options
+  - Referrer-Policy
+
+- [ ] **Implement rate limiting**
+  - Protect Cloud Functions from abuse
+  - Add Firebase App Check
+
+- [ ] **Add authentication to HTTP endpoints**
+  - Secure triggerSyncLocationSuggestions
+  - Secure triggerRefreshLocationsCache
+
+---
+
 ## 🔐 **Admin & Management**
 
 ### 👨‍💼 Admin Dashboard
