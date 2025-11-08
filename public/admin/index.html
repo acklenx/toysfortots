@@ -540,6 +540,13 @@
 					<label for="edit-box-contact-email">Contact Email</label>
 					<input type="email" id="edit-box-contact-email">
 				</div>
+				<div class="form-group">
+					<label>GPS Coordinates</label>
+					<div id="edit-box-gps" style="display: flex; gap: 10px; align-items: center;">
+						<span id="edit-box-coordinates" style="font-family: monospace; color: #666;"></span>
+						<a id="edit-box-map-link" href="#" target="_blank" rel="noopener noreferrer" style="display: none; color: var(--t4t-red); text-decoration: none; font-weight: 500;">View on Map →</a>
+					</div>
+				</div>
 				<div class="form-buttons">
 					<button type="button" class="secondary-btn" id="edit-box-cancel">Cancel</button>
 					<button type="submit" class="primary-btn">Save Changes</button>
@@ -1188,6 +1195,23 @@
 			document.getElementById('edit-box-contact-name').value = boxData.contactName || '';
 			document.getElementById('edit-box-contact-phone').value = boxData.contactPhone || '';
 			document.getElementById('edit-box-contact-email').value = boxData.contactEmail || '';
+
+			// Display GPS coordinates and map link
+			const coordinatesSpan = document.getElementById('edit-box-coordinates');
+			const mapLink = document.getElementById('edit-box-map-link');
+
+			if (boxData.lat && boxData.lon) {
+				const lat = boxData.lat.toFixed(6);
+				const lon = boxData.lon.toFixed(6);
+				coordinatesSpan.textContent = `${lat}, ${lon}`;
+
+				// Google Maps link
+				mapLink.href = `https://www.google.com/maps?q=${lat},${lon}`;
+				mapLink.style.display = 'inline';
+			} else {
+				coordinatesSpan.textContent = 'Not available';
+				mapLink.style.display = 'none';
+			}
 
 			document.getElementById('edit-box-modal').classList.add('active');
 		};
