@@ -282,7 +282,7 @@ header .header-right {
 .container #map {
     height: 500px !important; /* Explicit height for Leaflet, override any library defaults */
     flex: 4 !important;
-    min-width: 480px !important; /* Minimum for usable map viewing on desktop */
+    min-width: 480px; /* Minimum for usable map viewing on desktop (mobile overrides this) */
     width: auto !important; /* Let flex determine width, override Leaflet */
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -562,13 +562,15 @@ footer .footer-bear {
         min-height: 60vh; /* Ensure enough height to push footer down on mobile */
         width: 100%; /* Fill viewport width on mobile */
         max-width: 100%; /* Override desktop max-width */
+        padding: 0 10px; /* Reduced padding on mobile to prevent overflow */
     }
 
     .container #map {
         height: 50vh;
         min-height: 400px;
-        width: 100%;
-        min-width: 340px; /* Minimum for mobile devices */
+        width: 100% !important;
+        min-width: 0 !important; /* Allow map to shrink to container width on mobile */
+        max-width: 100% !important; /* Prevent overflow */
     }
 
     .container #location-list-container {
