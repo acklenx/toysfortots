@@ -166,9 +166,37 @@ npx playwright test --config=playwright.smoke.config.js --workers=1
 - ✅ Admin panel has comprehensive test coverage
 - ✅ Clear patterns for adding new admin features
 
+## Pre-Commit Hook Enhancements
+
+**Smart Retry Logic for Flaky Tests**: Modified `.git/hooks/pre-commit` to handle Firebase emulator contention gracefully.
+
+**How it works**:
+1. Run smoke tests with 4 workers (fast, parallel execution)
+2. If tests fail, parse failed test file names from output
+3. Retry only the failed tests sequentially with 1 worker
+4. If retry passes → allow commit (likely emulator contention)
+5. If retry fails → block commit (real bug)
+
+**Implementation Details**:
+- Captures test output to extract failed test paths using regex: `tests/e2e/[^:]+\.spec\.js`
+- Falls back to retrying all smoke tests if parsing fails
+- Provides clear messaging about what's happening
+- Distinguishes between flaky tests (emulator contention) and real bugs
+
+**User Feedback**:
+- Color-coded output (yellow for retry, green for success, red for failure)
+- Shows which specific test files are being retried
+- Explains the likely cause (Firebase emulator contention)
+
+**Benefits**:
+- Prevents false-positive test failures from blocking commits
+- Still catches real bugs (retry with 1 worker eliminates parallelism issues)
+- Faster normal case (4 workers when tests pass)
+- More reliable commit process
+
 ## Recommendations
 
-1. **Update smoke test config to use 1 worker** - Guarantees reliability, acceptable performance (18s)
+1. ~~**Update smoke test config to use 1 worker**~~ - ✅ Implemented via smart retry in pre-commit hook
 2. **Add build scripts to package.json** - Make it easier to build all minified files consistently
 3. **Consider CI/CD verification** - Ensure minified files are built before deployment
 4. **Document the data attribute pattern** - For future developers adding admin features
@@ -177,8 +205,9 @@ npx playwright test --config=playwright.smoke.config.js --workers=1
 
 - **Tests Fixed**: 4 smoke tests now passing
 - **Tests Added**: 2 new admin panel smoke tests
-- **Total Smoke Tests**: 13 (all passing with sequential execution)
+- **Total Smoke Tests**: 13 (12 passing + 1 flaky that passes on retry)
 - **Bugs Fixed**: 3 critical production bugs
 - **Features Added**: GPS coordinates display in admin panel
 - **Files Created**: 3 (2 minified JS, 1 test file)
-- **Commits**: 4
+- **Files Modified**: 1 (pre-commit hook)
+- **Commits**: 5 (including pre-commit enhancement)

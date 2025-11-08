@@ -8,6 +8,8 @@ import {
 } from '../fixtures/firebase-helpers.js';
 import { generateUsername, generateBoxId } from '../fixtures/test-id-generator.js';
 
+test.describe.configure({ mode: 'serial' }); // Run admin tests sequentially
+
 test.describe('Admin Panel', () => {
   let testUser = null;
 
@@ -43,7 +45,7 @@ test.describe('Admin Panel', () => {
     await clearTestData();
   });
 
-  test('should load admin panel for authorized users', async ({ page }) => {
+  test('should load admin panel for authorized users @smoke', async ({ page }) => {
     // Navigate to admin panel
     await page.goto('/admin');
 
@@ -61,7 +63,7 @@ test.describe('Admin Panel', () => {
     await expect(page.locator('#volunteers-search')).toBeVisible();
   });
 
-  test('should display data in all three tables when items exist', async ({ page }) => {
+  test('should display data in all three tables when items exist @smoke', async ({ page }) => {
     // Create test data
     const boxId = generateBoxId('ADMIN_TEST');
 

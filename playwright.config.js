@@ -16,13 +16,13 @@ export default defineConfig({
   // Hypothesis: Heavy tests "warm up" the emulator, reducing later contention
   testMatch: [
     '**/dashboard.spec.js',      // Heavy: Multiple data operations
-    '**/admin.spec.js',          // Heavy: Multiple data operations
     '**/setup.spec.js',          // Medium: Auth + provisioning
     '**/box-and-status.spec.js', // Medium: Box and status ops
     '**/home.spec.js',           // Light: Minimal data
     '**/login.spec.js',          // Light: Auth only
     '**/authorize.spec.js',      // Light: Auth + authorization flow
-    '**/user-journeys.spec.js'   // Real-world user scenarios (run last, sequential)
+    '**/user-journeys.spec.js',  // Real-world user scenarios (sequential)
+    '**/admin.spec.js'           // Heavy but sequential (run last to avoid interference)
   ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
