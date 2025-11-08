@@ -120,32 +120,28 @@ test.describe('Home Page', () => {
     // Some error styling might exist, but page should be functional
   });
 
-  test.skip('should work with anonymous authentication (DEPRECATED - homepage uses cache only)', async ({ page }) => {
-    // This test is deprecated since homepage no longer uses Firebase authentication
-    // Homepage uses cache-only for optimal performance (no auth required)
+  test('should load and display for unauthenticated public visitors @smoke', async ({ page }) => {
+    // Homepage uses cache-only (mock cache on localhost, no auth required)
     await page.goto('/');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
 
-    // Check that Firebase initialized and user is authenticated anonymously
-    const isAuthenticated = await page.evaluate(() => {
-      return new Promise((resolve) => {
-        if (window.auth) {
-          const unsubscribe = window.auth.onAuthStateChanged((user) => {
-            resolve(user !== null);
-            unsubscribe();
-          });
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            resolve(false);
-            unsubscribe();
-          }, 5000);
-        } else {
-          resolve(false);
-        }
-      });
-    });
+    // Homepage should load successfully without authentication
+    await expect(page).toHaveURL('/');
 
-    expect(isAuthenticated).toBe(true);
+    // Map should be visible
+    const mapElement = page.locator('#map');
+    await expect(mapElement).toBeVisible();
+
+    // Location list container should be visible
+    const locationListContainer = page.locator('#location-list-container');
+    await expect(locationListContainer).toBeVisible();
+
+    // Should have Leaflet map controls
+    const zoomInButton = page.locator('.leaflet-control-zoom-in');
+    await expect(zoomInButton).toBeVisible();
+
+    // Page should not redirect to login (homepage is public)
+    await expect(page).toHaveURL('/');
   });
 
   test('should load locations when they exist', async ({ page }) => {
