@@ -886,7 +886,7 @@
 			tableHTML += '<th class="sortable" data-sort="address" onclick="sortBoxes(\'address\')">Address</th>';
 			tableHTML += '<th class="sortable" data-sort="city" onclick="sortBoxes(\'city\')">City</th>';
 			tableHTML += '<th class="sortable" data-sort="volunteer" onclick="sortBoxes(\'volunteer\')">Volunteer</th>';
-			tableHTML += '<th class="sortable" data-sort="clicks" onclick="sortBoxes(\'clicks\')">Clicks</th>';
+			tableHTML += '<th class="sortable" data-sort="scans" onclick="sortBoxes(\'scans\')">Scans</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
@@ -902,7 +902,12 @@
 				const pickupRequests = analytics.pickupRequests || 0;
 				const problemReports = analytics.problemReports || 0;
 				const noActionViews = Math.max(0, views - pickupRequests - problemReports);
-				const tooltipText = `Views: ${views}
+
+				// Scans = total page views (should equal pickupRequests + problemReports + noActionViews)
+				// If views is 0 due to old bug, calculate from components
+				const scans = views > 0 ? views : (pickupRequests + problemReports);
+
+				const tooltipText = `Scans: ${scans}
 Pickup Requests: ${pickupRequests}
 Problem Reports: ${problemReports}
 No Action: ${noActionViews}`;
@@ -913,7 +918,7 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${box.address || 'N/A'}</a></td>`;
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
 				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
-				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${views}</td>`;
+				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${scans}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-box-id="${box.id}">Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-box-id="${box.id}" data-box-label="${escapedLabel}">Delete</button>`;
@@ -969,10 +974,19 @@ No Action: ${noActionViews}`;
 
 			filteredBoxes.sort((a, b) => {
 				let aVal, bVal;
-				if (column === 'clicks') {
-					// Sort by total views count
-					aVal = (a.analytics && a.analytics.views) || 0;
-					bVal = (b.analytics && b.analytics.views) || 0;
+				if (column === 'scans') {
+					// Sort by total scans (page views)
+					const aAnalytics = a.analytics || {};
+					const bAnalytics = b.analytics || {};
+					const aViews = aAnalytics.views || 0;
+					const bViews = bAnalytics.views || 0;
+					const aPickups = aAnalytics.pickupRequests || 0;
+					const bPickups = bAnalytics.pickupRequests || 0;
+					const aProblems = aAnalytics.problemReports || 0;
+					const bProblems = bAnalytics.problemReports || 0;
+					// Calculate scans (fallback to sum if views is 0)
+					aVal = aViews > 0 ? aViews : (aPickups + aProblems);
+					bVal = bViews > 0 ? bViews : (bPickups + bProblems);
 				} else {
 					aVal = a[column] || '';
 					bVal = b[column] || '';
