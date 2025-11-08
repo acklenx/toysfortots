@@ -960,7 +960,7 @@
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((report) => {
-				const date = report.timestamp ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : 'N/A';
+				const date = report.timestamp ? (report.timestamp.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : new Date(report.timestamp).toLocaleDateString()) : 'N/A';
 				tableHTML += '<tr>';
 				tableHTML += `<td>${report.id}</td>`;
 				tableHTML += `<td>${report.boxId || 'N/A'}</td>`;
