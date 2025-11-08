@@ -1123,9 +1123,9 @@
 			const pageData = filteredVolunteers.slice(startIndex, endIndex);
 
 			let tableHTML = '<table class="data-table"><thead><tr>';
-			tableHTML += '<th class="sortable" data-sort="id" onclick="sortVolunteers(\'id\')">User ID</th>';
 			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Display Name</th>';
 			tableHTML += '<th class="sortable" data-sort="isOAuth" onclick="sortVolunteers(\'isOAuth\')">OAuth</th>';
+			tableHTML += '<th class="sortable" data-sort="lastLogin" onclick="sortVolunteers(\'lastLogin\')">Last Seen</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
@@ -1134,11 +1134,35 @@
 				const escapedDisplayName = (volunteer.displayName || volunteer.email || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 				// Check if using OAuth (email not from custom domain @toysfortots.mcl1311.com)
 				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
+				// Format last login time
+				let lastSeenText = 'Never';
+				if (volunteer.lastLogin) {
+					const lastLoginDate = volunteer.lastLogin.seconds ? new Date(volunteer.lastLogin.seconds * 1000) : new Date(volunteer.lastLogin);
+					const now = new Date();
+					const diffMs = now - lastLoginDate;
+					const diffMins = Math.floor(diffMs / 60000);
+					const diffHours = Math.floor(diffMs / 3600000);
+					const diffDays = Math.floor(diffMs / 86400000);
+
+					if (diffMins < 1) {
+						lastSeenText = 'Just now';
+					} else if (diffMins < 60) {
+						lastSeenText = `${diffMins}m ago`;
+					} else if (diffHours < 24) {
+						lastSeenText = `${diffHours}h ago`;
+					} else if (diffDays < 7) {
+						lastSeenText = `${diffDays}d ago`;
+					} else {
+						lastSeenText = lastLoginDate.toLocaleDateString();
+					}
+				}
+
 				tableHTML += '<tr>';
-				tableHTML += `<td>${volunteer.id}</td>`;
-				tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
+				tableHTML += `<td title="${volunteer.id}">${volunteer.displayName || 'N/A'}</td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
+				tableHTML += `<td>${lastSeenText}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
+				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" class="edit-btn" style="text-decoration: none; display: inline-block;">View Boxes</a>`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 				tableHTML += `</div></td>`;
@@ -1202,6 +1226,10 @@
 					// Sort by OAuth status (true/false based on email domain)
 					aVal = a.email && !a.email.endsWith('@toysfortots.mcl1311.com') ? 1 : 0;
 					bVal = b.email && !b.email.endsWith('@toysfortots.mcl1311.com') ? 1 : 0;
+				} else if (column === 'lastLogin') {
+					// Sort by last login timestamp (most recent first when desc)
+					aVal = a.lastLogin ? (a.lastLogin.seconds || new Date(a.lastLogin).getTime() / 1000) : 0;
+					bVal = b.lastLogin ? (b.lastLogin.seconds || new Date(b.lastLogin).getTime() / 1000) : 0;
 				} else {
 					aVal = a[column] || '';
 					bVal = b[column] || '';
@@ -1224,13 +1252,18 @@
 		};
 
 		function exportVolunteersToCSV() {
-			const headers = ['User ID', 'Display Name', 'OAuth'];
+			const headers = ['Display Name', 'OAuth', 'Last Seen'];
 			const rows = filteredVolunteers.map(volunteer => {
 				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
+				let lastSeen = 'Never';
+				if (volunteer.lastLogin) {
+					const lastLoginDate = volunteer.lastLogin.seconds ? new Date(volunteer.lastLogin.seconds * 1000) : new Date(volunteer.lastLogin);
+					lastSeen = lastLoginDate.toLocaleString();
+				}
 				return [
-					volunteer.id,
 					volunteer.displayName || '',
-					isOAuth ? 'Yes' : 'No'
+					isOAuth ? 'Yes' : 'No',
+					lastSeen
 				];
 			});
 

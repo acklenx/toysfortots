@@ -278,7 +278,32 @@
 					{
 						renderDashboard( e.target.value );
 					} );
-					renderDashboard( currentUserDisplayName );
+
+					// Check for volunteer query parameter (from admin "View Boxes" link)
+					const urlParams = new URLSearchParams( window.location.search );
+					const volunteerParam = urlParams.get( 'volunteer' );
+
+					if( volunteerParam )
+					{
+						// Try to find matching volunteer in dropdown
+						const options = Array.from( filterSelect.options );
+						const matchingOption = options.find( opt => opt.value === volunteerParam );
+
+						if( matchingOption )
+						{
+							filterSelect.value = volunteerParam;
+							renderDashboard( volunteerParam );
+						}
+						else
+						{
+							// Volunteer not found, show my boxes
+							renderDashboard( currentUserDisplayName );
+						}
+					}
+					else
+					{
+						renderDashboard( currentUserDisplayName );
+					}
 				}
 				catch( error )
 				{
