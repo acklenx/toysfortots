@@ -63,7 +63,7 @@
           },
           {
             "key": "Permissions-Policy",
-            "value": "geolocation=(self), camera=(), microphone=(), payment=(), usb=(), bluetooth=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), ambient-light-sensor=(), display-capture=(), fullscreen=(), picture-in-picture=(), clipboard-read=(), clipboard-write=(), autoplay=(), encrypted-media=(), gamepad=(), screen-wake-lock=(), web-share=()"
+            "value": "geolocation=(self), camera=(), microphone=(), payment=(), usb=(), bluetooth=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=(), fullscreen=(), picture-in-picture=(), clipboard-read=(), clipboard-write=(), autoplay=(), encrypted-media=(), gamepad=(), screen-wake-lock=()"
           }
         ]
       },
