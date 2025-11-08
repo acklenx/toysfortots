@@ -50,12 +50,39 @@ test.describe('Home Page', () => {
   });
 
   test('should display map element @smoke', async ({ page }) => {
+    const consoleErrors = [];
+
+    // Monitor console for errors (including CSP violations)
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
     await page.goto('/');
     await page.waitForTimeout(2000);
 
     // Map element should exist and be visible
     const mapElement = page.locator('#map');
     await expect(mapElement).toBeVisible();
+
+    // CRITICAL: Verify JavaScript actually executed
+    // Leaflet creates .leaflet-container when JS runs - if CSP blocks JS, this won't exist
+    const leafletContainer = page.locator('.leaflet-container');
+    await expect(leafletContainer).toBeVisible({
+      timeout: 5000
+    });
+
+    // Verify map controls (created by Leaflet JS)
+    const zoomControls = page.locator('.leaflet-control-zoom');
+    await expect(zoomControls).toBeVisible();
+
+    // Fail test if console errors were detected
+    if (consoleErrors.length > 0) {
+      console.error('❌ Console errors detected:');
+      consoleErrors.forEach(err => console.error('  ', err));
+      throw new Error(`Console errors detected: ${consoleErrors.join('; ')}`);
+    }
   });
 
   test('should have map with minimum dimensions', async ({ page }) => {

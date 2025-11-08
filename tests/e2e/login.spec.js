@@ -14,7 +14,22 @@ test.describe('Login Page', () => {
   });
 
   test('should display login form @smoke', async ({ page }) => {
+    const consoleErrors = [];
+
+    // Monitor console for errors (including CSP violations)
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
     await page.goto('/login');
+
+    // CRITICAL: Verify JavaScript executed by checking for header loaded by loader.js
+    // If CSP blocks JavaScript, header won't be loaded from _header.html
+    // Check for specific element that only exists in the loaded header
+    const loadedHeader = page.locator('header img[alt*="Toys for Tots"]');
+    await expect(loadedHeader).toBeVisible({ timeout: 5000 });
 
     // Check that login form elements are visible
     await expect(page.locator('#auth-container h1')).toContainText('Volunteer Access');
@@ -23,6 +38,13 @@ test.describe('Login Page', () => {
     await expect(page.locator('#email-sign-in-btn')).toBeVisible();
     await expect(page.locator('#google-login-btn')).toBeVisible();
     await expect(page.locator('#toggle-sign-up-btn')).toBeVisible();
+
+    // Fail test if console errors were detected
+    if (consoleErrors.length > 0) {
+      console.error('❌ Console errors detected:');
+      consoleErrors.forEach(err => console.error('  ', err));
+      throw new Error(`Console errors detected: ${consoleErrors.join('; ')}`);
+    }
   });
 
   test('should toggle between sign-in and sign-up modes', async ({ page }) => {
