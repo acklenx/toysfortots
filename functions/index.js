@@ -165,11 +165,69 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 			throw new HttpsError( 'internal', 'Could not read server configuration.' );
 		}
 	}
-	if( !data.boxId || !data.address )
-	{
-		console.warn( 'Invalid argument: Missing required fields in request data.' );
-		throw new HttpsError( 'invalid-argument', 'Box ID address address, are required.' );
+	// Input validation - comprehensive checks
+	function validateInput(field, value, rules) {
+		if (rules.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
+			throw new HttpsError('invalid-argument', `${field} is required`);
+		}
+		if (value && typeof value === 'string') {
+			if (rules.maxLength && value.length > rules.maxLength) {
+				throw new HttpsError('invalid-argument', `${field} must be ${rules.maxLength} characters or less`);
+			}
+			if (rules.minLength && value.trim().length < rules.minLength) {
+				throw new HttpsError('invalid-argument', `${field} must be at least ${rules.minLength} characters`);
+			}
+			if (rules.pattern && !rules.pattern.test(value)) {
+				throw new HttpsError('invalid-argument', `${field} format is invalid`);
+			}
+		}
+		if (value && rules.type && typeof value !== rules.type) {
+			throw new HttpsError('invalid-argument', `${field} must be a ${rules.type}`);
+		}
 	}
+
+	// Email regex (RFC 5322 simplified)
+	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	// Phone regex (flexible - allows various formats)
+	const phonePattern = /^[\d\s\-().+]+$/;
+	// BoxId pattern (alphanumeric, hyphens, underscores)
+	const boxIdPattern = /^[A-Z0-9_-]+$/i;
+
+	// Validate required fields
+	validateInput('Box ID', data.boxId, { required: true, type: 'string', maxLength: 100, pattern: boxIdPattern });
+	validateInput('Label', data.label, { required: true, type: 'string', maxLength: 200, minLength: 1 });
+	validateInput('Address', data.address, { required: true, type: 'string', maxLength: 500, minLength: 3 });
+	validateInput('City', data.city, { required: true, type: 'string', maxLength: 100, minLength: 1 });
+	validateInput('State', data.state, { required: true, type: 'string', maxLength: 50, minLength: 2 });
+
+	// Validate optional fields
+	if (data.boxes !== undefined) {
+		validateInput('Boxes', data.boxes, { type: 'number' });
+		if (data.boxes < 0 || data.boxes > 1000) {
+			throw new HttpsError('invalid-argument', 'Boxes must be between 0 and 1000');
+		}
+	}
+	if (data.contactName) {
+		validateInput('Contact Name', data.contactName, { type: 'string', maxLength: 200 });
+	}
+	if (data.contactEmail) {
+		validateInput('Contact Email', data.contactEmail, { type: 'string', maxLength: 320, pattern: emailPattern });
+	}
+	if (data.contactPhone) {
+		validateInput('Contact Phone', data.contactPhone, { type: 'string', maxLength: 50, pattern: phonePattern });
+	}
+
+	// Sanitize string inputs (trim whitespace)
+	data.boxId = data.boxId.trim();
+	data.label = data.label.trim();
+	data.address = data.address.trim();
+	data.city = data.city.trim();
+	data.state = data.state.trim();
+	if (data.contactName) data.contactName = data.contactName.trim();
+	if (data.contactEmail) data.contactEmail = data.contactEmail.trim();
+	if (data.contactPhone) data.contactPhone = data.contactPhone.trim();
+
+	console.log('Input validation passed');
 	let geocodedLat = null;
 	let geocodedLon = null;
 	const fullAddress = `${ data.address }, ${ data.city }, ${ data.state }`;
