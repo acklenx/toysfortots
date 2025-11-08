@@ -759,7 +759,21 @@
 				);
 			});
 
+			updateDeleteAllBoxesButton();
 			renderBoxes();
+		}
+
+		function updateDeleteAllBoxesButton() {
+			const btn = document.getElementById('delete-all-boxes-btn');
+			const count = filteredBoxes.length;
+			const searchTerm = document.getElementById('boxes-search').value.trim();
+
+			if (searchTerm) {
+				btn.textContent = `Delete ${count} Box${count !== 1 ? 'es' : ''}`;
+			} else {
+				btn.textContent = 'Delete All Boxes';
+			}
+			btn.disabled = count === 0;
 		}
 
 		function renderBoxes() {
@@ -933,7 +947,21 @@
 				);
 			});
 
+			updateDeleteAllReportsButton();
 			renderReports();
+		}
+
+		function updateDeleteAllReportsButton() {
+			const btn = document.getElementById('delete-all-reports-btn');
+			const count = filteredReports.length;
+			const searchTerm = document.getElementById('reports-search').value.trim();
+
+			if (searchTerm) {
+				btn.textContent = `Delete ${count} Report${count !== 1 ? 's' : ''}`;
+			} else {
+				btn.textContent = 'Delete All Reports';
+			}
+			btn.disabled = count === 0;
 		}
 
 		function renderReports() {
@@ -1105,7 +1133,22 @@
 				);
 			});
 
+			updateDeleteAllVolunteersButton();
 			renderVolunteers();
+		}
+
+		function updateDeleteAllVolunteersButton() {
+			const btn = document.getElementById('delete-all-volunteers-btn');
+			// Count how many can be deleted (exclude current user)
+			const deletableCount = filteredVolunteers.filter(v => v.id !== currentUser.uid).length;
+			const searchTerm = document.getElementById('volunteers-search').value.trim();
+
+			if (searchTerm) {
+				btn.textContent = `Delete ${deletableCount} Volunteer${deletableCount !== 1 ? 's' : ''}`;
+			} else {
+				btn.textContent = 'Delete All Volunteers';
+			}
+			btn.disabled = deletableCount === 0;
 		}
 
 		function renderVolunteers() {
@@ -1370,15 +1413,21 @@
 
 		// Delete all boxes
 		document.getElementById('delete-all-boxes-btn').addEventListener('click', () => {
+			const deleteCount = filteredBoxes.length;
+			const keepCount = allBoxes.length - deleteCount;
+			const message = deleteCount === allBoxes.length
+				? `⚠️ WARNING: This will permanently delete ALL ${deleteCount} boxes and cannot be undone. Are you absolutely sure?`
+				: `⚠️ WARNING: This will delete ${deleteCount} box${deleteCount !== 1 ? 'es' : ''} (${keepCount} box${keepCount !== 1 ? 'es' : ''} will NOT be deleted). This action cannot be undone. Are you sure?`;
+
 			showConfirmation(
-				'Delete ALL Boxes',
-				'⚠️ WARNING: This will permanently delete ALL boxes and cannot be undone. Are you absolutely sure?',
+				`Delete ${deleteCount} Box${deleteCount !== 1 ? 'es' : ''}`,
+				message,
 				async () => {
 					try {
-						const snapshot = await getDocs(collection(db, locationsCollectionPath));
 						const deletePromises = [];
-						snapshot.forEach((doc) => {
-							deletePromises.push(deleteDoc(doc.ref));
+						filteredBoxes.forEach((box) => {
+							const docRef = doc(db, locationsCollectionPath, box.id);
+							deletePromises.push(deleteDoc(docRef));
 						});
 						await Promise.all(deletePromises);
 						loadBoxes();
@@ -1408,15 +1457,21 @@
 
 		// Delete all reports
 		document.getElementById('delete-all-reports-btn').addEventListener('click', () => {
+			const deleteCount = filteredReports.length;
+			const keepCount = allReports.length - deleteCount;
+			const message = deleteCount === allReports.length
+				? `⚠️ WARNING: This will permanently delete ALL ${deleteCount} reports and cannot be undone. Are you absolutely sure?`
+				: `⚠️ WARNING: This will delete ${deleteCount} report${deleteCount !== 1 ? 's' : ''} (${keepCount} report${keepCount !== 1 ? 's' : ''} will NOT be deleted). This action cannot be undone. Are you sure?`;
+
 			showConfirmation(
-				'Delete ALL Reports',
-				'⚠️ WARNING: This will permanently delete ALL reports and cannot be undone. Are you absolutely sure?',
+				`Delete ${deleteCount} Report${deleteCount !== 1 ? 's' : ''}`,
+				message,
 				async () => {
 					try {
-						const snapshot = await getDocs(collection(db, reportsCollectionPath));
 						const deletePromises = [];
-						snapshot.forEach((doc) => {
-							deletePromises.push(deleteDoc(doc.ref));
+						filteredReports.forEach((report) => {
+							const docRef = doc(db, reportsCollectionPath, report.id);
+							deletePromises.push(deleteDoc(docRef));
 						});
 						await Promise.all(deletePromises);
 						loadReports();
@@ -1501,18 +1556,25 @@
 
 		// Delete all volunteers
 		document.getElementById('delete-all-volunteers-btn').addEventListener('click', () => {
+			const volunteersToDelete = filteredVolunteers.filter(v => v.id !== currentUser.uid);
+			const deleteCount = volunteersToDelete.length;
+			const allDeletableCount = allVolunteers.filter(v => v.id !== currentUser.uid).length;
+			const keepCount = allDeletableCount - deleteCount;
+
+			const message = deleteCount === allDeletableCount
+				? `⚠️ WARNING: This will delete all ${deleteCount} volunteers EXCEPT you. This action cannot be undone. Are you absolutely sure?`
+				: `⚠️ WARNING: This will delete ${deleteCount} volunteer${deleteCount !== 1 ? 's' : ''} (${keepCount} volunteer${keepCount !== 1 ? 's' : ''} will NOT be deleted, plus you). This action cannot be undone. Are you sure?`;
+
 			showConfirmation(
-				'Delete ALL Volunteers',
-				'⚠️ WARNING: This will delete all volunteers EXCEPT you. This action cannot be undone. Are you absolutely sure?',
+				`Delete ${deleteCount} Volunteer${deleteCount !== 1 ? 's' : ''}`,
+				message,
 				async () => {
 					try {
 						const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
-						const snapshot = await getDocs(collection(db, volunteersPath));
 						const deletePromises = [];
-						snapshot.forEach((doc) => {
-							if (doc.id !== currentUser.uid) {
-								deletePromises.push(deleteDoc(doc.ref));
-							}
+						volunteersToDelete.forEach((volunteer) => {
+							const docRef = doc(db, volunteersPath, volunteer.id);
+							deletePromises.push(deleteDoc(docRef));
 						});
 						await Promise.all(deletePromises);
 						loadVolunteers();
