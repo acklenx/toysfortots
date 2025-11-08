@@ -912,9 +912,11 @@ Pickup Requests: ${pickupRequests}
 Problem Reports: ${problemReports}
 No Action: ${noActionViews}`;
 
+				const contactTooltip = box.contactName ? `Manager: ${box.contactName}` : '';
+
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${box.id}" target="_blank">${box.id}</a></td>`;
-				tableHTML += `<td>${box.label || 'N/A'}</td>`;
+				tableHTML += `<td title="${contactTooltip}">${box.label || 'N/A'}</td>`;
 				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${box.address || 'N/A'}</a></td>`;
 				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
 				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
