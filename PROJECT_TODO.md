@@ -179,14 +179,32 @@
   - Volunteer workflows (signup, provisioning, management)
   - Production-ready with 100% pass rate
 
+- [x] ✅ **CSP enforcement in local tests** (November 7, 2025 - commits: e2eaf5e, e8d670d)
+  - Added CSP meta tags to all 9 HTML pages
+  - Meta tags match firebase.json security headers exactly
+  - Includes localhost URLs for Firebase emulator compatibility
+  - Updated smoke tests to verify JavaScript execution
+  - Added console error detection to catch CSP violations
+  - Closes critical blind spot where emulator didn't enforce CSP
+  - All 11 smoke tests passing locally with CSP enforced
+
+- [x] ✅ **Production smoke tests** (November 7, 2025 - commit: e8d670d)
+  - Created test suite for https://toysfortots.mcl1311.com
+  - Verifies JavaScript executes (not blocked by CSP)
+  - Checks for console errors (CSP violations show here)
+  - Validates all security headers present
+  - Tests critical user paths (homepage, login, redirects)
+  - READ-ONLY tests, safe to run against production
+  - Usage: `npm run test:production`
+  - All 5 production tests passing (3.1s)
+
 ### 🌐 Production E2E Tests
-- [ ] **Create production test suite**
-  - Run against https://toysfortots.mcl1311.com
-  - Use themed test data (North Pole address, "Buddy the Elf" volunteer)
-  - Graceful cleanup that won't leave test data in production
-  - Separate test file: `tests/e2e-production/`
-  - Can be run safely without affecting real data
-  - Scheduled daily runs with notifications
+- [x] ✅ **Basic production smoke tests complete** (see "Completed" section above)
+- [ ] **Enhanced production test coverage** (optional future work)
+  - Add themed test data scenarios (North Pole address, "Buddy the Elf" volunteer)
+  - Expand to test more user journeys
+  - Add scheduled daily runs with notifications
+  - Currently: 5 READ-ONLY smoke tests verify site health
 
 ### ⚡ Test Performance Optimization
 - [ ] **Implement shared test fixtures for common scenarios**

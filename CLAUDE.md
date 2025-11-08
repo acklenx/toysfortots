@@ -115,6 +115,21 @@ npx playwright show-report                       # View test report
 - Automatic summary showing which tier recovered failures
 - Preserves all logs for analysis
 
+**Production Smoke Tests:**
+```bash
+# Test against live production site (https://toysfortots.mcl1311.com)
+npm run test:production
+
+# These tests verify:
+# - Pages load successfully
+# - JavaScript executes (not blocked by CSP)
+# - Security headers are present
+# - No console errors
+# - Critical user paths work
+```
+
+**Important:** Production tests are READ-ONLY and safe to run anytime. They don't create test data.
+
 See `docs/TEST_DEBUGGING_GUIDE.md` for more details.
 
 ### Performance Monitoring
