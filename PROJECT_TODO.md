@@ -123,9 +123,12 @@
   - Protect Cloud Functions from abuse
   - Add Firebase App Check
 
-- [ ] **Add authentication to HTTP endpoints**
-  - Secure triggerSyncLocationSuggestions
-  - Secure triggerRefreshLocationsCache
+- [x] ✅ **Add authentication to HTTP endpoints** (November 7, 2025 - commit: 024a5e5)
+  - Secured triggerSyncLocationSuggestions - requires authorized volunteer token
+  - Secured triggerRefreshLocationsCache - requires authorized volunteer token
+  - Both endpoints verify Firebase ID token and check authorizedVolunteers collection
+  - Client-side updated to send Authorization header with ID token
+  - **🚀 REQUIRES DEPLOYMENT: firebase deploy**
 
 ---
 
