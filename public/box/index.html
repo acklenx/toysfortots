@@ -24,22 +24,18 @@
 			let currentBoxInfo;
 			const setupFirebase = () =>
 			{
-				console.log( 'Setting up Firebase...' );
 				try
 				{
 					let appInitialized = false;
 					onAuthStateChanged( auth, ( user ) =>
 					{
-						console.log( 'Auth state changed. User:', user ? user.uid : 'null' );
 						if( user && !appInitialized )
 						{
 							appInitialized = true;
-							console.log( 'User is authenticated. Initializing main app...' );
 							window.initApp();
 						}
 						else if( !user )
 						{
-							console.log( 'No user found. Attempting anonymous sign-in...' );
 							signInAnonymously( auth ).catch( ( err ) =>
 							{
 								console.error( 'Anonymous sign-in failed:', err );
@@ -81,7 +77,6 @@
 					const locSnap = await getDoc( locRef );
 					if( !locSnap.exists() )
 					{
-						console.log( `Box ID ${ boxId } not found. Redirecting to setup page...` );
 						window.location.href = `/setup/?id=${ boxId }`;
 						return;
 					}
@@ -253,7 +248,6 @@
 
 					if( result.data && result.data.success )
 					{
-						console.log( `Report created with ID: ${ result.data.reportId }` );
 						return true;
 					}
 					else
