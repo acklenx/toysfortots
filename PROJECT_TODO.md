@@ -102,15 +102,13 @@
   - Restricted to production domain only: https://toysfortots.mcl1311.com
   - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only functions**
 
-- [ ] **Add Content Security Policy headers**
-  - Configure CSP in firebase.json
-  - Prevent inline script execution
-  - Restrict resource loading sources
-
-- [ ] **Add security headers**
-  - X-Frame-Options
-  - X-Content-Type-Options
-  - Referrer-Policy
+- [x] ✅ **Add Content Security Policy and security headers** (November 7, 2025 - commit: e0bfdec)
+  - Content-Security-Policy: Restrict script/style/connect sources to trusted domains
+  - X-Frame-Options: DENY (prevents clickjacking)
+  - X-Content-Type-Options: nosniff (prevents MIME-type sniffing)
+  - Referrer-Policy: strict-origin-when-cross-origin (privacy protection)
+  - Permissions-Policy: geolocation=(self), camera=(), microphone=()
+  - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only hosting**
 
 - [ ] **Implement rate limiting**
   - Protect Cloud Functions from abuse
