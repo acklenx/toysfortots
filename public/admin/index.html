@@ -1161,8 +1161,8 @@
 				tableHTML += `<td title="${volunteer.id}">${volunteer.displayName || 'N/A'}</td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
 				tableHTML += `<td>${lastSeenText}</td>`;
-				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" class="edit-btn" style="text-decoration: none; display: inline-block;">View Boxes</a>`;
+				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
+				tableHTML += `<a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline; margin-right: 12px;">View Boxes</a>`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 				tableHTML += `</div></td>`;

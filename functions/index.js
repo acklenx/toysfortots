@@ -288,7 +288,8 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 			console.log( `Authorizing new volunteer: ${ uid }` );
 			batch.set( authVolRef, {
 				email: userEmail, displayName: userName,
-				authorizedAt: FieldValue.serverTimestamp()
+				authorizedAt: FieldValue.serverTimestamp(),
+				lastLogin: FieldValue.serverTimestamp()
 			}, { merge: true } );
 		}
 		const initialReportRef = db.collection( REPORTS_PATH ).doc();
@@ -338,6 +339,13 @@ exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 		{
 			console.log( 'isAuthorizedVolunteerV2: User is authorized.' );
 			const userData = docSnap.data();
+
+			// Update lastLogin timestamp (fire-and-forget, don't wait)
+			authVolRef.update( { lastLogin: FieldValue.serverTimestamp() } ).catch( error =>
+			{
+				console.warn( `Failed to update lastLogin for ${ uid }:`, error.message );
+			} );
+
 			return { isAuthorized: true, displayName: userData.displayName || request.auth.token.name };
 		}
 		else
