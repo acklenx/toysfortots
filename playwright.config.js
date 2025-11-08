@@ -16,6 +16,7 @@ export default defineConfig({
   // Hypothesis: Heavy tests "warm up" the emulator, reducing later contention
   testMatch: [
     '**/dashboard.spec.js',      // Heavy: Multiple data operations
+    '**/admin.spec.js',          // Heavy: Multiple data operations
     '**/setup.spec.js',          // Medium: Auth + provisioning
     '**/box-and-status.spec.js', // Medium: Box and status ops
     '**/home.spec.js',           // Light: Minimal data
