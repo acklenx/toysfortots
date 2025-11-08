@@ -273,10 +273,14 @@
 					const sortedNames = Array.from( volunteerNames ).sort();
 					sortedNames.forEach( name =>
 					{
-						const option = document.createElement( 'option' );
-						option.value = name;
-						option.textContent = name;
-						filterSelect.appendChild( option );
+						// Skip current user since they already have "My Boxes" option
+						if( name !== currentUserDisplayName )
+						{
+							const option = document.createElement( 'option' );
+							option.value = name;
+							option.textContent = name;
+							filterSelect.appendChild( option );
+						}
 					} );
 					filterSelect.addEventListener( 'change', ( e ) =>
 					{
