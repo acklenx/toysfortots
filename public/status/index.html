@@ -247,10 +247,26 @@
 						return;
 					}
 
-					let historyHtml = '';
+					// Collect all reports into an array for manual sorting
+					const reports = [];
 					querySnapshot.forEach( docSnap =>
 					{
-						historyHtml += renderReportItem( docSnap.id, docSnap.data() );
+						reports.push( { id: docSnap.id, data: docSnap.data() } );
+					} );
+
+					// Sort by timestamp descending (most recent first)
+					reports.sort( ( a, b ) =>
+					{
+						const timeA = a.data.timestamp?.seconds || 0;
+						const timeB = b.data.timestamp?.seconds || 0;
+						return timeB - timeA; // Descending order
+					} );
+
+					// Render sorted reports
+					let historyHtml = '';
+					reports.forEach( report =>
+					{
+						historyHtml += renderReportItem( report.id, report.data );
 					} );
 					historyContainer.innerHTML = historyHtml;
 
