@@ -8,17 +8,18 @@
 		<title>Drop Box Action Center</title>
 		<link rel="stylesheet" href="/css/style.min.css?v=1.0.7">
 		<script type="module">
-			import { auth, db, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
+			import { auth, db, functions, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
 			import {
 				signInAnonymously,
 				onAuthStateChanged
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import {
 				doc,
-				getDoc,
-				addDoc,
-				collection
+				getDoc
 			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+			import {
+				httpsCallable
+			} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 			let currentBoxInfo;
 			const setupFirebase = () =>
@@ -225,36 +226,45 @@
 			};
 			const submitReportToFirestore = async( reportData, boxId, location ) =>
 			{
-				if( !db || !auth.currentUser )
+				if( !functions || !auth.currentUser )
 				{
-					console.error( 'Firestore not initialized or user not authenticated.' );
+					console.error( 'Functions not initialized or user not authenticated.' );
 					return false;
 				}
 				try
 				{
 					const userId = auth.currentUser.uid;
-					const timestamp = new Date().toISOString();
-					const reportCollectionRef = collection( db, reportsCollectionPath );
 					const reporterNameFromForm = reportData.contactName;
 					const reporterEmailFromForm = reportData.contactEmail;
 					delete reportData.contactName;
 					delete reportData.contactEmail;
-					const fullReport = {
-						...reportData,
-						...location,
+
+					// Call Cloud Function to create report with sequential ID
+					const createReport = httpsCallable( functions, 'createReportV2' );
+					const result = await createReport( {
 						boxId: boxId,
-						timestamp: timestamp,
-						reporterId: userId,
-						status: 'new',
-						reporterName: reporterNameFromForm || null,
-						reporterEmail: reporterEmailFromForm || null
-					};
-					await addDoc( reportCollectionRef, fullReport );
-					return true;
+						reportData: {
+							...reportData,
+							reporterId: userId,
+							reporterName: reporterNameFromForm || null,
+							reporterEmail: reporterEmailFromForm || null
+						}
+					} );
+
+					if( result.data && result.data.success )
+					{
+						console.log( `Report created with ID: ${ result.data.reportId }` );
+						return true;
+					}
+					else
+					{
+						console.error( 'Report creation failed:', result.data );
+						return false;
+					}
 				}
 				catch( error )
 				{
-					console.error( 'Firestore submission failed:', error );
+					console.error( 'Report submission failed:', error );
 					return false;
 				}
 			};

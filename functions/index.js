@@ -269,7 +269,8 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 		boxes: data.boxes, volunteer: userName, status: 'active',
 		created: new Date().toISOString(), provisionedBy: uid,
 		lat: geocodedLat, lon: geocodedLon,
-		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone
+		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone,
+		reportCounter: 0
 	};
 	console.log( 'New location object built.' );
 	try
@@ -292,12 +293,16 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 				lastLogin: FieldValue.serverTimestamp()
 			}, { merge: true } );
 		}
-		const initialReportRef = db.collection( REPORTS_PATH ).doc();
+		// Create initial report with sequential ID: BOXID-00001
+		const initialReportId = `${ data.boxId }-00001`;
+		const initialReportRef = db.doc( `${ REPORTS_PATH }/${ initialReportId }` );
 		batch.set( initialReportRef, {
 			...newLocation, boxId: data.boxId, reportType: 'box_registered',
 			description: `Box registered by ${ userName }.`,
 			timestamp: newLocation.created, status: 'cleared', reporterId: uid
 		} );
+		// Update reportCounter to 1 since we just created the first report
+		batch.update( newLocationRef, { reportCounter: 1 } );
 		await batch.commit();
 		console.log( 'Batch commit successful.' );
 		return {
@@ -969,6 +974,85 @@ exports.triggerRefreshLocationsCache = onRequest( { cors: ['https://toysfortots.
 			success: false,
 			error: error.message
 		} );
+	}
+} );
+
+// Create report with sequential ID per box
+exports.createReportV2 = onCall( async( request ) =>
+{
+	const db = getFirestore();
+
+	// Validate input
+	if( !request.data || !request.data.boxId || !request.data.reportData )
+	{
+		throw new HttpsError( 'invalid-argument', 'boxId and reportData are required' );
+	}
+
+	const { boxId, reportData } = request.data;
+
+	try
+	{
+		const locationRef = db.doc( `${ LOCATIONS_PATH }/${ boxId }` );
+
+		// Use transaction to atomically increment counter and create report
+		const result = await db.runTransaction( async( transaction ) =>
+		{
+			const locationDoc = await transaction.get( locationRef );
+
+			if( !locationDoc.exists )
+			{
+				throw new HttpsError( 'not-found', `Location with boxId ${ boxId } not found` );
+			}
+
+			const locationData = locationDoc.data();
+
+			// Get current counter (default to 0 if not set)
+			const currentCounter = locationData.reportCounter || 0;
+			const newCounter = currentCounter + 1;
+
+			// Create padded sequential number (5 digits: 00001, 00002, etc.)
+			const paddedNumber = String( newCounter ).padStart( 5, '0' );
+			const reportId = `${ boxId }-${ paddedNumber }`;
+
+			// Create report with custom ID
+			const reportRef = db.doc( `${ REPORTS_PATH }/${ reportId }` );
+
+			const fullReport = {
+				...reportData,
+				...locationData,
+				boxId: boxId,
+				timestamp: FieldValue.serverTimestamp(),
+				status: reportData.status || 'new'
+			};
+
+			transaction.set( reportRef, fullReport );
+
+			// Update location's report counter
+			transaction.update( locationRef, {
+				reportCounter: newCounter
+			} );
+
+			return { reportId, counter: newCounter };
+		} );
+
+		console.log( `Report created with ID: ${ result.reportId }, counter: ${ result.counter }` );
+
+		return {
+			success: true,
+			reportId: result.reportId,
+			counter: result.counter
+		};
+	}
+	catch( error )
+	{
+		console.error( 'createReportV2 error:', error );
+
+		if( error instanceof HttpsError )
+		{
+			throw error;
+		}
+
+		throw new HttpsError( 'internal', error.message );
 	}
 } );
 
