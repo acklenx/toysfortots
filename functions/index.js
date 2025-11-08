@@ -566,7 +566,7 @@ exports.scheduledSyncLocationSuggestions = onSchedule( {
  * Usage: curl https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
  * Optional 30s delay: curl https://...?delay=30
  */
-exports.triggerSyncLocationSuggestions = onRequest( async( req, res ) =>
+exports.triggerSyncLocationSuggestions = onRequest( { cors: true }, async( req, res ) =>
 {
 	console.log( '--- triggerSyncLocationSuggestions (HTTP) STARTED ---' );
 
@@ -794,7 +794,7 @@ exports.scheduledRefreshLocationsCache = onSchedule( {
  * HTTP endpoint to trigger cache refresh via curl
  * Usage: curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache
  */
-exports.triggerRefreshLocationsCache = onRequest( async( req, res ) =>
+exports.triggerRefreshLocationsCache = onRequest( { cors: true }, async( req, res ) =>
 {
 	console.log( '--- triggerRefreshLocationsCache (HTTP) STARTED ---' );
 
