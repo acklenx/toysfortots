@@ -67,7 +67,7 @@
 					</div>
 					<div class="form-group">
 						<label for="contactPhone">Contact Phone</label>
-						<input type="tel" id="contactPhone" name="contactPhone" maxlength="50" pattern="[\d\s\-().+]+" title="Phone number must contain only digits, spaces, hyphens, parentheses, dots, or plus signs">
+						<input type="tel" id="contactPhone" name="contactPhone" maxlength="50" title="Phone number must contain only digits, spaces, hyphens, parentheses, dots, or plus signs">
 					</div>
 					<div class="form-group">
 						<button id="submit-btn" type="submit">Submit Location</button>
@@ -300,6 +300,17 @@
 							highlightInvalidField( 'contactPhone', 'Please provide either a Contact Email or a Contact Phone.' );
 						}
 						return; // Stop the submission
+					}
+
+					// Validate phone format if provided
+					if( contactPhone )
+					{
+						const phonePattern = /^[\d\s().+-]+$/;
+						if( !phonePattern.test( contactPhone ) )
+						{
+							highlightInvalidField( 'contactPhone', 'Phone number must contain only digits, spaces, hyphens, parentheses, dots, or plus signs.' );
+							return;
+						}
 					}
 					if( !auth.currentUser || auth.currentUser.isAnonymous )
 					{
