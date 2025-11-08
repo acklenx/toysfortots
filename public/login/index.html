@@ -95,7 +95,9 @@
 					showAuthMessage('error', 'Username cannot contain "@" symbol. Just enter the username.');
 					return;
 				}
-				const email = `${username}@toysfortots.mcl1311.com`;
+				// Replace spaces with underscores to match how email was created during signup
+				const emailUsername = username.replace(/\s+/g, '_');
+				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 				try {
 					await signInWithEmailAndPassword(auth, email, password);
 				} catch (error) {
@@ -122,10 +124,13 @@
 					showAuthMessage('error', 'Username cannot contain "@" symbol.');
 					return;
 				}
-				const email = `${username}@toysfortots.mcl1311.com`;
+				// Create email with spaces replaced by underscores (email addresses can't have spaces)
+				// but keep the original username with spaces for displayName
+				const emailUsername = username.replace(/\s+/g, '_');
+				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-					// Store the username as typed (with proper capitalization) as displayName
+					// Store the username as typed (with proper capitalization and spaces) as displayName
 					// IMPORTANT: Wait for updateProfile to complete before setting isNewSignup
 					// This ensures the displayName is saved to Firebase Auth before the
 					// onAuthStateChanged handler processes the new user
