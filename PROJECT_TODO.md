@@ -84,12 +84,16 @@
   - Provide safe/unsafe code examples
   - List when to escape user data
 
-- [ ] **Fix XSS in home page** ⚠️ **CRITICAL**
-  - Escape location data in map markers
+- [x] ✅ **Fix XSS in home page** (November 7, 2025 - commit: 1a346cb) ⭐ **FINAL CRITICAL FIX**
+  - Escape location data in map markers (labels, addresses, cities, states)
   - Escape location data in sidebar list
+  - Add comprehensive XSS security test with map popup verification
+  - **All critical XSS vulnerabilities now fixed across entire application**
 
-- [ ] **Remove sensitive data from logs** ⚠️ **CRITICAL**
-  - Remove passcode from Cloud Function logs (functions/index.js:149)
+- [x] ✅ **Remove sensitive data from logs** (November 7, 2025 - commit: 5b60b9b)
+  - Removed passcode from Cloud Function logs (functions/index.js:149)
+  - Replaced with safe logging: 'Validating passcode...'
+  - Prevents passcode leakage in logs
 
 ### 🔐 Infrastructure Security
 - [ ] **Add Content Security Policy headers**
