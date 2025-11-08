@@ -146,7 +146,8 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 				console.warn( 'Passcode missing in request data.' );
 				throw new HttpsError( 'permission-denied', 'New volunteers must provide the correct password.' );
 			}
-			console.log( `Passcode Check: Submitted='${ data.passcode }', Expected='${ secretPasscode }'` );
+			// Security: Do NOT log passcode values
+			console.log( 'Validating passcode...' );
 			if( data.passcode !== secretPasscode )
 			{
 				console.warn( 'Incorrect passcode submitted.' );
