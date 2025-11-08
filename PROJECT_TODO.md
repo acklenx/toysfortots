@@ -96,6 +96,12 @@
   - Prevents passcode leakage in logs
 
 ### 🔐 Infrastructure Security
+- [x] ✅ **Restrict CORS on HTTP endpoints** (November 7, 2025 - commits: bf4236f, e252935)
+  - Added CORS support to triggerRefreshLocationsCache endpoint
+  - Added CORS support to triggerSyncLocationSuggestions endpoint
+  - Restricted to production domain only: https://toysfortots.mcl1311.com
+  - **🚀 REQUIRES DEPLOYMENT: firebase deploy --only functions**
+
 - [ ] **Add Content Security Policy headers**
   - Configure CSP in firebase.json
   - Prevent inline script execution
