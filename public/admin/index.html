@@ -490,7 +490,7 @@
 				</div>
 				<div class="section-controls">
 					<div class="search-box">
-						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID, name, or email...">
+						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID or name...">
 					</div>
 					<div class="control-buttons">
 						<button class="export-btn" id="export-volunteers-btn">Export CSV</button>
@@ -1101,8 +1101,7 @@
 			filteredVolunteers = allVolunteers.filter(volunteer => {
 				return (
 					volunteer.id.toLowerCase().includes(searchTerm) ||
-					(volunteer.displayName || '').toLowerCase().includes(searchTerm) ||
-					(volunteer.email || '').toLowerCase().includes(searchTerm)
+					(volunteer.displayName || '').toLowerCase().includes(searchTerm)
 				);
 			});
 
@@ -1126,17 +1125,19 @@
 			let tableHTML = '<table class="data-table"><thead><tr>';
 			tableHTML += '<th class="sortable" data-sort="id" onclick="sortVolunteers(\'id\')">User ID</th>';
 			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Display Name</th>';
-			tableHTML += '<th class="sortable" data-sort="email" onclick="sortVolunteers(\'email\')">Email</th>';
+			tableHTML += '<th class="sortable" data-sort="isOAuth" onclick="sortVolunteers(\'isOAuth\')">OAuth</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((volunteer) => {
 				const isCurrentUser = volunteer.id === currentUser.uid;
 				const escapedDisplayName = (volunteer.displayName || volunteer.email || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+				// Check if using OAuth (email not from custom domain @toysfortots.mcl1311.com)
+				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
 				tableHTML += '<tr>';
 				tableHTML += `<td>${volunteer.id}</td>`;
 				tableHTML += `<td>${volunteer.displayName || 'N/A'}</td>`;
-				tableHTML += `<td>${volunteer.email || 'N/A'}</td>`;
+				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
 				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
@@ -1195,8 +1196,17 @@
 			}
 
 			filteredVolunteers.sort((a, b) => {
-				const aVal = a[column] || '';
-				const bVal = b[column] || '';
+				let aVal, bVal;
+
+				if (column === 'isOAuth') {
+					// Sort by OAuth status (true/false based on email domain)
+					aVal = a.email && !a.email.endsWith('@toysfortots.mcl1311.com') ? 1 : 0;
+					bVal = b.email && !b.email.endsWith('@toysfortots.mcl1311.com') ? 1 : 0;
+				} else {
+					aVal = a[column] || '';
+					bVal = b[column] || '';
+				}
+
 				if (aVal < bVal) return volunteersSortDirection === 'asc' ? -1 : 1;
 				if (aVal > bVal) return volunteersSortDirection === 'asc' ? 1 : -1;
 				return 0;
@@ -1214,12 +1224,15 @@
 		};
 
 		function exportVolunteersToCSV() {
-			const headers = ['User ID', 'Display Name', 'Email'];
-			const rows = filteredVolunteers.map(volunteer => [
-				volunteer.id,
-				volunteer.displayName || '',
-				volunteer.email || ''
-			]);
+			const headers = ['User ID', 'Display Name', 'OAuth'];
+			const rows = filteredVolunteers.map(volunteer => {
+				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
+				return [
+					volunteer.id,
+					volunteer.displayName || '',
+					isOAuth ? 'Yes' : 'No'
+				];
+			});
 
 			let csvContent = headers.join(',') + '\n';
 			rows.forEach(row => {
