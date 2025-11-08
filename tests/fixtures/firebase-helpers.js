@@ -109,28 +109,52 @@ async function createTestLocation(boxId, data = {}) {
     contactName: data.contactName || 'Test Contact',
     contactEmail: data.contactEmail || 'test@example.com',
     contactPhone: data.contactPhone || '555-1234',
+    reportCounter: data.reportCounter !== undefined ? data.reportCounter : 0,
     ...data
   };
 
   const locationRef = firestore.doc(`${LOCATIONS_PATH}/${boxId}`);
-  await locationRef.set(locationData);
+
+  try {
+    await locationRef.set(locationData);
+  } catch (error) {
+    console.error(`Failed to create location ${boxId}:`, error);
+    throw new Error(`Failed to create location ${boxId}: ${error.message}`);
+  }
 
   // Create initial report
   const reportRef = firestore.collection(REPORTS_PATH).doc();
-  await reportRef.set({
-    ...locationData,
-    boxId: boxId,
-    reportType: 'box_registered',
-    description: `Box registered by ${locationData.volunteer}.`,
-    timestamp: locationData.created,
-    status: 'cleared',
-    reporterId: locationData.provisionedBy
-  });
+  try {
+    await reportRef.set({
+      ...locationData,
+      boxId: boxId,
+      reportType: 'box_registered',
+      description: `Box registered by ${locationData.volunteer}.`,
+      timestamp: locationData.created,
+      status: 'cleared',
+      reporterId: locationData.provisionedBy
+    });
+  } catch (error) {
+    console.error(`Failed to create initial report for ${boxId}:`, error);
+    throw new Error(`Failed to create initial report for ${boxId}: ${error.message}`);
+  }
 
   // Verify data is readable (ensures emulator has committed the write)
-  const verifyDoc = await locationRef.get();
+  // Note: This works reliably with workers=1 in smoke tests but can fail with parallel execution
+  let verifyDoc;
+  for (let i = 0; i < 5; i++) {
+    verifyDoc = await locationRef.get();
+    if (verifyDoc.exists) {
+      break;
+    }
+    if (i < 4) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
   if (!verifyDoc.exists) {
-    throw new Error(`Failed to verify location ${boxId} was created`);
+    console.error(`Location ${boxId} was written but verification read returned nothing after 5 retries`);
+    throw new Error(`Failed to verify location ${boxId} was created - write succeeded but read failed after 500ms`);
   }
 
   return locationData;

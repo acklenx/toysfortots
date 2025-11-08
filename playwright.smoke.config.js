@@ -6,10 +6,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e', // Only e2e tests, not unit tests
-  fullyParallel: true, // Run in parallel for speed
+  fullyParallel: false, // Run sequentially to avoid Firestore emulator consistency issues
   forbidOnly: !!process.env.CI,
   retries: 1, // One retry for transient failures
-  workers: 4, // Parallel workers for speed
+  workers: 1, // Single worker to ensure Firestore emulator consistency with Admin SDK writes
   reporter: 'html',
   timeout: 15000, // 15 seconds per test
   globalSetup: './tests/global-setup.js',

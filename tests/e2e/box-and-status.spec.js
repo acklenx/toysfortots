@@ -31,7 +31,7 @@ test.describe('Box Action Center and Status Pages', () => {
       await expect(page.url()).toContain('setup');
     });
 
-    test('should display box information', async ({ page }) => {
+    test('should display box information for anonymous users @smoke', async ({ page }) => {
       const boxId = generateBoxId('BOX');
       await createTestLocation(boxId, {
         label: 'Test Market',
@@ -42,7 +42,14 @@ test.describe('Box Action Center and Status Pages', () => {
 
       await page.goto(`/box?id=${boxId}`);
 
-      // Should display box details
+      // Wait for anonymous authentication to complete (critical signal that page is ready)
+      await page.waitForFunction(() => {
+        return window.auth && window.auth.currentUser && window.auth.currentUser.isAnonymous;
+      }, { timeout: 10000 });
+
+      // Should display box details WITHOUT redirecting to login
+      // Use regex to handle trailing slash variance (/box or /box/)
+      await expect(page).toHaveURL(new RegExp(`/box/?\\?id=${boxId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), { timeout: 5000 });
       await expect(page.locator('#location-display')).toContainText('Test Market');
       await expect(page.locator('#location-display')).toContainText('123 Main St');
     });
