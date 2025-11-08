@@ -348,8 +348,16 @@
 						{
 							try
 							{
+								// Get Firebase ID token for authorization
+								const idToken = await auth.currentUser.getIdToken();
+
 								const cacheRefreshUrl = 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
-								await fetch( cacheRefreshUrl, { method: 'POST' } );
+								await fetch( cacheRefreshUrl, {
+									method: 'POST',
+									headers: {
+										'Authorization': `Bearer ${ idToken }`
+									}
+								} );
 								console.log( 'Cache refresh triggered after new box registration' );
 							}
 							catch( error )

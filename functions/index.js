@@ -562,30 +562,72 @@ exports.scheduledSyncLocationSuggestions = onSchedule( {
 } );
 
 /**
- * HTTP endpoint to trigger sync via curl
- * Usage: curl https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
- * Optional 30s delay: curl https://...?delay=30
+ * HTTP endpoint to trigger sync via curl (REQUIRES AUTHORIZATION)
+ * Usage: curl -H "Authorization: Bearer <ID_TOKEN>" https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
+ * Optional 30s delay: curl -H "Authorization: Bearer <ID_TOKEN>" https://...?delay=30
  */
 exports.triggerSyncLocationSuggestions = onRequest( { cors: ['https://toysfortots.mcl1311.com'] }, async( req, res ) =>
 {
 	console.log( '--- triggerSyncLocationSuggestions (HTTP) STARTED ---' );
 
-	// Optional delay parameter (in seconds)
-	const delaySeconds = parseInt( req.query.delay || '0', 10 );
-	if( delaySeconds > 0 )
+	// Verify authentication
+	const authHeader = req.headers.authorization;
+	if( !authHeader || !authHeader.startsWith( 'Bearer ' ) )
 	{
-		console.log( `Waiting ${ delaySeconds } seconds before sync...` );
-		await new Promise( resolve => setTimeout( resolve, delaySeconds * 1000 ) );
+		console.warn( 'triggerSyncLocationSuggestions: Missing or invalid Authorization header' );
+		return res.status( 401 ).json( {
+			success: false,
+			error: 'Unauthorized - Missing authentication token'
+		} );
 	}
+
+	const idToken = authHeader.split( 'Bearer ' )[1];
+	const db = getFirestore();
 
 	try
 	{
+		// Verify the ID token
+		const decodedToken = await admin.auth().verifyIdToken( idToken );
+		const uid = decodedToken.uid;
+
+		// Check if user is authorized volunteer
+		const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
+		const authSnap = await authVolRef.get();
+
+		if( !authSnap.exists )
+		{
+			console.warn( `triggerSyncLocationSuggestions: User ${ uid } not authorized` );
+			return res.status( 403 ).json( {
+				success: false,
+				error: 'Forbidden - Only authorized volunteers can trigger sync'
+			} );
+		}
+
+		console.log( `triggerSyncLocationSuggestions: User ${ uid } authorized` );
+
+		// Optional delay parameter (in seconds)
+		const delaySeconds = parseInt( req.query.delay || '0', 10 );
+		if( delaySeconds > 0 )
+		{
+			console.log( `Waiting ${ delaySeconds } seconds before sync...` );
+			await new Promise( resolve => setTimeout( resolve, delaySeconds * 1000 ) );
+		}
+
 		const result = await syncLocationSuggestionsFromSheets();
 		console.log( '--- triggerSyncLocationSuggestions (HTTP) FINISHED ---' );
 		res.status( 200 ).json( result );
 	}
 	catch( error )
 	{
+		if( error.code === 'auth/argument-error' || error.code === 'auth/id-token-expired' )
+		{
+			console.error( 'triggerSyncLocationSuggestions: Invalid or expired token:', error );
+			return res.status( 401 ).json( {
+				success: false,
+				error: 'Unauthorized - Invalid or expired token'
+			} );
+		}
+
 		console.error( 'triggerSyncLocationSuggestions error:', error );
 		res.status( 500 ).json( {
 			success: false,
@@ -799,21 +841,63 @@ exports.scheduledRefreshLocationsCache = onSchedule( {
 } );
 
 /**
- * HTTP endpoint to trigger cache refresh via curl
- * Usage: curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache
+ * HTTP endpoint to trigger cache refresh via curl (REQUIRES AUTHORIZATION)
+ * Usage: curl -X POST -H "Authorization: Bearer <ID_TOKEN>" https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache
  */
 exports.triggerRefreshLocationsCache = onRequest( { cors: ['https://toysfortots.mcl1311.com'] }, async( req, res ) =>
 {
 	console.log( '--- triggerRefreshLocationsCache (HTTP) STARTED ---' );
 
+	// Verify authentication
+	const authHeader = req.headers.authorization;
+	if( !authHeader || !authHeader.startsWith( 'Bearer ' ) )
+	{
+		console.warn( 'triggerRefreshLocationsCache: Missing or invalid Authorization header' );
+		return res.status( 401 ).json( {
+			success: false,
+			error: 'Unauthorized - Missing authentication token'
+		} );
+	}
+
+	const idToken = authHeader.split( 'Bearer ' )[1];
+	const db = getFirestore();
+
 	try
 	{
+		// Verify the ID token
+		const decodedToken = await admin.auth().verifyIdToken( idToken );
+		const uid = decodedToken.uid;
+
+		// Check if user is authorized volunteer
+		const authVolRef = db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` );
+		const authSnap = await authVolRef.get();
+
+		if( !authSnap.exists )
+		{
+			console.warn( `triggerRefreshLocationsCache: User ${ uid } not authorized` );
+			return res.status( 403 ).json( {
+				success: false,
+				error: 'Forbidden - Only authorized volunteers can trigger cache refresh'
+			} );
+		}
+
+		console.log( `triggerRefreshLocationsCache: User ${ uid } authorized` );
+
 		const result = await generateLocationsCache();
 		console.log( '--- triggerRefreshLocationsCache (HTTP) FINISHED ---' );
 		res.status( 200 ).json( result );
 	}
 	catch( error )
 	{
+		if( error.code === 'auth/argument-error' || error.code === 'auth/id-token-expired' )
+		{
+			console.error( 'triggerRefreshLocationsCache: Invalid or expired token:', error );
+			return res.status( 401 ).json( {
+				success: false,
+				error: 'Unauthorized - Invalid or expired token'
+			} );
+		}
+
 		console.error( 'triggerRefreshLocationsCache error:', error );
 		res.status( 500 ).json( {
 			success: false,
