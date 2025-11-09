@@ -1296,7 +1296,7 @@ No Action: ${noActionViews}`;
 			const pageData = filteredVolunteers.slice(startIndex, endIndex);
 
 			let tableHTML = '<table class="data-table"><thead><tr style="text-align: center;">';
-			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Display Name</th>';
+			tableHTML += '<th class="sortable" data-sort="displayName" onclick="sortVolunteers(\'displayName\')">Name</th>';
 			tableHTML += '<th class="sortable" data-sort="isOAuth" onclick="sortVolunteers(\'isOAuth\')">OAuth</th>';
 			tableHTML += '<th class="sortable" data-sort="boxes" onclick="sortVolunteers(\'boxes\')">Boxes</th>';
 			tableHTML += '<th class="sortable" data-sort="undeployed" onclick="sortVolunteers(\'undeployed\')">Undeployed</th>';
@@ -1380,7 +1380,7 @@ No Action: ${noActionViews}`;
 				).length;
 
 				tableHTML += '<tr>';
-				tableHTML += `<td title="${volunteer.id}">${volunteer.displayName || 'N/A'}</td>`;
+				tableHTML += `<td title="${volunteer.id}"><a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline;">${volunteer.displayName || 'N/A'}</a></td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
 				tableHTML += `<td style="text-align: center;"><a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline;">${boxCount}</a></td>`;
 				tableHTML += `<td style="text-align: center;">${undeployedCount}</td>`;
