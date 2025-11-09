@@ -184,23 +184,28 @@
 			};
 			let allBoxesMap = new Map();
 			let currentUserId = null;
+			let currentUserDisplayName = null;
 			const renderDashboard = ( filterKey ) =>
 			{
 				const boxesContainer = document.getElementById( 'boxes-container' );
 				const boxesTitle = document.getElementById( 'boxes-title' );
 				boxesContainer.innerHTML = '';
 				let boxesToRender = [];
-				if( filterKey === 'all_boxes' )
+
+				// Map "my_boxes" to current user's display name
+				const actualFilterKey = filterKey === 'my_boxes' ? currentUserDisplayName : filterKey;
+
+				if( actualFilterKey === 'all_boxes' )
 				{
 					boxesToRender = Array.from( allBoxesMap.values() );
 					boxesTitle.textContent = 'All Box Statuses';
 				}
 				else
 				{
-					boxesTitle.textContent = `${ filterKey }'s Boxes`;
+					boxesTitle.textContent = `${ actualFilterKey }'s Boxes`;
 					allBoxesMap.forEach( box =>
 					{
-						if( box.volunteer === filterKey )
+						if( box.volunteer === actualFilterKey )
 						{
 							boxesToRender.push( box );
 						}
@@ -222,7 +227,7 @@
 			window.initApp = async( user, displayName ) =>
 			{
 				currentUserId = user.uid;
-				const currentUserDisplayName = displayName;
+				currentUserDisplayName = displayName;
 				const boxesContainer = document.getElementById( 'boxes-container' );
 				const loadingMessage = document.getElementById( 'loading-message' );
 				const filterSelect = document.getElementById( 'view-filter' );
@@ -278,21 +283,17 @@
 						}
 					} );
 					filterSelect.innerHTML = `
-                    <option value="${ currentUserDisplayName }">${ currentUserDisplayName }</option>
+                    <option value="my_boxes">My Boxes</option>
                     <option value="all_boxes">All Boxes</option>
                     <option value="" disabled>--- Filter by Volunteer ---</option>
                 `;
 					const sortedNames = Array.from( volunteerNames ).sort();
 					sortedNames.forEach( name =>
 					{
-						// Skip current user since they already have their name at the top
-						if( name !== currentUserDisplayName )
-						{
-							const option = document.createElement( 'option' );
-							option.value = name;
-							option.textContent = name;
-							filterSelect.appendChild( option );
-						}
+						const option = document.createElement( 'option' );
+						option.value = name;
+						option.textContent = name;
+						filterSelect.appendChild( option );
 					} );
 					filterSelect.addEventListener( 'change', ( e ) =>
 					{
@@ -311,18 +312,22 @@
 
 						if( matchingOption )
 						{
+							// Use the actual volunteer name (not "my_boxes")
 							filterSelect.value = volunteerParam;
 							renderDashboard( volunteerParam );
 						}
 						else
 						{
 							// Volunteer not found, show my boxes
-							renderDashboard( currentUserDisplayName );
+							filterSelect.value = 'my_boxes';
+							renderDashboard( 'my_boxes' );
 						}
 					}
 					else
 					{
-						renderDashboard( currentUserDisplayName );
+						// No parameter - default to "My Boxes"
+						filterSelect.value = 'my_boxes';
+						renderDashboard( 'my_boxes' );
 					}
 				}
 				catch( error )
