@@ -18,6 +18,9 @@
 			<div id="location-list-container">
 				<div class="list-header">
 					<h3>Donation Boxes</h3>
+					<div id="map-last-updated" style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">
+						Loading...
+					</div>
 				</div>
 				<div id="location-list">
 				</div>
@@ -152,6 +155,8 @@
 
 					try
 					{
+						const loadStart = performance.now();
+
 						// Use mock cache on localhost/emulators, real cache in production
 						const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 						const cacheUrl = isLocalhost
@@ -166,11 +171,18 @@
 						}
 
 						const cacheData = await response.json();
+						const loadTime = Math.round(performance.now() - loadStart);
 
 						// Even if cache is empty (mock returns 0 locations), mark as loaded
 						// This prevents blocking and allows realtime to populate the map
 						renderLocations( cacheData.locations, 'cache' );
 						cachedLocationsLoaded = true;
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						document.getElementById('map-last-updated').textContent =
+							`Loaded: ${timeStr} 📦 (cached) • ${loadTime}ms`;
 					}
 					catch( error )
 					{
@@ -184,6 +196,8 @@
 				{
 					try
 					{
+						const loadStart = performance.now();
+
 						const locationsRef = collection( db, locationsCollectionPath );
 						const q = query( locationsRef, orderBy( 'created', 'desc' ) );
 						const querySnapshot = await getDocs( q );
@@ -198,8 +212,17 @@
 							} );
 						} );
 
+						const loadTime = Math.round(performance.now() - loadStart);
+
 						renderLocations( locations, 'realtime' );
 						realtimeLocationsLoaded = true;
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+						document.getElementById('map-last-updated').textContent =
+							`Synced: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
 					}
 					catch( error )
 					{

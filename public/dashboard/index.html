@@ -17,6 +17,9 @@
 				<div class="dashboard-header-flex">
 					<div>
 						<h1>Dashboard</h1>
+						<div id="dashboard-last-updated" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">
+							Loading...
+						</div>
 					</div>
 					<div class="dashboard-header-controls">
 						<label for="view-filter">Show boxes:</label>
@@ -233,6 +236,8 @@
 				const filterSelect = document.getElementById( 'view-filter' );
 				try
 				{
+					const loadStart = performance.now();
+
 					// Get all locations
 					const locationsRef = collection( db, locationsCollectionPath );
 					const locationsSnapshot = await getDocs( locationsRef );
@@ -270,6 +275,15 @@
 					const reportsRef = collection( db, reportsCollectionPath );
 					const reportsQuery = query( reportsRef, orderBy( 'timestamp', 'desc' ) );
 					const reportsSnapshot = await getDocs( reportsQuery );
+
+					const loadTime = Math.round(performance.now() - loadStart);
+
+					// Update last updated timestamp with cache indicator
+					const now = new Date();
+					const timeStr = now.toLocaleTimeString();
+					const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+					document.getElementById('dashboard-last-updated').textContent =
+						`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
 
 					reportsSnapshot.forEach( doc =>
 					{

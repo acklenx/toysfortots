@@ -412,6 +412,101 @@
 				gap: 10px;
 			}
 		}
+
+		/* Live table update animations */
+		.data-table td {
+			position: relative;
+		}
+
+		/* Cell content wrapper to prevent shifting when bold */
+		.cell-content {
+			display: inline-block;
+			min-width: fit-content;
+		}
+
+		/* Hidden duplicate for width calculation */
+		.cell-content::after {
+			content: attr(data-text);
+			font-weight: bold;
+			height: 0;
+			visibility: hidden;
+			overflow: hidden;
+			user-select: none;
+			pointer-events: none;
+			display: block;
+		}
+
+		/* Update flash animation (yellow) */
+		@keyframes flash-yellow {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #fefce8; }
+		}
+
+		.flashing {
+			animation: flash-yellow 0.6s ease-in-out 3;
+		}
+
+		.cell-content.bold {
+			font-weight: bold;
+			color: #000;
+		}
+
+		/* New row insertion animation (green) */
+		@keyframes fade-in-new {
+			0% {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@keyframes flash-green {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #d1fae5; }
+		}
+
+		.new-row {
+			border-left: 4px solid #008000;
+			animation: fade-in-new 0.5s ease-out,
+			           flash-green 0.6s ease-in-out 3;
+		}
+
+		/* Row deletion animation (red) */
+		@keyframes flash-red-delete {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #fee2e2; }
+		}
+
+		@keyframes fade-out-collapse {
+			0% {
+				opacity: 1;
+				max-height: 60px;
+			}
+			50% {
+				opacity: 0;
+				max-height: 60px;
+			}
+			100% {
+				opacity: 0;
+				max-height: 0;
+				padding-top: 0;
+				padding-bottom: 0;
+			}
+		}
+
+		.deleting-row {
+			animation: flash-red-delete 0.4s ease-in-out 2,
+			           fade-out-collapse 0.6s ease-in-out 0.8s;
+			animation-fill-mode: forwards;
+			overflow: hidden;
+		}
+
+		.deleting-row td {
+			border-bottom: none;
+		}
 	</style>
 </head>
 <body class="bg-gray-100">
@@ -461,7 +556,12 @@
 			<!-- Box Management -->
 			<div class="admin-section">
 				<div class="section-header">
-					<h2>Box Management</h2>
+					<div>
+						<h2>Box Management</h2>
+						<div id="boxes-last-updated" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">
+							Loading...
+						</div>
+					</div>
 					<button class="danger-btn" id="delete-all-boxes-btn">Delete All Boxes</button>
 				</div>
 				<div class="section-controls">
@@ -481,7 +581,12 @@
 			<!-- Report Management -->
 			<div class="admin-section">
 				<div class="section-header">
-					<h2>Report Management</h2>
+					<div>
+						<h2>Report Management</h2>
+						<div id="reports-last-updated" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">
+							Loading...
+						</div>
+					</div>
 					<button class="danger-btn" id="delete-all-reports-btn">Delete All Reports</button>
 				</div>
 				<div class="section-controls">
@@ -501,7 +606,12 @@
 			<!-- Volunteer Management -->
 			<div class="admin-section">
 				<div class="section-header">
-					<h2>Volunteer Management</h2>
+					<div>
+						<h2>Volunteer Management</h2>
+						<div id="volunteers-last-updated" style="color: var(--text-muted); font-size: 0.875rem; margin-top: 4px;">
+							Loading...
+						</div>
+					</div>
 					<button class="danger-btn" id="delete-all-volunteers-btn">Delete All Volunteers</button>
 				</div>
 				<div class="section-controls">
@@ -612,7 +722,8 @@
 			updateDoc,
 			deleteDoc,
 			query,
-			orderBy
+			orderBy,
+			onSnapshot
 		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 		import {
 			onAuthStateChanged
@@ -634,6 +745,11 @@
 		let allVolunteers = [];
 		let filteredVolunteers = [];
 		let locationSuggestions = []; // Google Sheets data
+
+		// Live update tracking
+		let boxesInitialLoadComplete = false;
+		let reportsInitialLoadComplete = false;
+		let volunteersInitialLoadComplete = false;
 
 		// Pagination settings
 		const PAGE_SIZE = 20;
@@ -806,34 +922,156 @@
 			}
 		}
 
-		// Load boxes
-		async function loadBoxes() {
+		// Load boxes with real-time updates
+		function loadBoxes() {
 			try {
+				const loadStart = performance.now();
 				const locationsRef = collection(db, locationsCollectionPath);
 				const q = query(locationsRef, orderBy('created', 'desc'));
-				const snapshot = await getDocs(q);
 
-				allBoxes = [];
-				snapshot.forEach((doc) => {
-					allBoxes.push({ id: doc.id, ...doc.data() });
-				});
-
-				document.getElementById('stat-boxes').textContent = allBoxes.length;
-				document.getElementById('boxes-loading').style.display = 'none';
-
-				// Setup search
+				// Setup one-time event listeners
 				const searchInput = document.getElementById('boxes-search');
 				searchInput.addEventListener('input', () => filterAndRenderBoxes());
-
-				// Setup export
 				const exportBtn = document.getElementById('export-boxes-btn');
 				exportBtn.addEventListener('click', () => exportBoxesToCSV());
 
-				filterAndRenderBoxes();
+				// Real-time listener
+				onSnapshot(q, (snapshot) => {
+					const loadTime = Math.round(performance.now() - loadStart);
+
+					// Initial load - build complete list
+					if (!boxesInitialLoadComplete) {
+						allBoxes = [];
+						snapshot.forEach((doc) => {
+							allBoxes.push({ id: doc.id, ...doc.data() });
+						});
+
+						document.getElementById('stat-boxes').textContent = allBoxes.length;
+						document.getElementById('boxes-loading').style.display = 'none';
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+						document.getElementById('boxes-last-updated').textContent =
+							`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
+
+						filterAndRenderBoxes();
+						boxesInitialLoadComplete = true;
+					} else {
+						// Subsequent updates - handle changes with animations
+						snapshot.docChanges().forEach((change) => {
+							const box = { id: change.doc.id, ...change.doc.data() };
+
+							if (change.type === 'added') {
+								// New box added
+								allBoxes.push(box);
+								handleBoxAdded(box);
+							} else if (change.type === 'modified') {
+								// Box updated
+								const index = allBoxes.findIndex(b => b.id === box.id);
+								if (index !== -1) {
+									allBoxes[index] = box;
+									handleBoxModified(box);
+								}
+							} else if (change.type === 'removed') {
+								// Box deleted
+								const index = allBoxes.findIndex(b => b.id === box.id);
+								if (index !== -1) {
+									allBoxes.splice(index, 1);
+									handleBoxRemoved(box.id);
+								}
+							}
+						});
+
+						// Update count
+						document.getElementById('stat-boxes').textContent = allBoxes.length;
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						document.getElementById('boxes-last-updated').textContent =
+							`Synced: ${timeStr} 🔄 (live)`;
+					}
+				}, (error) => {
+					document.getElementById('boxes-loading').style.display = 'none';
+					document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
+					document.getElementById('boxes-error').style.display = 'block';
+				});
 			} catch (error) {
 				document.getElementById('boxes-loading').style.display = 'none';
 				document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
 				document.getElementById('boxes-error').style.display = 'block';
+			}
+		}
+
+		// Handle new box added with green flash animation
+		function handleBoxAdded(box) {
+			// Re-filter and render to include new box
+			filterAndRenderBoxes();
+
+			// Find the new row and apply animation
+			const container = document.getElementById('boxes-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === box.id) {
+					row.classList.add('new-row');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('new-row');
+					}, 3000);
+					// Scroll into view
+					row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}
+			});
+		}
+
+		// Handle box modified with yellow flash animation
+		function handleBoxModified(box) {
+			// Re-filter and render with updated data
+			filterAndRenderBoxes();
+
+			// Find the modified row and apply animation
+			const container = document.getElementById('boxes-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === box.id) {
+					row.classList.add('flashing');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('flashing');
+					}, 1800);
+				}
+			});
+		}
+
+		// Handle box removed with red flash + collapse animation
+		function handleBoxRemoved(boxId) {
+			// Find the row first
+			const container = document.getElementById('boxes-container');
+			const rows = container.querySelectorAll('tbody tr');
+			let foundRow = null;
+
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === boxId) {
+					foundRow = row;
+				}
+			});
+
+			if (foundRow) {
+				// Apply deletion animation
+				foundRow.classList.add('deleting-row');
+
+				// Re-render after animation completes
+				setTimeout(() => {
+					filterAndRenderBoxes();
+				}, 1400);
+			} else {
+				// Row not found (maybe filtered out), just re-render
+				filterAndRenderBoxes();
 			}
 		}
 
@@ -1038,9 +1276,11 @@ No Action: ${noActionViews}`;
 		// Load reports
 		async function loadReports() {
 			try {
+				const loadStart = performance.now();
 				const reportsRef = collection(db, reportsCollectionPath);
 				const q = query(reportsRef, orderBy('timestamp', 'desc'));
 				const snapshot = await getDocs(q);
+				const loadTime = Math.round(performance.now() - loadStart);
 
 				allReports = [];
 				snapshot.forEach((doc) => {
@@ -1049,6 +1289,13 @@ No Action: ${noActionViews}`;
 
 				document.getElementById('stat-reports').textContent = allReports.length;
 				document.getElementById('reports-loading').style.display = 'none';
+
+				// Update last updated timestamp with cache indicator
+				const now = new Date();
+				const timeStr = now.toLocaleTimeString();
+				const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+				document.getElementById('reports-last-updated').textContent =
+					`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
 
 				// Setup search
 				const searchInput = document.getElementById('reports-search');
@@ -1226,9 +1473,11 @@ No Action: ${noActionViews}`;
 		// Load volunteers
 		async function loadVolunteers() {
 			try {
+				const loadStart = performance.now();
 				const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
 				const volunteersRef = collection(db, volunteersPath);
 				const snapshot = await getDocs(volunteersRef);
+				const loadTime = Math.round(performance.now() - loadStart);
 
 				allVolunteers = [];
 				snapshot.forEach((doc) => {
@@ -1237,6 +1486,13 @@ No Action: ${noActionViews}`;
 
 				document.getElementById('stat-volunteers').textContent = allVolunteers.length;
 				document.getElementById('volunteers-loading').style.display = 'none';
+
+				// Update last updated timestamp with cache indicator
+				const now = new Date();
+				const timeStr = now.toLocaleTimeString();
+				const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+				document.getElementById('volunteers-last-updated').textContent =
+					`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
 
 				// Setup search
 				const searchInput = document.getElementById('volunteers-search');

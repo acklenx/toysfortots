@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
 import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { getFirestore, connectFirestoreEmulator, enableMultiTabIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getFunctions, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 const firebaseConfig = {
@@ -20,11 +20,28 @@ export const functions = getFunctions( app, 'us-central1' );
 window.auth = auth;
 
 // Connect to emulators if running locally
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+if (isLocalhost) {
 	connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
 	connectFirestoreEmulator(db, 'localhost', 8080);
 	connectFunctionsEmulator(functions, 'localhost', 5001);
 	console.log('Connected to Firebase emulators');
+} else {
+	// Enable offline persistence for production only (not in emulators)
+	enableMultiTabIndexedDbPersistence(db)
+		.then(() => {
+			console.log('Firestore offline persistence enabled');
+		})
+		.catch((err) => {
+			if (err.code === 'failed-precondition') {
+				console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+			} else if (err.code === 'unimplemented') {
+				console.warn('Browser doesn\'t support offline persistence.');
+			} else {
+				console.error('Error enabling persistence:', err);
+			}
+		});
 }
 const appId = firebaseConfig.projectId;
 const publicDocumentId = '01';

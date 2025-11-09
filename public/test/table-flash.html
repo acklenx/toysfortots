@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Table Flash Test</title>
+	<style>
+		:root {
+			--t4t-red: #D21F3C;
+			--marine-blue: #002D62;
+			--gray-50: #f9fafb;
+			--gray-100: #f3f4f6;
+			--gray-200: #e5e7eb;
+		}
+
+		body {
+			font-family: system-ui, -apple-system, sans-serif;
+			padding: 20px;
+			background: var(--gray-100);
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			background: white;
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+
+		h1 {
+			color: var(--marine-blue);
+			margin-top: 0;
+		}
+
+		.controls {
+			margin-bottom: 20px;
+			padding: 15px;
+			background: var(--gray-50);
+			border-radius: 4px;
+		}
+
+		.controls button {
+			background-color: var(--marine-blue);
+			color: white;
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: 600;
+			margin-right: 10px;
+		}
+
+		.controls button:hover {
+			background-color: #001a3d;
+		}
+
+		.data-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 15px;
+		}
+
+		.data-table th {
+			background-color: var(--gray-100);
+			color: var(--marine-blue);
+			padding: 12px;
+			text-align: left;
+			font-weight: 600;
+			border-bottom: 2px solid var(--t4t-red);
+		}
+
+		.data-table td {
+			padding: 12px;
+			border-bottom: 1px solid var(--gray-200);
+			/* Prevent layout shift by reserving space for bold text */
+			position: relative;
+		}
+
+		.data-table tr:hover {
+			background-color: var(--gray-50);
+		}
+
+		/* Cell content wrapper to prevent shifting */
+		.cell-content {
+			display: inline-block;
+			min-width: fit-content;
+		}
+
+		/* Hidden duplicate for width calculation */
+		.cell-content::after {
+			content: attr(data-text);
+			font-weight: bold;
+			height: 0;
+			visibility: hidden;
+			overflow: hidden;
+			user-select: none;
+			pointer-events: none;
+			display: block;
+		}
+
+		/* Flash animation */
+		@keyframes flash-yellow {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #fefce8; }
+		}
+
+		.flashing {
+			animation: flash-yellow 0.6s ease-in-out 3;
+		}
+
+		/* Bold state */
+		.cell-content.bold {
+			font-weight: bold;
+			color: #000;
+		}
+
+		/* New row insertion animation */
+		@keyframes fade-in-new {
+			0% {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@keyframes flash-green {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #d1fae5; }
+		}
+
+		.new-row {
+			border-left: 4px solid #008000; /* var(--t4t-green) */
+			animation: fade-in-new 0.5s ease-out,
+			           flash-green 0.6s ease-in-out 3;
+		}
+
+		/* Row deletion animation */
+		@keyframes flash-red-delete {
+			0%, 100% { background-color: transparent; }
+			50% { background-color: #fee2e2; }
+		}
+
+		@keyframes fade-out-collapse {
+			0% {
+				opacity: 1;
+				max-height: 60px;
+			}
+			50% {
+				opacity: 0;
+				max-height: 60px;
+			}
+			100% {
+				opacity: 0;
+				max-height: 0;
+				padding-top: 0;
+				padding-bottom: 0;
+			}
+		}
+
+		.deleting-row {
+			animation: flash-red-delete 0.4s ease-in-out 2,
+			           fade-out-collapse 0.6s ease-in-out 0.8s;
+			animation-fill-mode: forwards;
+			overflow: hidden;
+		}
+
+		.deleting-row td {
+			border-bottom: none;
+		}
+
+		.status {
+			margin-top: 15px;
+			padding: 10px;
+			background: var(--gray-50);
+			border-radius: 4px;
+			font-size: 0.9rem;
+			color: #666;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Table Flash Animation Test</h1>
+
+		<div class="controls">
+			<button id="start-btn">Start Auto-Updates</button>
+			<button id="stop-btn" disabled>Stop Auto-Updates</button>
+			<button id="manual-btn">Trigger Random Update</button>
+			<button id="triple-btn">Update 3 Rows</button>
+			<button id="insert-btn" style="background-color: #008000;">Insert New Row</button>
+			<button id="delete-btn" style="background-color: #D21F3C;">Delete Random Row</button>
+			<label style="margin-left: 20px;">
+				<input type="checkbox" id="show-log" checked>
+				Show update log
+			</label>
+		</div>
+
+		<div class="controls" style="background-color: #fff; border: 2px solid var(--marine-blue); margin-top: 15px;">
+			<div style="display: flex; gap: 20px; align-items: center;">
+				<div>
+					<label for="insert-count" style="font-weight: 600; color: #008000;">Insert:</label>
+					<select id="insert-count" style="padding: 6px; margin-left: 5px; border: 1px solid #008000; border-radius: 4px;">
+						<option value="0">0</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3" selected>3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+						<option value="8">8</option>
+						<option value="9">9</option>
+					</select>
+				</div>
+				<div>
+					<label for="update-count" style="font-weight: 600; color: #b8860b;">Update:</label>
+					<select id="update-count" style="padding: 6px; margin-left: 5px; border: 1px solid #b8860b; border-radius: 4px;">
+						<option value="0">0</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3" selected>3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+						<option value="8">8</option>
+						<option value="9">9</option>
+					</select>
+				</div>
+				<div>
+					<label for="delete-count" style="font-weight: 600; color: #D21F3C;">Delete:</label>
+					<select id="delete-count" style="padding: 6px; margin-left: 5px; border: 1px solid #D21F3C; border-radius: 4px;">
+						<option value="0">0</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3" selected>3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+						<option value="8">8</option>
+						<option value="9">9</option>
+					</select>
+				</div>
+				<button id="play-btn" style="background-color: var(--marine-blue); padding: 10px 30px; font-size: 1rem; font-weight: bold;">▶ PLAY</button>
+			</div>
+		</div>
+
+		<table class="data-table">
+			<thead>
+				<tr>
+					<th>Box ID</th>
+					<th>Location</th>
+					<th>City</th>
+					<th>Scans</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody id="table-body">
+			</tbody>
+		</table>
+
+		<div class="status" id="status-log"></div>
+	</div>
+
+	<script>
+		// Initial test data
+		const initialData = [
+			{ id: 'BOX-001', location: 'Walmart Supercenter', city: 'Alpharetta', scans: 15, status: 'Active' },
+			{ id: 'BOX-002', location: 'Target', city: 'Roswell', scans: 8, status: 'Active' },
+			{ id: 'BOX-003', location: 'Home Depot', city: 'Johns Creek', scans: 23, status: 'Active' },
+			{ id: 'BOX-004', location: 'Kroger', city: 'Milton', scans: 12, status: 'Active' },
+			{ id: 'BOX-005', location: 'Publix', city: 'Cumming', scans: 19, status: 'Active' }
+		];
+
+		let currentData = JSON.parse(JSON.stringify(initialData));
+		let updateInterval = null;
+		let updateCount = 0;
+
+		// Initialize table
+		function renderTable() {
+			const tbody = document.getElementById('table-body');
+			tbody.innerHTML = '';
+
+			currentData.forEach(row => {
+				const tr = document.createElement('tr');
+				tr.dataset.boxId = row.id;
+
+				tr.innerHTML = `
+					<td><span class="cell-content" data-text="${row.id}">${row.id}</span></td>
+					<td><span class="cell-content" data-text="${row.location}">${row.location}</span></td>
+					<td><span class="cell-content" data-text="${row.city}">${row.city}</span></td>
+					<td><span class="cell-content" data-text="${row.scans}">${row.scans}</span></td>
+					<td><span class="cell-content" data-text="${row.status}">${row.status}</span></td>
+				`;
+
+				tbody.appendChild(tr);
+			});
+		}
+
+		// Update a cell with flash animation
+		function updateCell(row, cellIndex, newValue, fieldName) {
+			const cells = row.querySelectorAll('td');
+			const cell = cells[cellIndex];
+			const content = cell.querySelector('.cell-content');
+
+			// Update the content and data attribute
+			content.textContent = newValue;
+			content.setAttribute('data-text', newValue);
+
+			// Start flash animation on the row
+			row.classList.add('flashing');
+
+			// Make text bold immediately
+			content.classList.add('bold');
+
+			// Remove bold at end of animation (1750ms - just before flash ends)
+			setTimeout(() => {
+				content.classList.remove('bold');
+			}, 1750);
+
+			// After animation completes, clean up (3 flashes × 600ms = 1800ms)
+			setTimeout(() => {
+				row.classList.remove('flashing');
+			}, 1800);
+		}
+
+		// Simulate a random update
+		function triggerRandomUpdate() {
+			const randomIndex = Math.floor(Math.random() * currentData.length);
+			const row = currentData[randomIndex];
+
+			// Randomly pick what to update
+			const updates = [
+				{ field: 'scans', cellIndex: 3, newValue: row.scans + Math.floor(Math.random() * 5) + 1 },
+				{ field: 'status', cellIndex: 4, newValue: Math.random() > 0.5 ? 'Active' : 'Needs Pickup' },
+			];
+
+			const update = updates[Math.floor(Math.random() * updates.length)];
+
+			// Update data
+			currentData[randomIndex][update.field] = update.newValue;
+
+			// Find the row element
+			const rowElement = document.querySelector(`tr[data-box-id="${row.id}"]`);
+
+			// Apply update with animation
+			updateCell(rowElement, update.cellIndex, update.newValue, update.field);
+
+			// Log update
+			updateCount++;
+			const log = document.getElementById('status-log');
+			if (document.getElementById('show-log').checked) {
+				const timestamp = new Date().toLocaleTimeString();
+				log.innerHTML = `<strong>Update #${updateCount}</strong> @ ${timestamp}: ${row.id} → ${update.field} changed to "${update.newValue}"<br>` + log.innerHTML;
+
+				// Keep only last 5 updates
+				const lines = log.innerHTML.split('<br>');
+				if (lines.length > 6) {
+					log.innerHTML = lines.slice(0, 6).join('<br>');
+				}
+			}
+		}
+
+		// Start auto-updates
+		document.getElementById('start-btn').addEventListener('click', () => {
+			if (updateInterval) return;
+
+			updateInterval = setInterval(triggerRandomUpdate, 2000);
+			document.getElementById('start-btn').disabled = true;
+			document.getElementById('stop-btn').disabled = false;
+
+			const log = document.getElementById('status-log');
+			log.innerHTML = '<strong style="color: green;">Auto-updates started (every 2 seconds)</strong><br>' + log.innerHTML;
+		});
+
+		// Stop auto-updates
+		document.getElementById('stop-btn').addEventListener('click', () => {
+			if (updateInterval) {
+				clearInterval(updateInterval);
+				updateInterval = null;
+			}
+			document.getElementById('start-btn').disabled = false;
+			document.getElementById('stop-btn').disabled = true;
+
+			const log = document.getElementById('status-log');
+			log.innerHTML = '<strong style="color: red;">Auto-updates stopped</strong><br>' + log.innerHTML;
+		});
+
+		// Manual update trigger
+		document.getElementById('manual-btn').addEventListener('click', triggerRandomUpdate);
+
+		// Triple update trigger
+		document.getElementById('triple-btn').addEventListener('click', () => {
+			// Update 3 different rows simultaneously
+			const indices = [];
+			while (indices.length < 3 && indices.length < currentData.length) {
+				const idx = Math.floor(Math.random() * currentData.length);
+				if (!indices.includes(idx)) {
+					indices.push(idx);
+				}
+			}
+
+			indices.forEach(randomIndex => {
+				const row = currentData[randomIndex];
+
+				// Randomly pick what to update
+				const updates = [
+					{ field: 'scans', cellIndex: 3, newValue: row.scans + Math.floor(Math.random() * 5) + 1 },
+					{ field: 'status', cellIndex: 4, newValue: Math.random() > 0.5 ? 'Active' : 'Needs Pickup' },
+				];
+
+				const update = updates[Math.floor(Math.random() * updates.length)];
+
+				// Update data
+				currentData[randomIndex][update.field] = update.newValue;
+
+				// Find the row element
+				const rowElement = document.querySelector(`tr[data-box-id="${row.id}"]`);
+
+				// Apply update with animation
+				updateCell(rowElement, update.cellIndex, update.newValue, update.field);
+			});
+
+			// Log update
+			updateCount++;
+			const log = document.getElementById('status-log');
+			if (document.getElementById('show-log').checked) {
+				const timestamp = new Date().toLocaleTimeString();
+				log.innerHTML = `<strong>Triple Update #${updateCount}</strong> @ ${timestamp}: Updated ${indices.length} rows simultaneously<br>` + log.innerHTML;
+
+				// Keep only last 5 updates
+				const lines = log.innerHTML.split('<br>');
+				if (lines.length > 6) {
+					log.innerHTML = lines.slice(0, 6).join('<br>');
+				}
+			}
+		});
+
+		// Insert new row with animation
+		let nextBoxNumber = 6;
+		const locations = ['Costco', 'CVS Pharmacy', 'Walgreens', 'Best Buy', 'Lowes', 'Whole Foods'];
+		const cities = ['Alpharetta', 'Roswell', 'Johns Creek', 'Milton', 'Cumming', 'Duluth'];
+
+		function insertNewRow() {
+			// Create new box data
+			const newBox = {
+				id: `BOX-${String(nextBoxNumber).padStart(3, '0')}`,
+				location: locations[Math.floor(Math.random() * locations.length)],
+				city: cities[Math.floor(Math.random() * cities.length)],
+				scans: Math.floor(Math.random() * 10),
+				status: 'Active'
+			};
+			nextBoxNumber++;
+
+			// Insert at random position
+			const insertIndex = Math.floor(Math.random() * (currentData.length + 1));
+			currentData.splice(insertIndex, 0, newBox);
+
+			// Create DOM row element
+			const tr = document.createElement('tr');
+			tr.dataset.boxId = newBox.id;
+			tr.classList.add('new-row');
+
+			tr.innerHTML = `
+				<td><span class="cell-content" data-text="${newBox.id}">${newBox.id}</span></td>
+				<td><span class="cell-content" data-text="${newBox.location}">${newBox.location}</span></td>
+				<td><span class="cell-content" data-text="${newBox.city}">${newBox.city}</span></td>
+				<td><span class="cell-content" data-text="${newBox.scans}">${newBox.scans}</span></td>
+				<td><span class="cell-content" data-text="${newBox.status}">${newBox.status}</span></td>
+			`;
+
+			// Insert at random position in table
+			const tbody = document.getElementById('table-body');
+			const existingRows = tbody.querySelectorAll('tr');
+
+			if (insertIndex >= existingRows.length) {
+				tbody.appendChild(tr);
+			} else {
+				tbody.insertBefore(tr, existingRows[insertIndex]);
+			}
+
+			// Remove green border after 3 seconds
+			setTimeout(() => {
+				tr.classList.remove('new-row');
+			}, 3000);
+
+			// Log insertion
+			updateCount++;
+			const log = document.getElementById('status-log');
+			if (document.getElementById('show-log').checked) {
+				const timestamp = new Date().toLocaleTimeString();
+				log.innerHTML = `<strong style="color: #008000;">New Row Inserted #${updateCount}</strong> @ ${timestamp}: ${newBox.id} - ${newBox.location}, ${newBox.city}<br>` + log.innerHTML;
+
+				// Keep only last 5 updates
+				const lines = log.innerHTML.split('<br>');
+				if (lines.length > 6) {
+					log.innerHTML = lines.slice(0, 6).join('<br>');
+				}
+			}
+
+			// Scroll into view if needed
+			tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		}
+
+		// Insert new row button
+		document.getElementById('insert-btn').addEventListener('click', insertNewRow);
+
+		// Delete random row with animation
+		function deleteRandomRow() {
+			if (currentData.length === 0) {
+				const log = document.getElementById('status-log');
+				log.innerHTML = '<strong style="color: red;">No rows to delete!</strong><br>' + log.innerHTML;
+				return;
+			}
+
+			// Pick random row
+			const randomIndex = Math.floor(Math.random() * currentData.length);
+			const rowToDelete = currentData[randomIndex];
+
+			// Find the DOM element
+			const rowElement = document.querySelector(`tr[data-box-id="${rowToDelete.id}"]`);
+
+			if (!rowElement) return;
+
+			// Apply deletion animation
+			rowElement.classList.add('deleting-row');
+
+			// Log deletion
+			updateCount++;
+			const log = document.getElementById('status-log');
+			if (document.getElementById('show-log').checked) {
+				const timestamp = new Date().toLocaleTimeString();
+				log.innerHTML = `<strong style="color: #D21F3C;">Row Deleted #${updateCount}</strong> @ ${timestamp}: ${rowToDelete.id} - ${rowToDelete.location}<br>` + log.innerHTML;
+
+				// Keep only last 5 updates
+				const lines = log.innerHTML.split('<br>');
+				if (lines.length > 6) {
+					log.innerHTML = lines.slice(0, 6).join('<br>');
+				}
+			}
+
+			// Remove from data and DOM after animation completes
+			// Animation: 800ms (flash) + 600ms (fade/collapse) = 1400ms
+			setTimeout(() => {
+				// Remove from data array
+				currentData.splice(randomIndex, 1);
+				// Remove from DOM
+				rowElement.remove();
+			}, 1400);
+		}
+
+		// Delete row button
+		document.getElementById('delete-btn').addEventListener('click', deleteRandomRow);
+
+		// Play button - execute multiple actions simultaneously
+		document.getElementById('play-btn').addEventListener('click', () => {
+			const insertCount = parseInt(document.getElementById('insert-count').value);
+			const updateCount = parseInt(document.getElementById('update-count').value);
+			const deleteCount = parseInt(document.getElementById('delete-count').value);
+
+			let actualInserts = 0;
+			let actualUpdates = 0;
+			let actualDeletes = 0;
+
+			// Perform deletes first (to avoid referencing rows that will be deleted)
+			const maxDeletes = Math.min(deleteCount, currentData.length);
+			const rowsToDelete = [];
+
+			// Select random rows to delete
+			for (let i = 0; i < maxDeletes; i++) {
+				let randomIndex;
+				do {
+					randomIndex = Math.floor(Math.random() * currentData.length);
+				} while (rowsToDelete.includes(randomIndex));
+				rowsToDelete.push(randomIndex);
+			}
+
+			// Sort in descending order so we can remove from array correctly
+			rowsToDelete.sort((a, b) => b - a);
+
+			// Execute deletes
+			rowsToDelete.forEach(index => {
+				const rowToDelete = currentData[index];
+				const rowElement = document.querySelector(`tr[data-box-id="${rowToDelete.id}"]`);
+
+				if (rowElement) {
+					rowElement.classList.add('deleting-row');
+					actualDeletes++;
+
+					setTimeout(() => {
+						currentData.splice(index, 1);
+						rowElement.remove();
+					}, 1400);
+				}
+			});
+
+			// Perform updates on remaining rows
+			const maxUpdates = Math.min(updateCount, currentData.length - rowsToDelete.length);
+			const rowsToUpdate = [];
+
+			for (let i = 0; i < maxUpdates; i++) {
+				let randomIndex;
+				do {
+					randomIndex = Math.floor(Math.random() * currentData.length);
+				} while (rowsToUpdate.includes(randomIndex) || rowsToDelete.includes(randomIndex));
+				rowsToUpdate.push(randomIndex);
+			}
+
+			// Execute updates
+			rowsToUpdate.forEach(randomIndex => {
+				const row = currentData[randomIndex];
+
+				const updates = [
+					{ field: 'scans', cellIndex: 3, newValue: row.scans + Math.floor(Math.random() * 5) + 1 },
+					{ field: 'status', cellIndex: 4, newValue: Math.random() > 0.5 ? 'Active' : 'Needs Pickup' },
+				];
+
+				const update = updates[Math.floor(Math.random() * updates.length)];
+				currentData[randomIndex][update.field] = update.newValue;
+
+				const rowElement = document.querySelector(`tr[data-box-id="${row.id}"]`);
+				if (rowElement) {
+					updateCell(rowElement, update.cellIndex, update.newValue, update.field);
+					actualUpdates++;
+				}
+			});
+
+			// Perform inserts
+			for (let i = 0; i < insertCount; i++) {
+				insertNewRow();
+				actualInserts++;
+			}
+
+			// Log the batch operation
+			updateCount++;
+			const log = document.getElementById('status-log');
+			if (document.getElementById('show-log').checked) {
+				const timestamp = new Date().toLocaleTimeString();
+				const summary = `<strong style="color: var(--marine-blue);">🎬 PLAY #${updateCount}</strong> @ ${timestamp}: ` +
+					`<span style="color: #008000;">${actualInserts} inserts</span>, ` +
+					`<span style="color: #b8860b;">${actualUpdates} updates</span>, ` +
+					`<span style="color: #D21F3C;">${actualDeletes} deletes</span>`;
+				log.innerHTML = summary + '<br>' + log.innerHTML;
+
+				const lines = log.innerHTML.split('<br>');
+				if (lines.length > 6) {
+					log.innerHTML = lines.slice(0, 6).join('<br>');
+				}
+			}
+		});
+
+		// Toggle log visibility
+		document.getElementById('show-log').addEventListener('change', (e) => {
+			const log = document.getElementById('status-log');
+			log.style.display = e.target.checked ? 'block' : 'none';
+		});
+
+		// Initialize
+		renderTable();
+		document.getElementById('status-log').innerHTML = '<em>Ready. Click "Start Auto-Updates" or "Trigger Random Update" to see animations.</em>';
+	</script>
+</body>
+</html>
