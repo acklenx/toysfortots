@@ -801,7 +801,7 @@
 		let currentEditBoxId = null;
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
-		let showingDeleted = false; // For root users to toggle deleted items view
+		let showingDeleted = localStorage.getItem('showingDeleted') === 'true'; // For root users to toggle deleted items view
 
 		const ROOT_USER_EMAIL = 'acklenx@gmail.com';
 		const ROOT_USER_NAME = 'Quincy Acklen';
@@ -932,7 +932,7 @@
 						</div>
 					`;
 					// Reload volunteers data to update undeployed count
-					loadVolunteers();
+					// Don't call loadVolunteers() - the real-time listener will handle updates automatically
 				} else {
 					resultDiv.className = 'error-message';
 					resultDiv.innerHTML = `<strong>❌ Sync Failed</strong><br>${data.message || 'Unknown error'}`;
@@ -1954,7 +1954,7 @@ No Action: ${noActionViews}`;
 				});
 
 				document.getElementById('edit-box-modal').classList.remove('active');
-				loadBoxes();
+				// Don't call loadBoxes() - the real-time listener will handle updates automatically
 			} catch (error) {
 				alert('Error updating box: ' + error.message);
 			}
@@ -1985,7 +1985,7 @@ No Action: ${noActionViews}`;
 							targetLabel: label
 						});
 
-						loadBoxes();
+						// Don't call loadBoxes() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting box: ' + error.message);
 					}
@@ -2023,7 +2023,7 @@ No Action: ${noActionViews}`;
 							count: deleteCount
 						});
 
-						loadBoxes();
+						// Don't call loadBoxes() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting boxes: ' + error.message);
 					}
@@ -2051,7 +2051,7 @@ No Action: ${noActionViews}`;
 							targetType: 'report'
 						});
 
-						loadReports();
+						// Don't call loadReports() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting report: ' + error.message);
 					}
@@ -2089,7 +2089,7 @@ No Action: ${noActionViews}`;
 							count: deleteCount
 						});
 
-						loadReports();
+						// Don't call loadReports() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting reports: ' + error.message);
 					}
@@ -2136,7 +2136,7 @@ No Action: ${noActionViews}`;
 				});
 
 				document.getElementById('edit-volunteer-modal').classList.remove('active');
-				loadVolunteers();
+				// Don't call loadVolunteers() - the real-time listener will handle updates automatically
 			} catch (error) {
 				alert('Error updating volunteer: ' + error.message);
 			}
@@ -2186,7 +2186,7 @@ No Action: ${noActionViews}`;
 							targetLabel: name
 						});
 
-						loadVolunteers();
+						// Don't call loadVolunteers() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting volunteer: ' + error.message);
 					}
@@ -2230,7 +2230,7 @@ No Action: ${noActionViews}`;
 							count: deleteCount
 						});
 
-						loadVolunteers();
+						// Don't call loadVolunteers() - the real-time listener will handle updates automatically
 					} catch (error) {
 						alert('Error deleting volunteers: ' + error.message);
 					}
@@ -2596,16 +2596,20 @@ No Action: ${noActionViews}`;
 		// ==================== RBAC: SHOW DELETED TOGGLE (ROOT ONLY) ====================
 
 		if (document.getElementById('show-deleted-checkbox')) {
-			document.getElementById('show-deleted-checkbox').addEventListener('change', (e) => {
+			const checkbox = document.getElementById('show-deleted-checkbox');
+
+			// Restore checkbox state from localStorage
+			checkbox.checked = showingDeleted;
+
+			checkbox.addEventListener('change', (e) => {
 				showingDeleted = e.target.checked;
 
-				// Reload all data to show/hide deleted items
-				loadBoxes();
-				loadReports();
-				loadVolunteers();
-				if (currentUserRole === 'root') {
-					loadAuditLogs();
-				}
+				// Save to localStorage
+				localStorage.setItem('showingDeleted', showingDeleted);
+
+				// Page refresh required to avoid duplicate listeners
+				// (loadBoxes/loadReports/loadVolunteers create new onSnapshot listeners)
+				window.location.reload();
 			});
 		}
 
