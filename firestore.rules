@@ -34,11 +34,10 @@ service cloud.firestore {
     // --- Public Data ---
     match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
-      // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
-      // Filter out soft-deleted items (unless resource doesn't exist yet)
+      // Allow ANY authenticated user to read
+      // Admins/root can see deleted items (for realtime listener), volunteers see filtered view client-side
       match /locations/{boxId} {
-        allow get, list: if request.auth != null &&
-                            (resource == null || resource.data.get('deleted', false) != true);
+        allow get, list: if request.auth != null;
         allow create: if false; // Only Cloud Functions can create
 
         // Allow any authenticated user to update ONLY the analytics field
@@ -49,11 +48,8 @@ service cloud.firestore {
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
-        // EXPERIMENT 1 v3.0: Allow soft delete with ONLY deleted field (no deletedAt/deletedBy)
-        allow update: if isAdmin() &&
-                         request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false &&
-                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted']);
+        // Allow admins to soft delete (any delete-related fields)
+        allow update: if isAdmin();
 
         // Allow root to restore soft deletes (set deleted=false)
         allow update: if isRoot() &&
@@ -71,11 +67,10 @@ service cloud.firestore {
       }
 
       // --- TOTSREPORTS RULE ---
-      // EXPERIMENT 2 v3.0: WIDE OPEN for testing - admins can update anything
+      // Volunteers can read all reports (filtering happens client-side)
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get: if isVolunteer() &&
-                            (resource == null || resource.data.get('deleted', false) != true);
+        allow list, get: if isVolunteer();
 
         // EXPERIMENT 2: Allow admins to update ANY fields (including deleted/deletedAt/deletedBy)
         allow update: if isAdmin();
@@ -118,10 +113,8 @@ service cloud.firestore {
         allow get: if request.auth != null &&
                       request.auth.uid == userId;
 
-        // Allow volunteers to list all volunteers
-        // Filter out soft-deleted items
-        allow list: if isVolunteer() &&
-                       (resource == null || resource.data.get('deleted', false) != true);
+        // Allow volunteers to list all volunteers (filtering happens client-side)
+        allow list: if isVolunteer();
 
         allow create: if false; // Only Cloud Functions can create
 
@@ -134,10 +127,7 @@ service cloud.firestore {
         // Admins can soft delete (but not root or themselves)
         allow update: if isAdmin() &&
                          userId != request.auth.uid &&
-                         (resource == null || resource.data.role != 'root') &&
-                         request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false &&
-                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
+                         (resource == null || resource.data.role != 'root');
 
         // Root can restore soft deletes
         allow update: if isRoot() &&
@@ -164,9 +154,8 @@ service cloud.firestore {
       // Only admins can read, only authenticated users can create, only root can purge
       match /auditLogs/{logId} {
         allow create: if request.auth != null; // Anyone authenticated can write logs
-        // Filter out soft-deleted items
-        allow list, get: if isAdmin() &&
-                            (resource == null || resource.data.get('deleted', false) != true);
+        // Admins can read all audit logs (filtering happens client-side)
+        allow list, get: if isAdmin();
         allow update, delete: if false; // Immutable, except for root purge
 
         // Root can soft delete audit logs
