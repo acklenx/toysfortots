@@ -14,6 +14,19 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 /**
+ * Escapes HTML special characters to prevent XSS attacks
+ */
+function escapeHtml(unsafe) {
+	if (!unsafe) return '';
+	return String(unsafe)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+}
+
+/**
  * Normalizes a string for search (lowercase, trim)
  */
 function normalizeForSearch(str) {
@@ -232,15 +245,15 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 				return;
 			}
 
-			// Build dropdown HTML
+			// Build dropdown HTML (with XSS protection)
 			dropdownElement.innerHTML = results.map(result => `
-				<div class="autocomplete-item" data-id="${result.id}" style="
+				<div class="autocomplete-item" data-id="${escapeHtml(result.id)}" style="
 					padding: 10px;
 					cursor: pointer;
 					border-bottom: 1px solid #eee;
 				">
-					<div style="font-weight: bold;">${result.label || '(No label)'}</div>
-					<div style="font-size: 0.875rem; color: #666;">${result.address || ''}, ${result.city || ''}</div>
+					<div style="font-weight: bold;">${escapeHtml(result.label || '(No label)')}</div>
+					<div style="font-size: 0.875rem; color: #666;">${escapeHtml(result.address || '')}, ${escapeHtml(result.city || '')}</div>
 				</div>
 			`).join('');
 

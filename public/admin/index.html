@@ -737,6 +737,17 @@
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
 
+		// HTML escaping function to prevent XSS attacks
+		const escapeHtml = (unsafe) => {
+			if (!unsafe) return '';
+			return String(unsafe)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#039;');
+		};
+
 		// Data storage for filtering/sorting/pagination
 		let allBoxes = [];
 		let filteredBoxes = [];
@@ -1129,7 +1140,8 @@
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((box) => {
-				const escapedLabel = (box.label || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+				const escapedLabel = escapeHtml(box.label || 'N/A');
+				const escapedLabelForAttr = escapedLabel.replace(/'/g, "\\'");
 				// Build Google Maps search URL
 				const fullAddress = `${box.address || ''}, ${box.city || ''}, ${box.state || 'GA'}`;
 				const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
@@ -1150,18 +1162,18 @@ Pickup Requests: ${pickupRequests}
 Problem Reports: ${problemReports}
 No Action: ${noActionViews}`;
 
-				const contactTooltip = box.contactName ? `Manager: ${box.contactName}` : '';
+				const contactTooltip = box.contactName ? `Manager: ${escapeHtml(box.contactName)}` : '';
 
 				tableHTML += '<tr>';
-				tableHTML += `<td><a href="/status?id=${box.id}" target="_blank">${box.id}</a></td>`;
-				tableHTML += `<td title="${contactTooltip}">${box.label || 'N/A'}</td>`;
-				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${box.address || 'N/A'}</a></td>`;
-				tableHTML += `<td>${box.city || 'N/A'}, ${box.state || 'GA'}</td>`;
-				tableHTML += `<td>${box.volunteer || 'N/A'}</td>`;
+				tableHTML += `<td><a href="/status?id=${encodeURIComponent(box.id)}" target="_blank">${escapeHtml(box.id)}</a></td>`;
+				tableHTML += `<td title="${contactTooltip}">${escapedLabel}</td>`;
+				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(box.address || 'N/A')}</a></td>`;
+				tableHTML += `<td>${escapeHtml(box.city || 'N/A')}, ${escapeHtml(box.state || 'GA')}</td>`;
+				tableHTML += `<td>${escapeHtml(box.volunteer || 'N/A')}</td>`;
 				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${scans}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" data-box-id="${box.id}">Edit</button>`;
-				tableHTML += `<button class="delete-btn" data-box-id="${box.id}" data-box-label="${escapedLabel}">Delete</button>`;
+				tableHTML += `<button class="edit-btn" data-box-id="${escapeHtml(box.id)}">Edit</button>`;
+				tableHTML += `<button class="delete-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -1367,13 +1379,13 @@ No Action: ${noActionViews}`;
 			pageData.forEach((report) => {
 				const date = report.timestamp ? (report.timestamp.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : new Date(report.timestamp).toLocaleDateString()) : 'N/A';
 				tableHTML += '<tr>';
-				tableHTML += `<td><a href="/status?id=${report.boxId}#report-${report.id}" target="_blank">${report.id}</a></td>`;
-				tableHTML += `<td><a href="/status?id=${report.boxId}" target="_blank">${report.boxId || 'N/A'}</a></td>`;
-				tableHTML += `<td>${report.reportType || 'N/A'}</td>`;
-				tableHTML += `<td>${report.status || 'N/A'}</td>`;
+				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}#report-${encodeURIComponent(report.id)}" target="_blank">${escapeHtml(report.id)}</a></td>`;
+				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
+				tableHTML += `<td>${escapeHtml(report.reportType || 'N/A')}</td>`;
+				tableHTML += `<td>${escapeHtml(report.status || 'N/A')}</td>`;
 				tableHTML += `<td>${date}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="delete-btn" data-report-id="${report.id}">Delete</button>`;
+				tableHTML += `<button class="delete-btn" data-report-id="${escapeHtml(report.id)}">Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -1564,7 +1576,8 @@ No Action: ${noActionViews}`;
 
 			pageData.forEach((volunteer) => {
 				const isCurrentUser = volunteer.id === currentUser.uid;
-				const escapedDisplayName = (volunteer.displayName || volunteer.email || 'N/A').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+				const escapedDisplayName = escapeHtml(volunteer.displayName || volunteer.email || 'N/A');
+				const escapedDisplayNameForAttr = escapedDisplayName.replace(/'/g, "\\'");
 				// Check if using OAuth (email not from custom domain @toysfortots.mcl1311.com)
 				const isOAuth = volunteer.email && !volunteer.email.endsWith('@toysfortots.mcl1311.com');
 
@@ -1636,16 +1649,16 @@ No Action: ${noActionViews}`;
 				).length;
 
 				tableHTML += '<tr>';
-				tableHTML += `<td title="${volunteer.id}"><a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline;">${volunteer.displayName || 'N/A'}</a></td>`;
+				tableHTML += `<td title="${escapeHtml(volunteer.id)}"><a href="/dashboard?volunteer=${encodeURIComponent(volunteer.displayName || volunteer.email || 'N/A')}" style="color: var(--marine-blue); text-decoration: underline;">${escapedDisplayName}</a></td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
-				tableHTML += `<td style="text-align: center;"><a href="/dashboard?volunteer=${encodeURIComponent(escapedDisplayName)}" style="color: var(--marine-blue); text-decoration: underline;">${boxCount}</a></td>`;
+				tableHTML += `<td style="text-align: center;"><a href="/dashboard?volunteer=${encodeURIComponent(volunteer.displayName || volunteer.email || 'N/A')}" style="color: var(--marine-blue); text-decoration: underline;">${boxCount}</a></td>`;
 				tableHTML += `<td style="text-align: center;">${undeployedCount}</td>`;
 				tableHTML += `<td title="${lastSeenTooltip}">${lastSeenText}</td>`;
 				tableHTML += `<td style="text-align: center;">${pendingCount}</td>`;
 				tableHTML += `<td style="text-align: center;">${resolvedCount}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" data-volunteer-id="${volunteer.id}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
-				tableHTML += `<button class="delete-btn" data-volunteer-id="${volunteer.id}" data-volunteer-name="${escapedDisplayName}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+				tableHTML += `<button class="edit-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
+				tableHTML += `<button class="delete-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
