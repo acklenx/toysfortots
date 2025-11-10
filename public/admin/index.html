@@ -1088,18 +1088,35 @@
 							const box = { id: change.doc.id, ...change.doc.data() };
 
 							if (change.type === 'added') {
-								// New box added
+								// New box added - check if it should be displayed
+								if (box.deleted && !showingDeleted) {
+									console.log(`🔍 DEBUG: Skipping deleted box ${box.id} (showingDeleted: false)`);
+									return; // Don't add deleted boxes unless showing deleted items
+								}
 								allBoxes.push(box);
 								handleBoxAdded(box);
 							} else if (change.type === 'modified') {
-								// Box updated
+								// Box updated - might have been soft-deleted!
 								const index = allBoxes.findIndex(b => b.id === box.id);
-								if (index !== -1) {
+
+								// Check if box was soft-deleted and we're not showing deleted items
+								if (box.deleted && !showingDeleted) {
+									console.log(`🗑️ DEBUG: Box ${box.id} was soft-deleted, removing from display`);
+									if (index !== -1) {
+										allBoxes.splice(index, 1);
+										handleBoxRemoved(box.id);
+									}
+								} else if (index !== -1) {
+									// Normal update
 									allBoxes[index] = box;
 									handleBoxModified(box);
+								} else if (!box.deleted || showingDeleted) {
+									// Box exists in Firestore but not in our array - add it
+									allBoxes.push(box);
+									handleBoxAdded(box);
 								}
 							} else if (change.type === 'removed') {
-								// Box deleted
+								// Box permanently deleted from Firestore
 								const index = allBoxes.findIndex(b => b.id === box.id);
 								if (index !== -1) {
 									allBoxes.splice(index, 1);
