@@ -2440,7 +2440,7 @@ No Action: ${noActionViews}`;
 					resultDiv.className = 'success-message';
 					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted boxes.`;
 
-					loadBoxes();
+					// Don't call loadBoxes() - the real-time listener will handle updates automatically
 					setTimeout(() => resultDiv.style.display = 'none', 5000);
 				} catch (error) {
 					resultDiv.className = 'error-message';
@@ -2486,7 +2486,7 @@ No Action: ${noActionViews}`;
 					resultDiv.className = 'success-message';
 					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted reports.`;
 
-					loadReports();
+					// Don't call loadReports() - the real-time listener will handle updates automatically
 					setTimeout(() => resultDiv.style.display = 'none', 5000);
 				} catch (error) {
 					resultDiv.className = 'error-message';
@@ -2532,7 +2532,7 @@ No Action: ${noActionViews}`;
 					resultDiv.className = 'success-message';
 					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted volunteers.`;
 
-					loadVolunteers();
+					// Don't call loadVolunteers() - the real-time listener will handle updates automatically
 					setTimeout(() => resultDiv.style.display = 'none', 5000);
 				} catch (error) {
 					resultDiv.className = 'error-message';
