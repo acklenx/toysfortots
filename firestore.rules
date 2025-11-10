@@ -35,10 +35,9 @@ service cloud.firestore {
     match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
       // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
-      // Only show non-deleted items to regular users
+      // TEMPORARY: Removed deleted check for debugging
       match /locations/{boxId} {
-        allow get, list: if request.auth != null &&
-                            (resource == null || resource.data.deleted != true);
+        allow get, list: if request.auth != null;
         allow create: if false; // Only Cloud Functions can create
 
         // Allow any authenticated user to update ONLY the analytics field
@@ -71,11 +70,10 @@ service cloud.firestore {
 
       // --- TOTSREPORTS RULE ---
       // Authorized volunteers can view and update reports
-      // Only admins can soft delete, only root can hard delete
+      // TEMPORARY: Removed deleted check for debugging
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get: if isVolunteer() &&
-                            (resource == null || resource.data.deleted != true);
+        allow list, get: if isVolunteer();
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
@@ -118,13 +116,13 @@ service cloud.firestore {
       // Volunteers can read, admins can manage (with restrictions)
       match /authorizedVolunteers/{userId} {
         // Allow users to read their OWN document (needed for getUserRole() helper to work)
+        // TEMPORARY: Removed deleted check for debugging
         allow get: if request.auth != null &&
-                      request.auth.uid == userId &&
-                      (resource == null || resource.data.deleted != true);
+                      request.auth.uid == userId;
 
         // Allow volunteers to list all volunteers
-        allow list: if isVolunteer() &&
-                       (resource == null || resource.data.deleted != true);
+        // TEMPORARY: Removed deleted check for debugging
+        allow list: if isVolunteer();
 
         allow create: if false; // Only Cloud Functions can create
 
@@ -166,8 +164,8 @@ service cloud.firestore {
       // Only admins can read, only authenticated users can create, only root can purge
       match /auditLogs/{logId} {
         allow create: if request.auth != null; // Anyone authenticated can write logs
-        allow list, get: if isAdmin() &&
-                            (resource == null || resource.data.deleted != true);
+        // TEMPORARY: Removed deleted check for debugging
+        allow list, get: if isAdmin();
         allow update, delete: if false; // Immutable, except for root purge
 
         // Root can soft delete audit logs
