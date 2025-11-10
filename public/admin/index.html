@@ -2009,27 +2009,54 @@ No Action: ${noActionViews}`;
 
 		// Soft delete box (admin only)
 		window.deleteBox = function(boxId, label) {
+			console.log('🔍 DELETE DEBUG: deleteBox called', { boxId, label });
 			showConfirmation(
 				'Delete Box',
 				`Soft delete "${label}"? This can be restored later by root users.`,
 				async () => {
 					try {
+						console.log('🔍 DELETE DEBUG: Starting delete operation', {
+							boxId,
+							label,
+							userId: currentUser.uid,
+							locationsCollectionPath
+						});
+
 						const docRef = doc(db, locationsCollectionPath, boxId);
-						await updateDoc(docRef, {
+						console.log('🔍 DELETE DEBUG: Document reference created', {
+							path: docRef.path,
+							id: docRef.id
+						});
+
+						const updateData = {
 							deleted: true,
 							deletedAt: serverTimestamp(),
 							deletedBy: currentUser.uid
-						});
+						};
+						console.log('🔍 DELETE DEBUG: Update data prepared', updateData);
+
+						console.log('🔍 DELETE DEBUG: Calling updateDoc...');
+						await updateDoc(docRef, updateData);
+						console.log('🔍 DELETE DEBUG: updateDoc SUCCESS!');
 
 						// Log audit
+						console.log('🔍 DELETE DEBUG: Logging audit...');
 						await logAudit(AUDIT_ACTIONS.DELETE_BOX, currentUser, {
 							targetId: boxId,
 							targetType: 'box',
 							targetLabel: label
 						});
+						console.log('🔍 DELETE DEBUG: Audit logged successfully');
 
 						// Don't call loadBoxes() - the real-time listener will handle updates automatically
+						console.log('🔍 DELETE DEBUG: Delete operation completed successfully');
 					} catch (error) {
+						console.error('🔍 DELETE DEBUG: Error caught!', {
+							message: error.message,
+							code: error.code,
+							stack: error.stack,
+							fullError: error
+						});
 						alert('Error deleting box: ' + error.message);
 					}
 				}
@@ -2283,6 +2310,7 @@ No Action: ${noActionViews}`;
 
 		// Confirmation modal
 		function showConfirmation(title, message, callback) {
+			console.log('🔍 CONFIRMATION DEBUG: Showing confirmation modal', { title, message });
 			document.getElementById('modal-title').textContent = title;
 			document.getElementById('modal-message').textContent = message;
 			confirmCallback = callback;
@@ -2290,9 +2318,16 @@ No Action: ${noActionViews}`;
 		}
 
 		document.getElementById('modal-confirm').addEventListener('click', async () => {
+			console.log('🔍 CONFIRMATION DEBUG: Confirm button clicked');
 			document.getElementById('confirmation-modal').classList.remove('active');
 			if (confirmCallback) {
-				await confirmCallback();
+				console.log('🔍 CONFIRMATION DEBUG: Executing callback...');
+				try {
+					await confirmCallback();
+					console.log('🔍 CONFIRMATION DEBUG: Callback completed successfully');
+				} catch (error) {
+					console.error('🔍 CONFIRMATION DEBUG: Callback error!', error);
+				}
 				confirmCallback = null;
 			}
 		});
