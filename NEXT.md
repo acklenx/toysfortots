@@ -914,3 +914,389 @@ Before considering RBAC complete, verify:
 **Status:** Implementation complete, production deployment partially working, permissions debugging in progress
 **Priority:** Fix production permissions issue (likely just needs rules propagation wait + data field additions)
 
+---
+
+# DEBUGGING SESSION NOTES - 2025-01-10 (Continued)
+
+## Session Summary
+
+**Goal:** Debug and fix production permission errors and duplicate items bugs in admin panel
+
+**Status:** ✅ Permission errors fixed, ⚠️ Duplicate items bug partially fixed but still occurring
+
+**Commits Made:**
+- `e932f5f` - Temporarily removed deleted field checks from Firestore rules
+- `b5a721c` - Fixed duplicate boxes bug in purge operations
+- `7a4ff9b` - Fixed duplicate items bug in all delete/edit operations
+
+---
+
+## Problem 1: Production Permission Errors ✅ RESOLVED
+
+### Issue
+After deploying RBAC changes, admin panel showed "Missing or insufficient permissions" for locations, reports, and volunteers collections. User could read their own volunteer document (confirmed role: "root", deleted: false) but couldn't access any other collections.
+
+### Root Cause
+Firestore rules were checking `resource.data.deleted != true` but this filter was being applied during LIST queries, which Firestore handles conservatively. Even though documents had `deleted: false`, the rules engine was blocking access.
+
+### Solution (Commit e932f5f)
+Temporarily simplified Firestore rules by removing ALL `deleted` field checks:
+
+**Changed from:**
+```javascript
+allow get, list: if request.auth != null &&
+                    (resource == null || resource.data.deleted != true);
+```
+
+**Changed to:**
+```javascript
+allow get, list: if request.auth != null;
+```
+
+**Applied to:**
+- locations collection (lines 40-41)
+- totsReports collection (lines 77-78)
+- authorizedVolunteers collection (lines 121-127)
+- auditLogs collection (lines 169-170)
+
+### Result
+✅ Admin panel now loads successfully
+✅ All collections readable
+✅ User can access boxes, reports, volunteers, and audit logs
+
+### Future Work
+Once RBAC is fully stable, we need to add back the `deleted` field filtering. The proper implementation will require:
+1. Client-side filtering in admin panel JavaScript (already partially implemented)
+2. OR modify rules to be less conservative about LIST queries
+3. OR use separate collections for deleted items
+
+---
+
+## Problem 2: Duplicate Items Bug ⚠️ PARTIALLY FIXED
+
+### Issue
+When performing operations in admin panel, items would duplicate in the display:
+1. Click "Purge Deleted Boxes" → all boxes duplicated
+2. Click soft delete on one box → all non-deleted boxes duplicated
+3. Edit a box → items duplicated
+
+### Root Cause Analysis
+
+The admin panel uses **real-time listeners** via `onSnapshot()`:
+
+```javascript
+function loadBoxes() {
+  const q = query(locationsRef, orderBy('created', 'desc'));
+
+  onSnapshot(q, (snapshot) => {
+    if (!boxesInitialLoadComplete) {
+      // First load: build complete array
+      allBoxes = [];
+      snapshot.forEach(doc => allBoxes.push(...));
+    } else {
+      // Subsequent updates: handle changes
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') allBoxes.push(box);
+        // ...
+      });
+    }
+  });
+}
+```
+
+**The problem:** Every time `loadBoxes()` is called, it creates a NEW `onSnapshot` listener without unsubscribing from the old one.
+
+**Example flow:**
+1. Page loads → `loadBoxes()` creates Listener #1 ✅
+2. User soft-deletes a box → code calls `loadBoxes()` → creates Listener #2 ❌
+3. Firestore detects the update
+4. **BOTH listeners fire** → each adds the item → **DUPLICATES!**
+
+### Fixes Applied
+
+#### Fix 1: Purge Operations (Commit b5a721c)
+Removed `loadBoxes()` calls from purge functions (lines 2443, 2489, 2535).
+**Result:** Purge operations no longer duplicate items ✅
+
+#### Fix 2: All Delete/Edit Operations (Commit 7a4ff9b)
+Removed load function calls from:
+- Edit box operation (line 1957)
+- Soft delete box (line 1988)
+- Bulk delete boxes (line 2026)
+- Delete report (line 2054)
+- Bulk delete reports (line 2092)
+- Location suggestions sync (line 935)
+- Edit volunteer (line 2139)
+- Delete volunteer (line 2189)
+- Bulk delete volunteers (line 2233)
+
+**Special case:** "Show Deleted Items" toggle (lines 2598-2614)
+- Changed to trigger `window.location.reload()` instead of calling load functions
+- Added localStorage to persist toggle state across refresh
+- This avoids creating duplicate listeners
+
+### Current Status
+
+**Testing shows:** Duplicate items bug is STILL occurring even after all fixes.
+
+**Possible remaining causes:**
+1. **Missed load function calls** - There may be other code paths calling loadBoxes/loadReports/loadVolunteers that we haven't found
+2. **Initial load is being called multiple times** - The page initialization might be calling loadBoxes() more than once
+3. **Listener cleanup not working** - The `boxesInitialLoadComplete` flag might not be set correctly
+4. **Race condition** - Multiple simultaneous operations might be triggering duplicate listeners
+5. **Browser cache** - Old JavaScript still running despite hard cache clear
+
+---
+
+## What We Tried (In Order)
+
+### Attempt 1: Wait for Firestore Rules Propagation
+**Action:** Waited 2-3 minutes after deployment
+**Result:** ❌ Still had permission errors
+
+### Attempt 2: Hard Refresh Browser
+**Action:** Ctrl+Shift+R multiple times
+**Result:** ❌ Still had permission errors
+
+### Attempt 3: Simplify Firestore Rules
+**Action:** Removed all `deleted != true` checks from rules (commit e932f5f)
+**Result:** ✅ Permission errors resolved, admin panel loads
+
+### Attempt 4: Verify Data Has deleted Field
+**Action:** Checked Firebase Console - confirmed all 2 locations have `deleted: false`
+**Result:** ✅ Data is correct
+
+### Attempt 5: Remove loadBoxes from Purge
+**Action:** Removed loadBoxes() call from purge operations (commit b5a721c)
+**Result:** ✅ Purge no longer duplicates, BUT...
+**New problem:** Soft delete now duplicates items
+
+### Attempt 6: Hard Cache Reset
+**Action:** Ctrl+Shift+Delete → Clear all cached files and data → Close browser
+**Result:** ✅ Purge works correctly after cache clear
+
+### Attempt 7: Remove ALL load Function Calls
+**Action:** Removed loadBoxes/loadReports/loadVolunteers from all operations (commit 7a4ff9b)
+**Result:** ⚠️ User reports it's STILL duplicating items
+
+---
+
+## Next Steps to Debug Duplicate Items
+
+### 1. Verify Latest Code is Deployed
+```bash
+# On production machine
+cd /home/acklenx/WebstormProjects/toysfortots
+git pull origin main
+git log --oneline -3  # Should show: 7a4ff9b, b5a721c, e932f5f
+firebase deploy --only hosting
+```
+
+### 2. Aggressive Browser Cache Clear
+1. Close ALL browser tabs and windows completely
+2. Clear browser cache: Ctrl+Shift+Delete → "All time" → Check "Cached images and files"
+3. Or use Incognito/Private window (bypasses cache entirely)
+4. Open fresh tab to admin panel
+
+### 3. Verify Code in Browser
+Press F12 → Sources tab → Open `admin/index.html` → Search for:
+- "Don't call loadBoxes()" - should find MULTIPLE instances
+- If you find `loadBoxes();` on lines 1988, 2026, etc without the comment, OLD CODE is still cached
+
+### 4. Check Console for Errors
+Press F12 → Console tab → Look for:
+- Firestore permission errors
+- JavaScript errors
+- Multiple "snapshot" log messages (indicates multiple listeners)
+
+### 5. Find Remaining load Function Calls
+Search entire admin/index.html for:
+```
+loadBoxes()
+loadReports()
+loadVolunteers()
+```
+
+Lines 895-897 should be the ONLY calls (initial page load).
+
+### 6. Trace Duplicate Event
+Add debug logging to find where duplicates come from:
+
+**Add to line 1048 (in loadBoxes function):**
+```javascript
+allBoxes = [];
+console.log('🔵 loadBoxes: Initial load starting');
+snapshot.forEach((doc) => {
+```
+
+**Add to line 1074 (in docChanges loop):**
+```javascript
+if (change.type === 'added') {
+    console.log('🟢 loadBoxes: Item added by listener', box.id);
+    allBoxes.push(box);
+```
+
+Then in browser console, watch for duplicate log messages when you soft-delete.
+
+---
+
+## Alternative Solution: Proper Listener Cleanup
+
+The real fix is to unsubscribe from old listeners before creating new ones.
+
+### Current Problem
+```javascript
+function loadBoxes() {
+  onSnapshot(q, (snapshot) => { ... }); // Creates new listener, never cleans up old one
+}
+```
+
+### Proper Solution
+```javascript
+let boxesUnsubscribe = null; // Global variable to store unsubscribe function
+
+function loadBoxes() {
+  // Clean up old listener first
+  if (boxesUnsubscribe) {
+    console.log('Unsubscribing from old listener');
+    boxesUnsubscribe();
+  }
+
+  // Create new listener and save unsubscribe function
+  boxesUnsubscribe = onSnapshot(q, (snapshot) => { ... });
+}
+```
+
+**Apply this pattern to:**
+- loadBoxes() → boxesUnsubscribe
+- loadReports() → reportsUnsubscribe
+- loadVolunteers() → volunteersUnsubscribe
+- loadAuditLogs() → auditLogsUnsubscribe
+
+**But wait!** If we do proper cleanup, we DON'T need to avoid calling loadBoxes() - we can call it as much as we want without duplicates!
+
+---
+
+## Recommended Implementation: Listener Manager
+
+Create a clean abstraction:
+
+```javascript
+const listenerManager = {
+  boxes: null,
+  reports: null,
+  volunteers: null,
+  auditLogs: null,
+
+  subscribe(type, unsubscribeFn) {
+    // Clean up old listener
+    if (this[type]) {
+      console.log(`Unsubscribing from old ${type} listener`);
+      this[type]();
+    }
+    // Store new unsubscribe function
+    this[type] = unsubscribeFn;
+  },
+
+  unsubscribeAll() {
+    Object.keys(this).forEach(key => {
+      if (typeof this[key] === 'function') {
+        this[key]();
+        this[key] = null;
+      }
+    });
+  }
+};
+
+// Usage in loadBoxes():
+function loadBoxes() {
+  const unsubscribe = onSnapshot(q, (snapshot) => { ... });
+  listenerManager.subscribe('boxes', unsubscribe);
+}
+```
+
+This would be a clean, robust solution that fixes the root cause.
+
+---
+
+## Files Modified This Session
+
+1. **firestore.rules** (commit e932f5f)
+   - Temporarily removed `deleted != true` checks
+   - Simplified rules to maximize access during debugging
+
+2. **public/admin/index.html** (commits b5a721c, 7a4ff9b)
+   - Removed 10+ loadBoxes/loadReports/loadVolunteers calls
+   - Changed "Show Deleted Items" toggle to use page refresh
+   - Added localStorage to persist toggle state
+
+---
+
+## Known Issues
+
+### Issue 1: Duplicate Items Still Occurring ❌
+**Status:** ACTIVE BUG
+**Priority:** HIGH
+**Impact:** Users cannot reliably use admin panel soft delete feature
+**Next step:** Deploy code, clear cache aggressively, add debug logging
+
+### Issue 2: No deleted Field Filtering ⚠️
+**Status:** INTENTIONAL (temporary)
+**Priority:** MEDIUM
+**Impact:** If soft-deleted items exist, they'll be visible to all users
+**Workaround:** Don't soft-delete items until duplicate bug is fixed
+**Fix:** Restore Firestore rules with `deleted != true` checks OR implement client-side filtering
+
+### Issue 3: Show Deleted Toggle Requires Page Refresh 🐌
+**Status:** WORKAROUND IN PLACE
+**Priority:** LOW
+**Impact:** User experience is slightly degraded (page refresh is slow)
+**Fix:** Implement proper listener cleanup (see "Alternative Solution" above)
+
+---
+
+## Testing Checklist for Next Session
+
+- [ ] Verify git log shows commits: 7a4ff9b, b5a721c, e932f5f
+- [ ] Deploy: `firebase deploy --only hosting,firestore:rules`
+- [ ] Clear browser cache completely (or use Incognito)
+- [ ] Admin panel loads without permission errors
+- [ ] Can see 2 boxes, 2 reports, 3 volunteers
+- [ ] Soft delete ONE box → verify count stays at 1 box (not 2 or 3)
+- [ ] Purge deleted boxes → verify count updates correctly
+- [ ] Edit a box → verify count doesn't change
+- [ ] Toggle "Show Deleted Items" → page refreshes, shows deleted box
+- [ ] Toggle off → page refreshes, hides deleted box
+
+---
+
+## File Locations
+
+**Production:**
+- `/home/acklenx/WebstormProjects/toysfortots`
+
+**Development:**
+- `/home/quincy/toysfortots`
+
+---
+
+## Critical Notes for Next Session
+
+1. **If duplicate bug persists after cache clear:** Implement proper listener cleanup (see "Alternative Solution" section)
+
+2. **Browser cache is VERY sticky:** Recommend using Incognito window for testing to completely bypass cache
+
+3. **The deleted field checks in Firestore rules are DISABLED:** This is temporary. Do not deploy this to production long-term without either:
+   - Restoring the rules, OR
+   - Implementing client-side filtering in JavaScript
+
+4. **All 12 smoke tests passing:** The bugs are production-only issues, emulator tests don't catch the duplicate listeners problem
+
+5. **Root email verification:** Make sure production volunteer document has correct email (should be one of your test accounts, not acklenx@gmail.com which is on different computer)
+
+---
+
+**Session ended at:** 2025-01-10 (continued session, user reported bug still occurring)
+**Status:** Permissions fixed ✅, Duplicate items bug still active ❌
+**Priority:** Implement proper listener cleanup OR add extensive debug logging to trace remaining issue
+
