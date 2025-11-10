@@ -28,9 +28,47 @@ const isProduction = process.argv.includes('--production');
 // Initialize Firebase Admin
 if (isProduction) {
 	console.log('🔥 Initializing Firebase Admin for PRODUCTION...');
-	admin.initializeApp({
-		projectId: 'toysfortots-eae4d'
-	});
+
+	// Check for service account key file
+	const fs = require('fs');
+	const path = require('path');
+
+	// Try multiple possible locations
+	const possiblePaths = [
+		process.env.GOOGLE_APPLICATION_CREDENTIALS,
+		path.join(process.cwd(), 'serviceAccountKey.json'),
+		path.join(__dirname, '..', 'serviceAccountKey.json'),
+		path.join(process.env.HOME, 'serviceAccountKey.json'),
+		path.join(process.env.HOME, 'Downloads', 'serviceAccountKey.json')
+	].filter(Boolean);
+
+	let serviceAccountPath = null;
+	console.log('🔍 Searching for service account key...');
+	for (const tryPath of possiblePaths) {
+		const exists = fs.existsSync(tryPath);
+		console.log(`   ${exists ? '✓' : '✗'} ${tryPath}`);
+		if (exists) {
+			serviceAccountPath = tryPath;
+			break;
+		}
+	}
+
+	if (serviceAccountPath) {
+		const serviceAccount = require(serviceAccountPath);
+		admin.initializeApp({
+			credential: admin.credential.cert(serviceAccount),
+			projectId: 'toysfortots-eae4d'
+		});
+		console.log(`✓ Using service account: ${serviceAccountPath}`);
+	} else {
+		console.log('❌ No service account key found!');
+		console.log('   Searched in:');
+		possiblePaths.forEach(p => console.log(`     - ${p}`));
+		console.log('');
+		console.log('   Please download the service account key and place it in one of these locations.');
+		console.log('   Or set GOOGLE_APPLICATION_CREDENTIALS environment variable.');
+		process.exit(1);
+	}
 } else {
 	console.log('🧪 Initializing Firebase Admin for EMULATORS...');
 	process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
