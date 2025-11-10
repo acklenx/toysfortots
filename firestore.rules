@@ -38,7 +38,7 @@ service cloud.firestore {
       // Filter out soft-deleted items (unless resource doesn't exist yet)
       match /locations/{boxId} {
         allow get, list: if request.auth != null &&
-                            (resource == null || resource.data.deleted != true);
+                            (resource == null || resource.data.get('deleted', false) != true);
         allow create: if false; // Only Cloud Functions can create
 
         // Allow any authenticated user to update ONLY the analytics field
@@ -75,7 +75,7 @@ service cloud.firestore {
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
         allow list, get: if isVolunteer() &&
-                            (resource == null || resource.data.deleted != true);
+                            (resource == null || resource.data.get('deleted', false) != true);
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
@@ -121,12 +121,12 @@ service cloud.firestore {
         // Filter out soft-deleted items
         allow get: if request.auth != null &&
                       request.auth.uid == userId &&
-                      (resource == null || resource.data.deleted != true);
+                      (resource == null || resource.data.get('deleted', false) != true);
 
         // Allow volunteers to list all volunteers
         // Filter out soft-deleted items
         allow list: if isVolunteer() &&
-                       (resource == null || resource.data.deleted != true);
+                       (resource == null || resource.data.get('deleted', false) != true);
 
         allow create: if false; // Only Cloud Functions can create
 
@@ -170,7 +170,7 @@ service cloud.firestore {
         allow create: if request.auth != null; // Anyone authenticated can write logs
         // Filter out soft-deleted items
         allow list, get: if isAdmin() &&
-                            (resource == null || resource.data.deleted != true);
+                            (resource == null || resource.data.get('deleted', false) != true);
         allow update, delete: if false; // Immutable, except for root purge
 
         // Root can soft delete audit logs
