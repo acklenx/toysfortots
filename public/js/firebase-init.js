@@ -3,6 +3,9 @@ import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs
 import { getFirestore, connectFirestoreEmulator, enableMultiTabIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 import { getFunctions, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
+// Check if running locally FIRST (before initializing Firebase)
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 const firebaseConfig = {
 	apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
 	authDomain: 'toysfortots.mcl1311.com',
@@ -11,22 +14,19 @@ const firebaseConfig = {
 	messagingSenderId: '505039956655',
 	appId: '1:505039956655:web:c750c66b28f7facd82025a'
 };
+
 export const app = initializeApp( firebaseConfig );
 export const auth = getAuth( app );
 export const db = getFirestore( app );
 export const functions = getFunctions( app, 'us-central1' );
 
-// Make auth available globally for tests
-window.auth = auth;
-
-// Connect to emulators if running locally
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
+// Connect to emulators IMMEDIATELY after getting instances (CRITICAL: must be before any auth/db operations)
 if (isLocalhost) {
-	connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-	connectFirestoreEmulator(db, 'localhost', 8080);
-	connectFunctionsEmulator(functions, 'localhost', 5001);
-	console.log('Connected to Firebase emulators');
+	// Use 127.0.0.1 instead of localhost to avoid DNS resolution issues in browser contexts
+	connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+	connectFirestoreEmulator(db, '127.0.0.1', 8080);
+	connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+	console.log('[firebase-init] Connected to emulators (auth: 127.0.0.1:9099, firestore: 127.0.0.1:8080, functions: 127.0.0.1:5001)');
 } else {
 	// Enable offline persistence for production only (not in emulators)
 	enableMultiTabIndexedDbPersistence(db)
@@ -43,6 +43,9 @@ if (isLocalhost) {
 			}
 		});
 }
+
+// Make auth available globally for tests
+window.auth = auth;
 const appId = firebaseConfig.projectId;
 const publicDocumentId = '01';
 const dataDocumentId = '01';

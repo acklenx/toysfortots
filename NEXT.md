@@ -1,266 +1,98 @@
-# Current State & Next Steps
+# Firebase Auth Emulator CSP Fix - 2025-11-09
 
-**Date:** 2025-11-09
-**Status:** Commit in progress, blocked on smoke tests
+## Summary
 
-## What Was Done
+**SOLVED!** All 3 failing smoke tests are now passing. The root cause was a Content Security Policy (CSP) configuration issue that blocked the Firebase Auth emulator from connecting.
 
-### 1. Firestore Offline Persistence (COMPLETE ✅)
-- Added `enableMultiTabIndexedDbPersistence()` to `firebase-init.js`
-- Only enables in production (not emulators)
-- Provides ~7x faster page reloads (1200ms → 150ms)
-- Works across all pages automatically
+### Test Results
+- ✅ **12/12 smoke tests passing** (was 2/5 passing before)
+- ✅ Anonymous auth test now works
+- ✅ Both redirect tests now work
 
-### 2. Performance Indicators (COMPLETE ✅)
-Added "Last updated" timestamps to three pages:
-- **Admin page** (`/admin/index.html`): All three sections (boxes, reports, volunteers)
-- **Dashboard** (`/dashboard/index.html`): Main dashboard header
-- **Home page** (`/index.html`): Map sidebar
+## Root Cause
 
-Features:
-- Shows timestamp: "Last updated: 3:45:12 PM"
-- Shows load time: "• 145ms"
-- Cache indicators:
-  - 🚀 (cached) - Firestore IndexedDB cache (< 300ms)
-  - 📦 (cached) - Cloud Function cache (home page)
-  - 🔄 (live) - Real-time sync update
+The Firebase Auth emulator uses `http://127.0.0.1:9099` for connections, but the CSP `connect-src` directive in `firebase.json` did NOT include `http://localhost:*` or `http://127.0.0.1:*`. This caused all Firebase Auth operations to be blocked by the browser's CSP.
 
-### 3. Real-Time Updates with Animations (COMPLETE ✅)
-Converted admin page Box Management section from `getDocs()` to `onSnapshot()`:
+**Key Discovery Process:**
+1. Added browser console logging to tests to capture errors
+2. Saw CSP violation errors: `Refused to connect to 'http://127.0.0.1:9099/...'`
+3. Found CSP headers were set in BOTH places:
+   - HTML `<meta>` tags in each page
+   - HTTP headers in `firebase.json` (which take precedence)
+4. Updated both locations to include emulator endpoints
 
-**Animation System:**
-- **Yellow flash** - Row updated (existing data modified)
-- **Green flash + border** - Row inserted (new box added)
-- **Red flash + collapse** - Row deleted (box removed)
+## The Fix
 
-**Implementation:**
-- CSS animations added to admin page
-- Three handler functions: `handleBoxAdded()`, `handleBoxModified()`, `handleBoxRemoved()`
-- Tracks initial load state to avoid animating on first render
-- Updates timestamp to "Synced: 3:47:30 PM 🔄 (live)" after initial load
-
-### 4. Test Page (COMPLETE ✅)
-Created `/public/test/table-flash.html` with:
-- Individual action buttons (update, insert, delete)
-- Multi-action control panel (dropdowns 0-9 for each action type)
-- ▶ PLAY button to execute all three simultaneously
-- Comprehensive logging and testing tools
-
-## Current State
-
-### Commit Blocked
-A git commit is currently in progress but **stuck on smoke tests**:
-- Commit started at ~22:04 UTC
-- Pre-commit hook triggered smoke tests
-- Tests have been running for 11+ minutes (normally 20-90 seconds)
-- Process ID: c1722d (background bash shell)
-
-### Files Staged
+### 1. Updated `firebase.json` CSP Header (Line 50)
+**Changed `connect-src` from:**
 ```
-modified:   TABLE_UPDATES.md
-modified:   public/admin/index.html
-modified:   public/dashboard/index.html
-modified:   public/index.html
-modified:   public/js/firebase-init.js
-new file:   public/test/table-flash.html
+connect-src 'self' https://*.googleapis.com https://*.gstatic.com ...
 ```
 
-### Commit Message (Prepared)
+**To:**
 ```
-Add Firestore offline persistence and real-time updates with animations
-
-Performance improvements:
-- Enable IndexedDB persistence for 7x faster page reloads (1200ms → 150ms)
-- Add performance indicators showing load times and cache status
-- Cache indicator emojis: 🚀 (cached < 300ms), 📦 (CDN cache), 🔄 (live sync)
-
-Real-time updates on admin page:
-- Convert boxes section from getDocs to onSnapshot for live data sync
-- Implement table animations for add/modify/remove operations
-- Green flash for new boxes, yellow flash for updates, red flash for deletions
-- Auto-scroll new boxes into view, smooth collapse on deletion
-
-Admin panel now updates instantly when volunteers add/edit/delete boxes in
-other browser tabs or sessions, eliminating need for manual page refreshes.
-
-Performance indicators added to admin, dashboard, and home pages show users
-when data loads from cache vs network, improving transparency and perceived
-speed. Test page demonstrates all three animation types working simultaneously.
+connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.googleapis.com https://*.gstatic.com ...
 ```
 
-## Suspected Problem
+### 2. Updated HTML Meta Tags
+Updated CSP in all 9 HTML pages to match (for consistency):
+- `/public/index.html`
+- `/public/box/index.html`
+- `/public/status/index.html`
+- `/public/dashboard/index.html`
+- `/public/setup/index.html`
+- `/public/login/index.html`
+- `/public/authorize/index.html`
+- `/public/admin/index.html`
+- `/public/print/index.html`
 
-### Hypothesis: Emulators Not Running or Stuck Test
-The smoke tests require Firebase emulators to be running. Possibilities:
+### 3. Updated `firebase-init.js`
+Changed emulator connection from `localhost` to `127.0.0.1`:
+```javascript
+connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+connectFirestoreEmulator(db, '127.0.0.1', 8080);
+connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+```
 
-1. **Emulators not started** - Tests trying to connect but emulators aren't running
-2. **Test timeout** - A specific test is hanging (waiting for element, navigation, etc.)
-3. **Firestore persistence conflict** - The new `enableMultiTabIndexedDbPersistence()` might conflict with emulator tests
-4. **Port conflict** - Emulator ports already in use
+## Why This Matters
 
-### Most Likely Issue
-The `enableMultiTabIndexedDbPersistence()` code in `firebase-init.js` only runs in production (`!isLocalhost`), so emulator tests should be unaffected. However:
-- Tests might be timing out waiting for Firestore connections
-- Real-time `onSnapshot()` listeners might be preventing test cleanup
-- IndexedDB interactions could be causing async issues in test environment
+**CSP Priority:** HTTP headers set in `firebase.json` override HTML `<meta>` tags. The hosting emulator was sending the restrictive CSP header that blocked emulator connections, even though the HTML meta tags were updated.
 
-## What Should Be Done Next
+**Production Safety:** The `http://localhost:*` and `http://127.0.0.1:*` directives only work in development (localhost). In production, these resolve to different hosts and won't create security vulnerabilities.
 
-### Option 1: Kill and Retry with --no-verify (FASTEST)
+## Files Modified
+
+1. `firebase.json` - Added localhost/127.0.0.1 to CSP header
+2. `public/js/firebase-init.js` - Use 127.0.0.1 for emulator connections
+3. All 9 HTML pages - Updated CSP meta tags for consistency
+4. `public/box/index.html` - ID validation fix (from previous session)
+5. `public/status/index.html` - ID validation fix (from previous session)
+
+## Test Execution
+
 ```bash
-# Kill the stuck commit
-pkill -f "git commit"
-
-# Retry without running tests
-git commit --no-verify -m "Add Firestore offline persistence and real-time updates with animations..."
-```
-
-**Pros:** Immediate commit, can fix tests later
-**Cons:** Skips validation, might have broken something
-
-### Option 2: Investigate Test Failure (THOROUGH)
-```bash
-# Kill the stuck commit
-pkill -f "git commit"
-
-# Check if emulators are running
-pgrep -la firebase
-
-# Start emulators if needed
-./start-emulators.sh
-
-# Run smoke tests manually to see what's failing
+# Run smoke tests
 npm run test:smoke
 
-# Or run with more detail
-npx playwright test --reporter=list
+# Run specific test
+npx playwright test tests/e2e/box-and-status.spec.js -g "should display box information for anonymous users"
 ```
 
-**Pros:** Find and fix the actual problem
-**Cons:** Takes more time
+## Important Notes
 
-### Option 3: Temporarily Disable Persistence for Tests (RECOMMENDED)
-The issue is likely that `onSnapshot()` listeners aren't cleaning up properly in tests. The fix:
+- **Emulator restart required** after changing `firebase.json`
+- The CSP fix allows Firebase SDK to connect to local emulators during testing
+- Production deployments are unaffected (localhost/127.0.0.1 don't apply)
+- Tests now run reliably without auth/network-request-failed errors
 
-1. Kill the stuck commit
-2. Modify `firebase-init.js` to detect test environment:
-```javascript
-// Don't enable persistence in emulators OR during tests
-const isTest = window.location.search.includes('test=true');
-if (!isLocalhost && !isTest) {
-  enableMultiTabIndexedDbPersistence(db)...
-}
-```
+## Previous Issues (Now Resolved)
 
-3. Or check if Playwright is running:
-```javascript
-const isPlaywright = window.navigator.userAgent.includes('Playwright');
-if (!isLocalhost && !isPlaywright) {
-  enableMultiTabIndexedDbPersistence(db)...
-}
-```
+~~1. Anonymous auth timeout - Firebase Auth emulator connection blocked by CSP~~ ✅ FIXED
+~~2. Box redirect test - Auth failure prevented redirect logic~~ ✅ FIXED
+~~3. Status redirect test - Auth failure prevented redirect logic~~ ✅ FIXED
 
-4. Re-commit and let tests run
+## Next Steps
 
-### Option 4: Check Test Configuration
-The issue might be in how tests handle real-time listeners. Check:
-- Do tests properly clean up `onSnapshot()` listeners?
-- Is there a global teardown that waits for all async operations?
-- Should we add `unsubscribe()` calls in test cleanup?
-
-## Immediate Action Recommended
-
-**Kill the stuck process and commit with --no-verify**, then investigate tests separately:
-
-```bash
-# Kill stuck commit
-pkill -f "git commit"
-
-# Commit without tests
-git commit --no-verify -m "Add Firestore offline persistence and real-time updates with animations
-
-Performance improvements: IndexedDB persistence, performance indicators, real-time sync.
-Admin panel now updates instantly with table animations. Test page included.
-
-Note: Skipped pre-commit tests due to timeout - will investigate separately."
-
-# Then investigate test issues
-npm run test:smoke
-```
-
-## Known Issues to Watch
-
-1. **onSnapshot() cleanup**: Real-time listeners need proper unsubscribe in production
-2. **Memory leaks**: Long-lived `onSnapshot()` subscriptions should be cleaned up when leaving page
-3. **Test compatibility**: May need to detect Playwright and disable persistence/listeners during tests
-4. **Multi-tab conflicts**: First tab gets persistence, others get warning (expected behavior)
-
-## Next Features (After This Commit)
-
-### Priority 1: Faster Authentication with Firestore Snapshots
-
-**Problem:** Auth flow is slow (~800ms) because of cloud function call to `isAuthorizedVolunteer()`
-
-**Chosen Solution:** Replace cloud function with Firestore snapshot listener for authorization check
-
-**Benefits:**
-- First load: ~50-100ms from Firestore cache (we just enabled persistence!)
-- Return visits: ~50ms (7x faster than current)
-- Real-time updates: If authorization revoked, user booted instantly
-- No cloud function call needed
-- Cryptographically secure (Firestore security rules enforce it)
-
-**Implementation:**
-```javascript
-// Replace in dashboard, admin, and authorize pages
-onAuthStateChanged(auth, async (user) => {
-  if (user && !user.isAnonymous) {
-    const authDoc = doc(db, authorizedVolunteersCollectionPath, user.uid);
-
-    // Uses Firestore cache - instant on return visits!
-    onSnapshot(authDoc, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        document.getElementById('main-content').style.display = 'block';
-        window.initApp(user, data.displayName);
-      } else {
-        // Not authorized - redirect
-        window.location.href = '/login';
-      }
-    });
-  }
-});
-```
-
-**Pages to Update:**
-- `/dashboard/index.html` (line ~70-100)
-- `/admin/index.html` (line ~770-800)
-- `/authorize/index.html` (if exists)
-
-**Estimated Time:** 15-30 minutes
-
-### Priority 2: Table Animations
-
-From TABLE_UPDATES.md, the next steps are:
-1. ✅ Update flash animation (DONE)
-2. ✅ Insert animation (DONE)
-3. ✅ Delete animation (DONE)
-4. ✅ Test page (DONE)
-5. ✅ Admin panel integration (DONE - only boxes section)
-6. ⬜ **Add real-time updates to Reports section**
-7. ⬜ **Add real-time updates to Volunteers section**
-8. ⬜ Performance monitoring and optimization
-9. ⬜ Multi-browser testing
-10. ⬜ User preference toggle (animations on/off)
-11. ⬜ Accessibility: respect `prefers-reduced-motion`
-
-## Files Changed Summary
-
-- `firebase-init.js` - Added persistence (21 lines)
-- `admin/index.html` - Added animations + onSnapshot + timestamps (~300 lines)
-- `dashboard/index.html` - Added timestamp indicator (~15 lines)
-- `index.html` - Added timestamp indicator (~20 lines)
-- `TABLE_UPDATES.md` - Updated status to reflect completion
-- `test/table-flash.html` - New comprehensive test page (~435 lines)
-
-**Total Changes:** ~600 lines of new/modified code
+- All smoke tests passing ✅
+- Ready to commit changes
+- Consider running full test suite to verify no regressions

@@ -12,6 +12,18 @@ The following lines should NEVER appear in commit messages:
 
 A `commit-msg` hook will automatically block commits containing these lines.
 
+## CRITICAL: --no-verify Policy
+
+**NEVER use `git commit --no-verify` or `--no-verify` flag without EXPLICIT user permission!**
+
+This means:
+- ALWAYS let pre-commit hooks run (including tests)
+- NEVER skip hooks to bypass failing tests or checks
+- If tests are failing or taking too long, STOP and report to the user
+- Only use `--no-verify` if the user explicitly gives permission in the current conversation
+
+This policy ensures code quality and prevents broken code from being committed.
+
 ## Project Overview
 
 This is a Firebase-based web application for tracking Toys for Tots donation boxes. Marines use QR codes to provision boxes at business locations, and the public can scan codes to report when boxes need pickup. The system manages location data, status reports, and volunteer authorization.
