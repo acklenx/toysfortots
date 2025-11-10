@@ -117,8 +117,15 @@ service cloud.firestore {
       // This is the collection checked by the isAuthorizedVolunteer function.
       // Volunteers can read, admins can manage (with restrictions)
       match /authorizedVolunteers/{userId} {
-        allow list, get: if isVolunteer() &&
-                            (resource == null || resource.data.deleted != true);
+        // Allow users to read their OWN document (needed for getUserRole() helper to work)
+        allow get: if request.auth != null &&
+                      request.auth.uid == userId &&
+                      (resource == null || resource.data.deleted != true);
+
+        // Allow volunteers to list all volunteers
+        allow list: if isVolunteer() &&
+                       (resource == null || resource.data.deleted != true);
+
         allow create: if false; // Only Cloud Functions can create
 
         // Admins can update volunteers (but not their own role or the root user)
