@@ -52,12 +52,12 @@ service cloud.firestore {
         // Allow admins to soft delete (set deleted=true)
         allow update: if isAdmin() &&
                          request.resource.data.deleted == true &&
-                         resource.data.deleted == false;
+                         resource.data.get('deleted', false) == false;
 
         // Allow root to restore soft deletes (set deleted=false)
         allow update: if isRoot() &&
                          request.resource.data.deleted == false &&
-                         resource.data.deleted == true;
+                         resource.data.get('deleted', false) == true;
 
         // Hard delete only for root (purging soft deletes)
         allow delete: if isRoot();
@@ -82,12 +82,12 @@ service cloud.firestore {
         // Allow admins to soft delete
         allow update: if isAdmin() &&
                          request.resource.data.deleted == true &&
-                         resource.data.deleted == false;
+                         resource.data.get('deleted', false) == false;
 
         // Allow root to restore soft deletes
         allow update: if isRoot() &&
                          request.resource.data.deleted == false &&
-                         resource.data.deleted == true;
+                         resource.data.get('deleted', false) == true;
 
         // Hard delete (purge) only for root
         allow delete: if isRoot();
@@ -141,12 +141,12 @@ service cloud.firestore {
                          userId != request.auth.uid &&
                          (resource == null || resource.data.role != 'root') &&
                          request.resource.data.deleted == true &&
-                         resource.data.deleted == false;
+                         resource.data.get('deleted', false) == false;
 
         // Root can restore soft deletes
         allow update: if isRoot() &&
                          request.resource.data.deleted == false &&
-                         resource.data.deleted == true;
+                         resource.data.get('deleted', false) == true;
 
         // Hard delete (purge) - only root
         allow delete: if isRoot();
@@ -176,7 +176,7 @@ service cloud.firestore {
         // Root can soft delete audit logs
         allow update: if isRoot() &&
                          request.resource.data.deleted == true &&
-                         resource.data.deleted == false;
+                         resource.data.get('deleted', false) == false;
 
         // Root can hard delete (purge)
         allow delete: if isRoot();
