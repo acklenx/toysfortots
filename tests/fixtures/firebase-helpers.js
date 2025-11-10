@@ -78,7 +78,9 @@ async function authorizeVolunteer(uid, email, displayName) {
   await volunteerRef.set({
     email: email,
     displayName: displayName || email,
-    authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+    role: 'volunteer',
+    authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
+    deleted: false
   });
 
   // Verify write
@@ -110,6 +112,7 @@ async function createTestLocation(boxId, data = {}) {
     contactEmail: data.contactEmail || 'test@example.com',
     contactPhone: data.contactPhone || '555-1234',
     reportCounter: data.reportCounter !== undefined ? data.reportCounter : 0,
+    deleted: false,
     ...data
   };
 
@@ -132,7 +135,8 @@ async function createTestLocation(boxId, data = {}) {
       description: `Box registered by ${locationData.volunteer}.`,
       timestamp: locationData.created,
       status: 'cleared',
-      reporterId: locationData.provisionedBy
+      reporterId: locationData.provisionedBy,
+      deleted: false
     });
   } catch (error) {
     console.error(`Failed to create initial report for ${boxId}:`, error);
@@ -187,6 +191,7 @@ async function createTestReport(boxId, reportData = {}) {
     timestamp: new Date().toISOString(),
     status: reportData.status || 'new',
     reporterId: reportData.reporterId || 'anonymous',
+    deleted: false,
     ...reportData
   };
 

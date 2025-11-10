@@ -56,6 +56,7 @@ export const locationsCollectionPath = `${ basePath }/locations`;
 export const reportsCollectionPath = `${ basePath }/totsReports`;
 export const locationSuggestionsCollectionPath = `${ basePath }/locationSuggestions`;
 export const authorizedVolunteersCollectionPath = `${ privateBasePath }/authorizedVolunteers`;
+export const auditLogsCollectionPath = `${ privateBasePath }/auditLogs`;
 
 // Make paths available globally for user-display.js
 window.db = db;

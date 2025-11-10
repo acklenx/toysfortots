@@ -2,28 +2,65 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- HELPER FUNCTION FOR AUTHORIZATION (NOW PROVIDER-AGNOSTIC) ---
+    // --- HELPER FUNCTIONS FOR AUTHORIZATION AND RBAC ---
+
     // Authorization is granted ONLY if the user's UID is found in the
     // private authorizedVolunteers collection.
     function isAuthorizedVolunteer() {
       return exists(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid));
     }
 
+    // Get user's role from authorizedVolunteers collection
+    function getUserRole() {
+      let volunteer = get(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid));
+      return volunteer.data.role;
+    }
+
+    // Check if user is a volunteer (any authorized user)
+    function isVolunteer() {
+      return isAuthorizedVolunteer();
+    }
+
+    // Check if user is an admin or root user
+    function isAdmin() {
+      return isAuthorizedVolunteer() && getUserRole() in ['admin', 'root'];
+    }
+
+    // Check if user is the root user (super admin)
+    function isRoot() {
+      return isAuthorizedVolunteer() && getUserRole() == 'root';
+    }
+
     // --- Public Data ---
     match /artifacts/toysfortots-eae4d/public/01/data/01 {
 
       // Allow ANY authenticated user (including anonymous) to 'get' OR 'list'
-      // Authorized volunteers can update and delete for admin panel
+      // Only show non-deleted items to regular users
       match /locations/{boxId} {
-        allow get, list: if request.auth != null;
-        allow create: if false;
+        allow get, list: if request.auth != null &&
+                            (resource == null || resource.data.deleted != true);
+        allow create: if false; // Only Cloud Functions can create
 
         // Allow any authenticated user to update ONLY the analytics field
         allow update: if request.auth != null &&
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['analytics']);
 
-        // Allow authorized volunteers to update/delete everything else
-        allow update, delete: if isAuthorizedVolunteer();
+        // Allow authorized volunteers to update location data (but not delete fields)
+        allow update: if isVolunteer() &&
+                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
+
+        // Allow admins to soft delete (set deleted=true)
+        allow update: if isAdmin() &&
+                         request.resource.data.deleted == true &&
+                         resource.data.deleted == false;
+
+        // Allow root to restore soft deletes (set deleted=false)
+        allow update: if isRoot() &&
+                         request.resource.data.deleted == false &&
+                         resource.data.deleted == true;
+
+        // Hard delete only for root (purging soft deletes)
+        allow delete: if isRoot();
 
         // Allow any authenticated user to create analytics events (page views, clicks)
         match /events/{eventId} {
@@ -33,10 +70,27 @@ service cloud.firestore {
       }
 
       // --- TOTSREPORTS RULE ---
-      // Authorized volunteers (any provider) can list, get, update, and delete (for admin panel).
+      // Authorized volunteers can view and update reports
+      // Only admins can soft delete, only root can hard delete
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
-        allow list, get, update, delete: if isAuthorizedVolunteer(); // Uses the new provider-agnostic function
+        allow list, get: if isVolunteer() &&
+                            (resource == null || resource.data.deleted != true);
+        allow update: if isVolunteer() &&
+                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
+
+        // Allow admins to soft delete
+        allow update: if isAdmin() &&
+                         request.resource.data.deleted == true &&
+                         resource.data.deleted == false;
+
+        // Allow root to restore soft deletes
+        allow update: if isRoot() &&
+                         request.resource.data.deleted == false &&
+                         resource.data.deleted == true;
+
+        // Hard delete (purge) only for root
+        allow delete: if isRoot();
       }
 
       // --- LOCATION SUGGESTIONS (for autocomplete) ---
@@ -61,12 +115,32 @@ service cloud.firestore {
       }
 
       // This is the collection checked by the isAuthorizedVolunteer function.
-      // Authorized volunteers can read and update for admin panel (but not delete themselves)
+      // Volunteers can read, admins can manage (with restrictions)
       match /authorizedVolunteers/{userId} {
-        allow list, get: if isAuthorizedVolunteer();
-        allow update: if isAuthorizedVolunteer();
-        allow delete: if isAuthorizedVolunteer() && userId != request.auth.uid; // Cannot delete self
+        allow list, get: if isVolunteer() &&
+                            (resource == null || resource.data.deleted != true);
         allow create: if false; // Only Cloud Functions can create
+
+        // Admins can update volunteers (but not their own role or the root user)
+        allow update: if isAdmin() &&
+                         userId != request.auth.uid && // Can't modify self
+                         (resource == null || resource.data.role != 'root') && // Can't modify root user
+                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
+
+        // Admins can soft delete (but not root or themselves)
+        allow update: if isAdmin() &&
+                         userId != request.auth.uid &&
+                         (resource == null || resource.data.role != 'root') &&
+                         request.resource.data.deleted == true &&
+                         resource.data.deleted == false;
+
+        // Root can restore soft deletes
+        allow update: if isRoot() &&
+                         request.resource.data.deleted == false &&
+                         resource.data.deleted == true;
+
+        // Hard delete (purge) - only root
+        allow delete: if isRoot();
 
         // Allow authorized volunteers to write analytics events to their own subcollections
         match /actions/{actionId} {
@@ -78,6 +152,24 @@ service cloud.firestore {
           allow create: if isAuthorizedVolunteer() && userId == request.auth.uid;
           allow read: if isAuthorizedVolunteer();
         }
+      }
+
+      // --- AUDIT LOGS ---
+      // Immutable log of all sensitive operations
+      // Only admins can read, only authenticated users can create, only root can purge
+      match /auditLogs/{logId} {
+        allow create: if request.auth != null; // Anyone authenticated can write logs
+        allow list, get: if isAdmin() &&
+                            (resource == null || resource.data.deleted != true);
+        allow update, delete: if false; // Immutable, except for root purge
+
+        // Root can soft delete audit logs
+        allow update: if isRoot() &&
+                         request.resource.data.deleted == true &&
+                         resource.data.deleted == false;
+
+        // Root can hard delete (purge)
+        allow delete: if isRoot();
       }
     }
 

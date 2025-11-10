@@ -627,6 +627,66 @@
 				<div id="volunteers-container"></div>
 				<div id="volunteers-pagination" class="pagination" style="display: none;"></div>
 			</div>
+
+			<!-- Root Only: Show Deleted Toggle -->
+			<div id="deleted-toggle" class="admin-section" style="display: none;">
+				<label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+					<input type="checkbox" id="show-deleted-checkbox" style="width: auto;">
+					<span style="font-weight: 600; color: var(--marine-blue);">Show Deleted Items</span>
+					<span style="color: var(--text-muted); font-size: 0.9rem;">(Root users can view and restore soft-deleted data)</span>
+				</label>
+			</div>
+
+			<!-- Admin/Root: Audit Logs Section -->
+			<div id="audit-section" class="admin-section" style="display: none;">
+				<div class="section-header">
+					<h2>📋 Audit Logs</h2>
+				</div>
+				<div class="section-controls">
+					<div class="search-box">
+						<input type="text" id="audit-search" placeholder="Search audit logs by user, action, or target...">
+					</div>
+					<div class="control-buttons">
+						<select id="audit-action-filter" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px;">
+							<option value="">All Actions</option>
+							<option value="delete_box">Delete Box</option>
+							<option value="delete_box_bulk">Bulk Delete Boxes</option>
+							<option value="delete_report">Delete Report</option>
+							<option value="delete_report_bulk">Bulk Delete Reports</option>
+							<option value="delete_volunteer">Delete Volunteer</option>
+							<option value="delete_volunteer_bulk">Bulk Delete Volunteers</option>
+							<option value="modify_box">Modify Box</option>
+							<option value="modify_volunteer">Modify Volunteer</option>
+							<option value="modify_volunteer_role">Change Volunteer Role</option>
+							<option value="purge_soft_deletes">Purge Soft Deletes</option>
+							<option value="export_data">Export Data</option>
+						</select>
+						<button id="refresh-audit-btn" class="primary-btn">Refresh</button>
+					</div>
+				</div>
+				<div id="audit-loading" class="loading" style="display: none;">Loading audit logs...</div>
+				<div id="audit-error" class="error-message" style="display: none;"></div>
+				<div id="audit-container"></div>
+				<div id="audit-pagination" class="pagination" style="display: none;"></div>
+			</div>
+
+			<!-- Root Only: Purge Section -->
+			<div id="purge-section" class="admin-section" style="display: none; border: 2px solid var(--t4t-red);">
+				<div class="section-header" style="border-bottom-color: var(--t4t-red);">
+					<h2 style="color: var(--t4t-red);">⚠️ Danger Zone - Purge Operations (Root Only)</h2>
+				</div>
+				<p style="color: var(--text-secondary); margin-bottom: 20px;">
+					<strong>WARNING:</strong> Purge operations permanently delete data and cannot be undone.
+					Only use these when you're certain you want to remove soft-deleted items forever.
+				</p>
+				<div class="control-buttons">
+					<button id="purge-deleted-boxes-btn" class="danger-btn">Purge Deleted Boxes</button>
+					<button id="purge-deleted-reports-btn" class="danger-btn">Purge Deleted Reports</button>
+					<button id="purge-deleted-volunteers-btn" class="danger-btn">Purge Deleted Volunteers</button>
+					<button id="purge-audit-logs-btn" class="danger-btn">Purge Old Audit Logs (90+ days)</button>
+				</div>
+				<div id="purge-result" style="margin-top: 15px; display: none;"></div>
+			</div>
 		</div>
 	</main>
 
@@ -714,16 +774,20 @@
 	<div id="footer-placeholder"></div>
 	<script src="/js/loader.min.js" defer></script>
 	<script type="module">
-		import { db, auth, functions, locationsCollectionPath, reportsCollectionPath } from '/js/firebase-init.js';
+		import { db, auth, functions, locationsCollectionPath, reportsCollectionPath, authorizedVolunteersCollectionPath, auditLogsCollectionPath } from '/js/firebase-init.js';
+		import { logAudit, AUDIT_ACTIONS } from '/js/audit-logger.js';
 		import {
 			collection,
 			getDocs,
+			getDoc,
 			doc,
 			updateDoc,
 			deleteDoc,
 			query,
 			orderBy,
-			onSnapshot
+			where,
+			onSnapshot,
+			serverTimestamp
 		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 		import {
 			onAuthStateChanged
@@ -733,9 +797,14 @@
 		} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 
 		let currentUser = null;
+		let currentUserRole = 'volunteer'; // Will be set on auth
 		let currentEditBoxId = null;
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
+		let showingDeleted = false; // For root users to toggle deleted items view
+
+		const ROOT_USER_EMAIL = 'acklenx@gmail.com';
+		const ROOT_USER_NAME = 'Quincy Acklen';
 
 		// HTML escaping function to prevent XSS attacks
 		const escapeHtml = (unsafe) => {
@@ -795,8 +864,31 @@
 					return;
 				}
 
+				// Get user's role from Firestore
+				const volunteerDoc = await getDoc(doc(db, authorizedVolunteersCollectionPath, user.uid));
+				if (volunteerDoc.exists()) {
+					currentUserRole = volunteerDoc.data().role || 'volunteer';
+					console.log(`User role: ${currentUserRole}`);
+				}
+
+				// Only admins/root can access admin panel
+				if (!['admin', 'root'].includes(currentUserRole)) {
+					document.getElementById('auth-check').innerHTML = '<div class="error-message">Only administrators can access this panel.</div>';
+					return;
+				}
+
 				document.getElementById('auth-check').style.display = 'none';
 				document.getElementById('admin-content').style.display = 'block';
+
+				// Show/hide root-only features
+				if (currentUserRole === 'root') {
+					const deletedToggle = document.getElementById('deleted-toggle');
+					const purgeSection = document.getElementById('purge-section');
+					const auditSection = document.getElementById('audit-section');
+					if (deletedToggle) deletedToggle.style.display = 'block';
+					if (purgeSection) purgeSection.style.display = 'block';
+					if (auditSection) auditSection.style.display = 'block';
+				}
 
 				// Load all data
 				loadLocationSuggestions();
@@ -804,7 +896,7 @@
 				loadReports();
 				loadVolunteers();
 			} catch (error) {
-				document.getElementById('auth-check').innerHTML = '<div class="error-message">Error checking authorization: ' + error.message + '</div>';
+				document.getElementById('auth-check').innerHTML = '<div class="error-message">Error checking authorization: ' + escapeHtml(error.message) + '</div>';
 			}
 		});
 
@@ -954,7 +1046,10 @@
 					if (!boxesInitialLoadComplete) {
 						allBoxes = [];
 						snapshot.forEach((doc) => {
-							allBoxes.push({ id: doc.id, ...doc.data() });
+							const data = doc.data();
+							// Filter out soft-deleted items (unless root viewing deleted)
+							if (data.deleted && !showingDeleted) return;
+							allBoxes.push({ id: doc.id, ...data });
 						});
 
 						document.getElementById('stat-boxes').textContent = allBoxes.length;
@@ -1296,7 +1391,10 @@ No Action: ${noActionViews}`;
 
 				allReports = [];
 				snapshot.forEach((doc) => {
-					allReports.push({ id: doc.id, ...doc.data() });
+					const data = doc.data();
+					// Filter out soft-deleted items (unless root viewing deleted)
+					if (data.deleted && !showingDeleted) return;
+					allReports.push({ id: doc.id, ...data });
 				});
 
 				document.getElementById('stat-reports').textContent = allReports.length;
@@ -1493,7 +1591,10 @@ No Action: ${noActionViews}`;
 
 				allVolunteers = [];
 				snapshot.forEach((doc) => {
-					allVolunteers.push({ id: doc.id, ...doc.data() });
+					const data = doc.data();
+					// Filter out soft-deleted items (unless root viewing deleted)
+					if (data.deleted && !showingDeleted) return;
+					allVolunteers.push({ id: doc.id, ...data });
 				});
 
 				document.getElementById('stat-volunteers').textContent = allVolunteers.length;
@@ -1863,15 +1964,27 @@ No Action: ${noActionViews}`;
 			document.getElementById('edit-box-modal').classList.remove('active');
 		});
 
-		// Delete box
+		// Soft delete box (admin only)
 		window.deleteBox = function(boxId, label) {
 			showConfirmation(
 				'Delete Box',
-				`Are you sure you want to delete "${label}"? This action cannot be undone.`,
+				`Soft delete "${label}"? This can be restored later by root users.`,
 				async () => {
 					try {
 						const docRef = doc(db, locationsCollectionPath, boxId);
-						await deleteDoc(docRef);
+						await updateDoc(docRef, {
+							deleted: true,
+							deletedAt: serverTimestamp(),
+							deletedBy: currentUser.uid
+						});
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_BOX, currentUser, {
+							targetId: boxId,
+							targetType: 'box',
+							targetLabel: label
+						});
+
 						loadBoxes();
 					} catch (error) {
 						alert('Error deleting box: ' + error.message);
@@ -1880,13 +1993,13 @@ No Action: ${noActionViews}`;
 			);
 		};
 
-		// Delete all boxes
+		// Soft delete all boxes (bulk)
 		document.getElementById('delete-all-boxes-btn').addEventListener('click', () => {
 			const deleteCount = filteredBoxes.length;
 			const keepCount = allBoxes.length - deleteCount;
 			const message = deleteCount === allBoxes.length
-				? `⚠️ WARNING: This will permanently delete ALL ${deleteCount} boxes and cannot be undone. Are you absolutely sure?`
-				: `⚠️ WARNING: This will delete ${deleteCount} box${deleteCount !== 1 ? 'es' : ''} (${keepCount} box${keepCount !== 1 ? 'es' : ''} will NOT be deleted). This action cannot be undone. Are you sure?`;
+				? `⚠️ WARNING: This will soft delete ALL ${deleteCount} boxes. They can be restored by root users. Are you sure?`
+				: `⚠️ WARNING: This will soft delete ${deleteCount} box${deleteCount !== 1 ? 'es' : ''} (${keepCount} box${keepCount !== 1 ? 'es' : ''} will NOT be deleted). Are you sure?`;
 
 			showConfirmation(
 				`Delete ${deleteCount} Box${deleteCount !== 1 ? 'es' : ''}`,
@@ -1896,9 +2009,20 @@ No Action: ${noActionViews}`;
 						const deletePromises = [];
 						filteredBoxes.forEach((box) => {
 							const docRef = doc(db, locationsCollectionPath, box.id);
-							deletePromises.push(deleteDoc(docRef));
+							deletePromises.push(updateDoc(docRef, {
+								deleted: true,
+								deletedAt: serverTimestamp(),
+								deletedBy: currentUser.uid
+							}));
 						});
 						await Promise.all(deletePromises);
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_BOX_BULK, currentUser, {
+							targetType: 'box',
+							count: deleteCount
+						});
+
 						loadBoxes();
 					} catch (error) {
 						alert('Error deleting boxes: ' + error.message);
@@ -1907,15 +2031,26 @@ No Action: ${noActionViews}`;
 			);
 		});
 
-		// Delete report
+		// Soft delete report
 		window.deleteReport = function(reportId) {
 			showConfirmation(
 				'Delete Report',
-				'Are you sure you want to delete this report?',
+				'Soft delete this report? It can be restored later by root users.',
 				async () => {
 					try {
 						const docRef = doc(db, reportsCollectionPath, reportId);
-						await deleteDoc(docRef);
+						await updateDoc(docRef, {
+							deleted: true,
+							deletedAt: serverTimestamp(),
+							deletedBy: currentUser.uid
+						});
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_REPORT, currentUser, {
+							targetId: reportId,
+							targetType: 'report'
+						});
+
 						loadReports();
 					} catch (error) {
 						alert('Error deleting report: ' + error.message);
@@ -1924,13 +2059,13 @@ No Action: ${noActionViews}`;
 			);
 		};
 
-		// Delete all reports
+		// Soft delete all reports (bulk)
 		document.getElementById('delete-all-reports-btn').addEventListener('click', () => {
 			const deleteCount = filteredReports.length;
 			const keepCount = allReports.length - deleteCount;
 			const message = deleteCount === allReports.length
-				? `⚠️ WARNING: This will permanently delete ALL ${deleteCount} reports and cannot be undone. Are you absolutely sure?`
-				: `⚠️ WARNING: This will delete ${deleteCount} report${deleteCount !== 1 ? 's' : ''} (${keepCount} report${keepCount !== 1 ? 's' : ''} will NOT be deleted). This action cannot be undone. Are you sure?`;
+				? `⚠️ WARNING: This will soft delete ALL ${deleteCount} reports. They can be restored by root users. Are you sure?`
+				: `⚠️ WARNING: This will soft delete ${deleteCount} report${deleteCount !== 1 ? 's' : ''} (${keepCount} report${keepCount !== 1 ? 's' : ''} will NOT be deleted). Are you sure?`;
 
 			showConfirmation(
 				`Delete ${deleteCount} Report${deleteCount !== 1 ? 's' : ''}`,
@@ -1940,9 +2075,20 @@ No Action: ${noActionViews}`;
 						const deletePromises = [];
 						filteredReports.forEach((report) => {
 							const docRef = doc(db, reportsCollectionPath, report.id);
-							deletePromises.push(deleteDoc(docRef));
+							deletePromises.push(updateDoc(docRef, {
+								deleted: true,
+								deletedAt: serverTimestamp(),
+								deletedBy: currentUser.uid
+							}));
 						});
 						await Promise.all(deletePromises);
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_REPORT_BULK, currentUser, {
+							targetType: 'report',
+							count: deleteCount
+						});
+
 						loadReports();
 					} catch (error) {
 						alert('Error deleting reports: ' + error.message);
@@ -2001,20 +2147,45 @@ No Action: ${noActionViews}`;
 		});
 
 		// Delete volunteer
-		window.deleteVolunteer = function(volunteerId, name) {
+		// Soft delete volunteer (cannot delete self or root user)
+		window.deleteVolunteer = async function(volunteerId, name) {
 			if (volunteerId === currentUser.uid) {
 				alert('You cannot delete your own account.');
 				return;
 			}
 
+			// Check if target is root user
+			try {
+				const docRef = doc(db, authorizedVolunteersCollectionPath, volunteerId);
+				const docSnap = await getDoc(docRef);
+				if (docSnap.exists() && docSnap.data().role === 'root') {
+					alert('Cannot delete root user (Quincy Acklen).');
+					return;
+				}
+			} catch (error) {
+				alert('Error checking volunteer: ' + error.message);
+				return;
+			}
+
 			showConfirmation(
 				'Delete Volunteer',
-				`Are you sure you want to delete volunteer "${name}"? This will remove their access to the system.`,
+				`Soft delete volunteer "${name}"? This will remove their access but can be restored by root users.`,
 				async () => {
 					try {
-						const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
-						const docRef = doc(db, volunteersPath, volunteerId);
-						await deleteDoc(docRef);
+						const docRef = doc(db, authorizedVolunteersCollectionPath, volunteerId);
+						await updateDoc(docRef, {
+							deleted: true,
+							deletedAt: serverTimestamp(),
+							deletedBy: currentUser.uid
+						});
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_VOLUNTEER, currentUser, {
+							targetId: volunteerId,
+							targetType: 'volunteer',
+							targetLabel: name
+						});
+
 						loadVolunteers();
 					} catch (error) {
 						alert('Error deleting volunteer: ' + error.message);
@@ -2023,29 +2194,42 @@ No Action: ${noActionViews}`;
 			);
 		};
 
-		// Delete all volunteers
+		// Soft delete all volunteers (bulk) - exclude self and root user
 		document.getElementById('delete-all-volunteers-btn').addEventListener('click', () => {
-			const volunteersToDelete = filteredVolunteers.filter(v => v.id !== currentUser.uid);
+			// Filter out self and root users
+			const volunteersToDelete = filteredVolunteers.filter(v =>
+				v.id !== currentUser.uid && v.role !== 'root'
+			);
 			const deleteCount = volunteersToDelete.length;
-			const allDeletableCount = allVolunteers.filter(v => v.id !== currentUser.uid).length;
+			const allDeletableCount = allVolunteers.filter(v => v.id !== currentUser.uid && v.role !== 'root').length;
 			const keepCount = allDeletableCount - deleteCount;
 
 			const message = deleteCount === allDeletableCount
-				? `⚠️ WARNING: This will delete all ${deleteCount} volunteers EXCEPT you. This action cannot be undone. Are you absolutely sure?`
-				: `⚠️ WARNING: This will delete ${deleteCount} volunteer${deleteCount !== 1 ? 's' : ''} (${keepCount} volunteer${keepCount !== 1 ? 's' : ''} will NOT be deleted, plus you). This action cannot be undone. Are you sure?`;
+				? `⚠️ WARNING: This will soft delete all ${deleteCount} volunteers EXCEPT you and root users. They can be restored. Are you sure?`
+				: `⚠️ WARNING: This will soft delete ${deleteCount} volunteer${deleteCount !== 1 ? 's' : ''} (${keepCount} volunteer${keepCount !== 1 ? 's' : ''} will NOT be deleted, plus you and root users). Are you sure?`;
 
 			showConfirmation(
 				`Delete ${deleteCount} Volunteer${deleteCount !== 1 ? 's' : ''}`,
 				message,
 				async () => {
 					try {
-						const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
 						const deletePromises = [];
 						volunteersToDelete.forEach((volunteer) => {
-							const docRef = doc(db, volunteersPath, volunteer.id);
-							deletePromises.push(deleteDoc(docRef));
+							const docRef = doc(db, authorizedVolunteersCollectionPath, volunteer.id);
+							deletePromises.push(updateDoc(docRef, {
+								deleted: true,
+								deletedAt: serverTimestamp(),
+								deletedBy: currentUser.uid
+							}));
 						});
 						await Promise.all(deletePromises);
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.DELETE_VOLUNTEER_BULK, currentUser, {
+							targetType: 'volunteer',
+							count: deleteCount
+						});
+
 						loadVolunteers();
 					} catch (error) {
 						alert('Error deleting volunteers: ' + error.message);
@@ -2074,6 +2258,361 @@ No Action: ${noActionViews}`;
 			document.getElementById('confirmation-modal').classList.remove('active');
 			confirmCallback = null;
 		});
+
+		// ==================== RBAC: AUDIT LOGS ====================
+
+		let allAuditLogs = [];
+		let filteredAuditLogs = [];
+		let currentAuditPage = 1;
+		const AUDIT_PAGE_SIZE = 50;
+
+		// Load audit logs (admin/root only)
+		async function loadAuditLogs() {
+			if (!['admin', 'root'].includes(currentUserRole)) return;
+
+			const loading = document.getElementById('audit-loading');
+			const error = document.getElementById('audit-error');
+			const container = document.getElementById('audit-container');
+
+			loading.style.display = 'block';
+			error.style.display = 'none';
+			container.innerHTML = '';
+
+			try {
+				const auditRef = collection(db, auditLogsCollectionPath);
+				const q = query(auditRef, orderBy('timestamp', 'desc'));
+				const snapshot = await getDocs(q);
+
+				allAuditLogs = [];
+				snapshot.forEach((doc) => {
+					const data = doc.data();
+					// Filter deleted logs unless showing deleted
+					if (data.deleted && !showingDeleted) return;
+					allAuditLogs.push({ id: doc.id, ...data });
+				});
+
+				loading.style.display = 'none';
+				filterAndRenderAuditLogs();
+			} catch (err) {
+				loading.style.display = 'none';
+				error.textContent = 'Error loading audit logs: ' + err.message;
+				error.style.display = 'block';
+			}
+		}
+
+		// Filter and render audit logs
+		function filterAndRenderAuditLogs() {
+			const searchTerm = document.getElementById('audit-search').value.toLowerCase();
+			const actionFilter = document.getElementById('audit-action-filter').value;
+
+			filteredAuditLogs = allAuditLogs.filter(log => {
+				const matchesSearch = !searchTerm || (
+					(log.userEmail || '').toLowerCase().includes(searchTerm) ||
+					(log.userDisplayName || '').toLowerCase().includes(searchTerm) ||
+					(log.action || '').toLowerCase().includes(searchTerm) ||
+					(log.details?.targetLabel || '').toLowerCase().includes(searchTerm)
+				);
+				const matchesAction = !actionFilter || log.action === actionFilter;
+				return matchesSearch && matchesAction;
+			});
+
+			renderAuditLogs();
+		}
+
+		// Render audit logs
+		function renderAuditLogs() {
+			const container = document.getElementById('audit-container');
+			const pagination = document.getElementById('audit-pagination');
+
+			if (filteredAuditLogs.length === 0) {
+				container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No audit logs found.</p>';
+				pagination.style.display = 'none';
+				return;
+			}
+
+			const startIdx = (currentAuditPage - 1) * AUDIT_PAGE_SIZE;
+			const endIdx = startIdx + AUDIT_PAGE_SIZE;
+			const pageData = filteredAuditLogs.slice(startIdx, endIdx);
+
+			let html = '<table class="data-table"><thead><tr>';
+			html += '<th>Timestamp</th>';
+			html += '<th>User</th>';
+			html += '<th>Action</th>';
+			html += '<th>Details</th>';
+			html += '</tr></thead><tbody>';
+
+			pageData.forEach(log => {
+				const timestamp = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : 'N/A';
+				const user = escapeHtml(log.userDisplayName || log.userEmail || 'Unknown');
+				const action = escapeHtml(log.action || 'unknown');
+
+				let details = '';
+				if (log.details) {
+					if (log.details.targetLabel) {
+						details += escapeHtml(log.details.targetLabel);
+					} else if (log.details.count) {
+						details += `${log.details.count} items`;
+					}
+					if (log.details.targetType) {
+						details += ` (${escapeHtml(log.details.targetType)})`;
+					}
+				}
+
+				html += `<tr>`;
+				html += `<td>${timestamp}</td>`;
+				html += `<td>${user}</td>`;
+				html += `<td><span style="font-family: monospace; background: var(--gray-100); padding: 2px 6px; border-radius: 3px;">${action}</span></td>`;
+				html += `<td>${details}</td>`;
+				html += `</tr>`;
+			});
+
+			html += '</tbody></table>';
+			container.innerHTML = html;
+
+			// Pagination
+			const totalPages = Math.ceil(filteredAuditLogs.length / AUDIT_PAGE_SIZE);
+			if (totalPages > 1) {
+				let paginationHtml = `<button ${currentAuditPage === 1 ? 'disabled' : ''} onclick="currentAuditPage--; renderAuditLogs();">Previous</button>`;
+				paginationHtml += `<span class="page-info">Page ${currentAuditPage} of ${totalPages} (${filteredAuditLogs.length} total)</span>`;
+				paginationHtml += `<button ${currentAuditPage === totalPages ? 'disabled' : ''} onclick="currentAuditPage++; renderAuditLogs();">Next</button>`;
+				pagination.innerHTML = paginationHtml;
+				pagination.style.display = 'flex';
+			} else {
+				pagination.style.display = 'none';
+			}
+		}
+
+		// Event listeners for audit logs
+		if (document.getElementById('audit-search')) {
+			document.getElementById('audit-search').addEventListener('input', () => {
+				currentAuditPage = 1;
+				filterAndRenderAuditLogs();
+			});
+		}
+
+		if (document.getElementById('audit-action-filter')) {
+			document.getElementById('audit-action-filter').addEventListener('change', () => {
+				currentAuditPage = 1;
+				filterAndRenderAuditLogs();
+			});
+		}
+
+		if (document.getElementById('refresh-audit-btn')) {
+			document.getElementById('refresh-audit-btn').addEventListener('click', loadAuditLogs);
+		}
+
+		// ==================== RBAC: PURGE OPERATIONS (ROOT ONLY) ====================
+
+		// Purge deleted boxes (hard delete)
+		if (document.getElementById('purge-deleted-boxes-btn')) {
+			document.getElementById('purge-deleted-boxes-btn').addEventListener('click', async () => {
+				if (currentUserRole !== 'root') {
+					alert('Only root users can purge data.');
+					return;
+				}
+
+				const confirmed = confirm('⚠️ WARNING: This will PERMANENTLY delete all soft-deleted boxes. This action cannot be undone. Are you absolutely sure?');
+				if (!confirmed) return;
+
+				const resultDiv = document.getElementById('purge-result');
+				resultDiv.style.display = 'block';
+				resultDiv.className = 'loading';
+				resultDiv.textContent = 'Purging deleted boxes...';
+
+				try {
+					const locationsRef = collection(db, locationsCollectionPath);
+					const q = query(locationsRef, where('deleted', '==', true));
+					const snapshot = await getDocs(q);
+
+					const deletePromises = [];
+					snapshot.forEach((doc) => {
+						deletePromises.push(deleteDoc(doc.ref));
+					});
+
+					await Promise.all(deletePromises);
+
+					// Log audit
+					await logAudit(AUDIT_ACTIONS.PURGE_SOFT_DELETES, currentUser, {
+						targetType: 'box',
+						count: snapshot.size
+					});
+
+					resultDiv.className = 'success-message';
+					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted boxes.`;
+
+					loadBoxes();
+					setTimeout(() => resultDiv.style.display = 'none', 5000);
+				} catch (error) {
+					resultDiv.className = 'error-message';
+					resultDiv.textContent = '❌ Error purging boxes: ' + error.message;
+				}
+			});
+		}
+
+		// Purge deleted reports
+		if (document.getElementById('purge-deleted-reports-btn')) {
+			document.getElementById('purge-deleted-reports-btn').addEventListener('click', async () => {
+				if (currentUserRole !== 'root') {
+					alert('Only root users can purge data.');
+					return;
+				}
+
+				const confirmed = confirm('⚠️ WARNING: This will PERMANENTLY delete all soft-deleted reports. This action cannot be undone. Are you absolutely sure?');
+				if (!confirmed) return;
+
+				const resultDiv = document.getElementById('purge-result');
+				resultDiv.style.display = 'block';
+				resultDiv.className = 'loading';
+				resultDiv.textContent = 'Purging deleted reports...';
+
+				try {
+					const reportsRef = collection(db, reportsCollectionPath);
+					const q = query(reportsRef, where('deleted', '==', true));
+					const snapshot = await getDocs(q);
+
+					const deletePromises = [];
+					snapshot.forEach((doc) => {
+						deletePromises.push(deleteDoc(doc.ref));
+					});
+
+					await Promise.all(deletePromises);
+
+					// Log audit
+					await logAudit(AUDIT_ACTIONS.PURGE_SOFT_DELETES, currentUser, {
+						targetType: 'report',
+						count: snapshot.size
+					});
+
+					resultDiv.className = 'success-message';
+					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted reports.`;
+
+					loadReports();
+					setTimeout(() => resultDiv.style.display = 'none', 5000);
+				} catch (error) {
+					resultDiv.className = 'error-message';
+					resultDiv.textContent = '❌ Error purging reports: ' + error.message;
+				}
+			});
+		}
+
+		// Purge deleted volunteers
+		if (document.getElementById('purge-deleted-volunteers-btn')) {
+			document.getElementById('purge-deleted-volunteers-btn').addEventListener('click', async () => {
+				if (currentUserRole !== 'root') {
+					alert('Only root users can purge data.');
+					return;
+				}
+
+				const confirmed = confirm('⚠️ WARNING: This will PERMANENTLY delete all soft-deleted volunteers. This action cannot be undone. Are you absolutely sure?');
+				if (!confirmed) return;
+
+				const resultDiv = document.getElementById('purge-result');
+				resultDiv.style.display = 'block';
+				resultDiv.className = 'loading';
+				resultDiv.textContent = 'Purging deleted volunteers...';
+
+				try {
+					const volunteersRef = collection(db, authorizedVolunteersCollectionPath);
+					const q = query(volunteersRef, where('deleted', '==', true));
+					const snapshot = await getDocs(q);
+
+					const deletePromises = [];
+					snapshot.forEach((doc) => {
+						deletePromises.push(deleteDoc(doc.ref));
+					});
+
+					await Promise.all(deletePromises);
+
+					// Log audit
+					await logAudit(AUDIT_ACTIONS.PURGE_SOFT_DELETES, currentUser, {
+						targetType: 'volunteer',
+						count: snapshot.size
+					});
+
+					resultDiv.className = 'success-message';
+					resultDiv.textContent = `✅ Successfully purged ${snapshot.size} deleted volunteers.`;
+
+					loadVolunteers();
+					setTimeout(() => resultDiv.style.display = 'none', 5000);
+				} catch (error) {
+					resultDiv.className = 'error-message';
+					resultDiv.textContent = '❌ Error purging volunteers: ' + error.message;
+				}
+			});
+		}
+
+		// Purge old audit logs (90+ days)
+		if (document.getElementById('purge-audit-logs-btn')) {
+			document.getElementById('purge-audit-logs-btn').addEventListener('click', async () => {
+				if (currentUserRole !== 'root') {
+					alert('Only root users can purge data.');
+					return;
+				}
+
+				const confirmed = confirm('⚠️ WARNING: This will PERMANENTLY delete audit logs older than 90 days. This action cannot be undone. Are you absolutely sure?');
+				if (!confirmed) return;
+
+				const resultDiv = document.getElementById('purge-result');
+				resultDiv.style.display = 'block';
+				resultDiv.className = 'loading';
+				resultDiv.textContent = 'Purging old audit logs...';
+
+				try {
+					const auditRef = collection(db, auditLogsCollectionPath);
+					const ninetyDaysAgo = new Date();
+					ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+					const snapshot = await getDocs(auditRef);
+
+					const deletePromises = [];
+					snapshot.forEach((doc) => {
+						const data = doc.data();
+						const timestamp = data.timestamp?.toDate();
+						if (timestamp && timestamp < ninetyDaysAgo) {
+							deletePromises.push(deleteDoc(doc.ref));
+						}
+					});
+
+					await Promise.all(deletePromises);
+
+					// Log audit (this won't be purged since it's new)
+					await logAudit(AUDIT_ACTIONS.PURGE_AUDIT_LOGS, currentUser, {
+						targetType: 'audit_log',
+						count: deletePromises.length
+					});
+
+					resultDiv.className = 'success-message';
+					resultDiv.textContent = `✅ Successfully purged ${deletePromises.length} old audit logs.`;
+
+					loadAuditLogs();
+					setTimeout(() => resultDiv.style.display = 'none', 5000);
+				} catch (error) {
+					resultDiv.className = 'error-message';
+					resultDiv.textContent = '❌ Error purging audit logs: ' + error.message;
+				}
+			});
+		}
+
+		// ==================== RBAC: SHOW DELETED TOGGLE (ROOT ONLY) ====================
+
+		if (document.getElementById('show-deleted-checkbox')) {
+			document.getElementById('show-deleted-checkbox').addEventListener('change', (e) => {
+				showingDeleted = e.target.checked;
+
+				// Reload all data to show/hide deleted items
+				loadBoxes();
+				loadReports();
+				loadVolunteers();
+				if (currentUserRole === 'root') {
+					loadAuditLogs();
+				}
+			});
+		}
+
+		// Load audit logs for admins/root on init
+		if (['admin', 'root'].includes(currentUserRole)) {
+			setTimeout(loadAuditLogs, 1000); // Load after main data
+		}
 	</script>
 </body>
 </html>

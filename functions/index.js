@@ -270,7 +270,8 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 		created: new Date().toISOString(), provisionedBy: uid,
 		lat: geocodedLat, lon: geocodedLon,
 		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone,
-		reportCounter: 0
+		reportCounter: 0,
+		deleted: false
 	};
 	console.log( 'New location object built.' );
 	try
@@ -289,8 +290,10 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 			console.log( `Authorizing new volunteer: ${ uid }` );
 			batch.set( authVolRef, {
 				email: userEmail, displayName: userName,
+				role: 'volunteer',
 				authorizedAt: FieldValue.serverTimestamp(),
-				lastLogin: FieldValue.serverTimestamp()
+				lastLogin: FieldValue.serverTimestamp(),
+				deleted: false
 			}, { merge: true } );
 		}
 		// Create initial report with sequential ID: BOXID-00001
@@ -299,7 +302,8 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 		batch.set( initialReportRef, {
 			...newLocation, boxId: data.boxId, reportType: 'box_registered',
 			description: `Box registered by ${ userName }.`,
-			timestamp: newLocation.created, status: 'cleared', reporterId: uid
+			timestamp: newLocation.created, status: 'cleared', reporterId: uid,
+			deleted: false
 		} );
 		// Update reportCounter to 1 since we just created the first report
 		batch.update( newLocationRef, { reportCounter: 1 } );
@@ -449,7 +453,9 @@ exports.authorizeVolunteerV2 = onCall( async( request ) =>
 			uid: uid,
 			email: userEmail,
 			displayName: userName,
-			authorizedAt: FieldValue.serverTimestamp()
+			role: 'volunteer',
+			authorizedAt: FieldValue.serverTimestamp(),
+			deleted: false
 		} );
 		console.log( 'authorizeVolunteerV2: User authorized successfully.' );
 		return { success: true, message: 'Authorization successful!' };
@@ -458,6 +464,113 @@ exports.authorizeVolunteerV2 = onCall( async( request ) =>
 	{
 		console.error( 'authorizeVolunteerV2: Error saving authorization:', error );
 		throw new HttpsError( 'internal', 'Error saving authorization. Please try again.' );
+	}
+} );
+
+/**
+ * Update volunteer role (admin/root only)
+ * Callable function to change a volunteer's role
+ */
+exports.updateVolunteerRole = onCall( async( request ) =>
+{
+	console.log( '--- updateVolunteerRole STARTED ---' );
+
+	// Check authentication
+	if( !request.auth || !request.auth.uid )
+	{
+		console.warn( 'updateVolunteerRole: Authentication failed.' );
+		throw new HttpsError( 'unauthenticated', 'You must be signed in to perform this action.' );
+	}
+
+	const callerUid = request.auth.uid;
+	const db = getFirestore();
+
+	// Check if caller is admin
+	try
+	{
+		const callerDoc = await db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ callerUid }` ).get();
+		if( !callerDoc.exists || !['admin', 'root'].includes( callerDoc.data().role ) )
+		{
+			console.warn( `updateVolunteerRole: User ${ callerUid } not authorized (not admin/root).` );
+			throw new HttpsError( 'permission-denied', 'Only admins can change roles.' );
+		}
+		console.log( `updateVolunteerRole: Caller ${ callerUid } is ${ callerDoc.data().role }` );
+	}
+	catch( error )
+	{
+		if( error instanceof HttpsError )
+		{
+			throw error;
+		}
+		console.error( 'updateVolunteerRole: Error checking caller authorization:', error );
+		throw new HttpsError( 'internal', 'Could not verify authorization.' );
+	}
+
+	const { volunteerId, newRole } = request.data;
+
+	// Validate input
+	if( !volunteerId || !newRole )
+	{
+		throw new HttpsError( 'invalid-argument', 'volunteerId and newRole are required.' );
+	}
+
+	if( !['volunteer', 'admin', 'root'].includes( newRole ) )
+	{
+		throw new HttpsError( 'invalid-argument', 'Invalid role. Must be: volunteer, admin, or root.' );
+	}
+
+	// Can't change your own role
+	if( volunteerId === callerUid )
+	{
+		console.warn( `updateVolunteerRole: User ${ callerUid } attempted to change own role.` );
+		throw new HttpsError( 'permission-denied', 'Cannot change your own role.' );
+	}
+
+	// Get target volunteer
+	try
+	{
+		const targetDoc = await db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ volunteerId }` ).get();
+		if( !targetDoc.exists )
+		{
+			throw new HttpsError( 'not-found', 'Volunteer not found.' );
+		}
+
+		const targetData = targetDoc.data();
+
+		// Can't change root user
+		if( targetData.role === 'root' )
+		{
+			console.warn( `updateVolunteerRole: Attempted to modify root user ${ volunteerId }.` );
+			throw new HttpsError( 'permission-denied', 'Cannot modify root user.' );
+		}
+
+		// Update role
+		await db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ volunteerId }` ).update( {
+			role: newRole,
+			modifiedAt: FieldValue.serverTimestamp(),
+			modifiedBy: callerUid
+		} );
+
+		console.log( `updateVolunteerRole: Changed ${ volunteerId } role from ${ targetData.role } to ${ newRole }` );
+		return {
+			success: true,
+			message: `Role updated to ${ newRole }.`,
+			previousRole: targetData.role,
+			newRole: newRole
+		};
+	}
+	catch( error )
+	{
+		if( error instanceof HttpsError )
+		{
+			throw error;
+		}
+		console.error( 'updateVolunteerRole: Error updating role:', error );
+		throw new HttpsError( 'internal', 'Failed to update role.' );
+	}
+	finally
+	{
+		console.log( '--- updateVolunteerRole FINISHED ---' );
 	}
 } );
 
