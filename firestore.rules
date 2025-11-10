@@ -49,10 +49,11 @@ service cloud.firestore {
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
-        // Allow admins to soft delete (set deleted=true)
+        // Allow admins to soft delete (set deleted=true, deletedAt, deletedBy)
         allow update: if isAdmin() &&
                          request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false;
+                         resource.data.get('deleted', false) == false &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
 
         // Allow root to restore soft deletes (set deleted=false)
         allow update: if isRoot() &&
@@ -79,10 +80,11 @@ service cloud.firestore {
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
-        // Allow admins to soft delete
+        // Allow admins to soft delete (set deleted=true, deletedAt, deletedBy)
         allow update: if isAdmin() &&
                          request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false;
+                         resource.data.get('deleted', false) == false &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
 
         // Allow root to restore soft deletes
         allow update: if isRoot() &&
@@ -140,7 +142,8 @@ service cloud.firestore {
                          userId != request.auth.uid &&
                          (resource == null || resource.data.role != 'root') &&
                          request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false;
+                         resource.data.get('deleted', false) == false &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
 
         // Root can restore soft deletes
         allow update: if isRoot() &&
