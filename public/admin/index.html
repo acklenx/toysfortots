@@ -806,6 +806,7 @@
 		// Listener cleanup - store unsubscribe functions to prevent duplicate listeners
 		let boxesUnsubscribe = null;
 		let boxesEventListenersSetup = false; // Track if search/export listeners are already attached
+		let renderDebounceTimer = null; // Debounce timer to prevent duplicate re-renders during animations
 
 		const ROOT_USER_EMAIL = 'acklenx@gmail.com';
 		const ROOT_USER_NAME = 'Quincy Acklen';
@@ -1219,19 +1220,24 @@
 		}
 
 		function filterAndRenderBoxes() {
-			const searchTerm = document.getElementById('boxes-search').value.toLowerCase();
-			filteredBoxes = allBoxes.filter(box => {
-				return (
-					box.id.toLowerCase().includes(searchTerm) ||
-					(box.label || '').toLowerCase().includes(searchTerm) ||
-					(box.address || '').toLowerCase().includes(searchTerm) ||
-					(box.city || '').toLowerCase().includes(searchTerm) ||
-					(box.volunteer || '').toLowerCase().includes(searchTerm)
-				);
-			});
+			// Debounce rendering to prevent race conditions during animations
+			// This prevents duplicate items when Firestore events fire during the 1400ms deletion animation
+			clearTimeout(renderDebounceTimer);
+			renderDebounceTimer = setTimeout(() => {
+				const searchTerm = document.getElementById('boxes-search').value.toLowerCase();
+				filteredBoxes = allBoxes.filter(box => {
+					return (
+						box.id.toLowerCase().includes(searchTerm) ||
+						(box.label || '').toLowerCase().includes(searchTerm) ||
+						(box.address || '').toLowerCase().includes(searchTerm) ||
+						(box.city || '').toLowerCase().includes(searchTerm) ||
+						(box.volunteer || '').toLowerCase().includes(searchTerm)
+					);
+				});
 
-			updateDeleteAllBoxesButton();
-			renderBoxes();
+				updateDeleteAllBoxesButton();
+				renderBoxes();
+			}, 100); // Wait 100ms for rapid changes to settle
 		}
 
 		function updateDeleteAllBoxesButton() {
