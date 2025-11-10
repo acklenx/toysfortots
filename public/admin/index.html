@@ -2009,13 +2009,13 @@ No Action: ${noActionViews}`;
 
 		// Soft delete box (admin only)
 		window.deleteBox = function(boxId, label) {
-			console.log('🔍 DELETE DEBUG v2.0: deleteBox called', { boxId, label });
+			console.log('🔍 BOX DELETE v3.0 EXPERIMENT 1: MINIMAL DATA (only deleted:true)', { boxId, label });
 			showConfirmation(
 				'Delete Box',
 				`Soft delete "${label}"? This can be restored later by root users.`,
 				async () => {
 					try {
-						console.log('🔍 DELETE DEBUG: Starting delete operation', {
+						console.log('🔍 BOX v3.0: Starting delete operation', {
 							boxId,
 							label,
 							userId: currentUser.uid,
@@ -2023,21 +2023,20 @@ No Action: ${noActionViews}`;
 						});
 
 						const docRef = doc(db, locationsCollectionPath, boxId);
-						console.log('🔍 DELETE DEBUG: Document reference created', {
+						console.log('🔍 BOX v3.0: Document reference created', {
 							path: docRef.path,
 							id: docRef.id
 						});
 
+						// EXPERIMENT 1: Only send deleted:true, NO deletedAt or deletedBy
 						const updateData = {
-							deleted: true,
-							deletedAt: serverTimestamp(),
-							deletedBy: currentUser.uid
+							deleted: true
 						};
-						console.log('🔍 DELETE DEBUG: Update data prepared', updateData);
+						console.log('🔍 BOX v3.0: Update data prepared (MINIMAL - only deleted field)', updateData);
 
-						console.log('🔍 DELETE DEBUG: Calling updateDoc...');
+						console.log('🔍 BOX v3.0: Calling updateDoc...');
 						await updateDoc(docRef, updateData);
-						console.log('🔍 DELETE DEBUG: updateDoc SUCCESS!');
+						console.log('✅ BOX v3.0: updateDoc SUCCESS!');
 
 						// Log audit
 						console.log('🔍 DELETE DEBUG: Logging audit...');
@@ -2103,26 +2102,45 @@ No Action: ${noActionViews}`;
 
 		// Soft delete report
 		window.deleteReport = function(reportId) {
+			console.log('🔍 REPORT DELETE v3.0 EXPERIMENT 2: FULL DATA + WIDE OPEN RULES', { reportId });
 			showConfirmation(
 				'Delete Report',
 				'Soft delete this report? It can be restored later by root users.',
 				async () => {
 					try {
+						console.log('🔍 REPORT v3.0: Starting delete', { reportId, reportsCollectionPath });
 						const docRef = doc(db, reportsCollectionPath, reportId);
-						await updateDoc(docRef, {
+						console.log('🔍 REPORT v3.0: Doc ref created', { path: docRef.path, id: docRef.id });
+
+						// EXPERIMENT 2: Full data (all three fields) + WIDE OPEN firestore rules
+						const updateData = {
 							deleted: true,
 							deletedAt: serverTimestamp(),
 							deletedBy: currentUser.uid
-						});
+						};
+						console.log('🔍 REPORT v3.0: Update data (FULL - all 3 fields)', updateData);
+
+						console.log('🔍 REPORT v3.0: Calling updateDoc...');
+						await updateDoc(docRef, updateData);
+						console.log('✅ REPORT v3.0: updateDoc SUCCESS!');
 
 						// Log audit
+						console.log('🔍 REPORT v3.0: Logging audit...');
 						await logAudit(AUDIT_ACTIONS.DELETE_REPORT, currentUser, {
 							targetId: reportId,
 							targetType: 'report'
 						});
+						console.log('✅ REPORT v3.0: Audit logged successfully');
 
 						// Don't call loadReports() - the real-time listener will handle updates automatically
+						console.log('✅ REPORT v3.0: Delete operation completed successfully');
 					} catch (error) {
+						console.error('❌ REPORT v3.0: Error caught!', {
+							message: error.message,
+							code: error.code,
+							stack: error.stack,
+							fullError: error
+						});
 						alert('Error deleting report: ' + error.message);
 					}
 				}
@@ -2237,19 +2255,30 @@ No Action: ${noActionViews}`;
 				return;
 			}
 
-			showConfirmation(
+			console.log('🔍 VOLUNTEER DELETE v3.0 EXPERIMENT 3: FULL DATA + STANDARD RULES', { volunteerId, name });
+		showConfirmation(
 				'Delete Volunteer',
 				`Soft delete volunteer "${name}"? This will remove their access but can be restored by root users.`,
 				async () => {
 					try {
+						console.log('🔍 VOLUNTEER v3.0: Starting delete', { volunteerId, name, authorizedVolunteersCollectionPath });
 						const docRef = doc(db, authorizedVolunteersCollectionPath, volunteerId);
-						await updateDoc(docRef, {
+						console.log('🔍 VOLUNTEER v3.0: Doc ref created', { path: docRef.path, id: docRef.id });
+
+						// EXPERIMENT 3: Full data (all three fields) + standard firestore rules
+						const updateData = {
 							deleted: true,
 							deletedAt: serverTimestamp(),
 							deletedBy: currentUser.uid
-						});
+						};
+						console.log('🔍 VOLUNTEER v3.0: Update data (FULL - all 3 fields + standard rules)', updateData);
+
+						console.log('🔍 VOLUNTEER v3.0: Calling updateDoc...');
+						await updateDoc(docRef, updateData);
+						console.log('✅ VOLUNTEER v3.0: updateDoc SUCCESS!');
 
 						// Log audit
+						console.log('🔍 VOLUNTEER v3.0: Logging audit...');
 						await logAudit(AUDIT_ACTIONS.DELETE_VOLUNTEER, currentUser, {
 							targetId: volunteerId,
 							targetType: 'volunteer',
@@ -2257,7 +2286,14 @@ No Action: ${noActionViews}`;
 						});
 
 						// Don't call loadVolunteers() - the real-time listener will handle updates automatically
+						console.log('✅ VOLUNTEER v3.0: Delete operation completed successfully');
 					} catch (error) {
+						console.error('❌ VOLUNTEER v3.0: Error caught!', {
+							message: error.message,
+							code: error.code,
+							stack: error.stack,
+							fullError: error
+						});
 						alert('Error deleting volunteer: ' + error.message);
 					}
 				}

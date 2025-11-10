@@ -49,11 +49,11 @@ service cloud.firestore {
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
-        // Allow admins to soft delete (set deleted=true, deletedAt, deletedBy)
+        // EXPERIMENT 1 v3.0: Allow soft delete with ONLY deleted field (no deletedAt/deletedBy)
         allow update: if isAdmin() &&
                          request.resource.data.deleted == true &&
                          resource.data.get('deleted', false) == false &&
-                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted']);
 
         // Allow root to restore soft deletes (set deleted=false)
         allow update: if isRoot() &&
@@ -71,20 +71,14 @@ service cloud.firestore {
       }
 
       // --- TOTSREPORTS RULE ---
-      // Authorized volunteers can view and update reports
-      // Filter out soft-deleted items
+      // EXPERIMENT 2 v3.0: WIDE OPEN for testing - admins can update anything
       match /totsReports/{reportId} {
         allow create: if request.auth != null;
         allow list, get: if isVolunteer() &&
                             (resource == null || resource.data.get('deleted', false) != true);
-        allow update: if isVolunteer() &&
-                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
-        // Allow admins to soft delete (set deleted=true, deletedAt, deletedBy)
-        allow update: if isAdmin() &&
-                         request.resource.data.deleted == true &&
-                         resource.data.get('deleted', false) == false &&
-                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'deletedBy']);
+        // EXPERIMENT 2: Allow admins to update ANY fields (including deleted/deletedAt/deletedBy)
+        allow update: if isAdmin();
 
         // Allow root to restore soft deletes
         allow update: if isRoot() &&
