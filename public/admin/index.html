@@ -803,6 +803,10 @@
 		let confirmCallback = null;
 		let showingDeleted = localStorage.getItem('showingDeleted') === 'true'; // For root users to toggle deleted items view
 
+		// Listener cleanup - store unsubscribe functions to prevent duplicate listeners
+		let boxesUnsubscribe = null;
+		let boxesEventListenersSetup = false; // Track if search/export listeners are already attached
+
 		const ROOT_USER_EMAIL = 'acklenx@gmail.com';
 		const ROOT_USER_NAME = 'Quincy Acklen';
 
@@ -1028,22 +1032,35 @@
 		// Load boxes with real-time updates
 		function loadBoxes() {
 			try {
+				console.log('📦 DEBUG: loadBoxes() called');
+
+				// Clean up old listener to prevent duplicates
+				if (boxesUnsubscribe) {
+					console.log('🔧 DEBUG: Cleaning up old boxes listener to prevent duplicates');
+					boxesUnsubscribe();
+					boxesUnsubscribe = null;
+				}
+
 				const loadStart = performance.now();
 				const locationsRef = collection(db, locationsCollectionPath);
 				const q = query(locationsRef, orderBy('created', 'desc'));
 
-				// Setup one-time event listeners
-				const searchInput = document.getElementById('boxes-search');
-				searchInput.addEventListener('input', () => filterAndRenderBoxes());
-				const exportBtn = document.getElementById('export-boxes-btn');
-				exportBtn.addEventListener('click', () => exportBoxesToCSV());
+				// Setup one-time event listeners (only once to prevent duplicates)
+				if (!boxesEventListenersSetup) {
+					const searchInput = document.getElementById('boxes-search');
+					searchInput.addEventListener('input', () => filterAndRenderBoxes());
+					const exportBtn = document.getElementById('export-boxes-btn');
+					exportBtn.addEventListener('click', () => exportBoxesToCSV());
+					boxesEventListenersSetup = true;
+				}
 
-				// Real-time listener
-				onSnapshot(q, (snapshot) => {
+				// Real-time listener - store unsubscribe function for cleanup
+				boxesUnsubscribe = onSnapshot(q, (snapshot) => {
 					const loadTime = Math.round(performance.now() - loadStart);
 
 					// Initial load - build complete list
 					if (!boxesInitialLoadComplete) {
+						console.log('📦 DEBUG: Initial boxes load from Firestore');
 						allBoxes = [];
 						snapshot.forEach((doc) => {
 							const data = doc.data();
@@ -1066,6 +1083,7 @@
 						boxesInitialLoadComplete = true;
 					} else {
 						// Subsequent updates - handle changes with animations
+						console.log('🔄 DEBUG: Boxes listener fired - processing changes');
 						snapshot.docChanges().forEach((change) => {
 							const box = { id: change.doc.id, ...change.doc.data() };
 
@@ -1104,6 +1122,8 @@
 					document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
 					document.getElementById('boxes-error').style.display = 'block';
 				});
+
+				console.log('✅ DEBUG: Boxes listener created and stored successfully');
 			} catch (error) {
 				document.getElementById('boxes-loading').style.display = 'none';
 				document.getElementById('boxes-error').textContent = 'Error loading boxes: ' + error.message;
