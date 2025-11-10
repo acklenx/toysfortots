@@ -118,10 +118,9 @@ service cloud.firestore {
       // Volunteers can read, admins can manage (with restrictions)
       match /authorizedVolunteers/{userId} {
         // Allow users to read their OWN document (needed for getUserRole() helper to work)
-        // Filter out soft-deleted items
+        // NO deleted check here - must be able to read own document for role-based permissions
         allow get: if request.auth != null &&
-                      request.auth.uid == userId &&
-                      (resource == null || resource.data.get('deleted', false) != true);
+                      request.auth.uid == userId;
 
         // Allow volunteers to list all volunteers
         // Filter out soft-deleted items
