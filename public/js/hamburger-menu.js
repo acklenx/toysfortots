@@ -95,6 +95,11 @@
           const result = await checkAuth();
           const isAuthorized = result.data.isAuthorized;
 
+          // Remember authorization status in localStorage
+          if (isAuthorized) {
+            localStorage.setItem('t4t_wasAuthorized', 'true');
+          }
+
           // Add asterisk if not authorized
           const suffix = isAuthorized ? '' : '*';
           menuUsername.textContent = `${username}${suffix}`;
@@ -117,25 +122,48 @@
       // Keep tabindex and aria-hidden until menu is expanded
       // (They are removed by toggleMenu when menu opens)
     } else {
-      // Not authenticated or anonymous - hide hamburger button
-      hamburgerBtn.style.display = 'none';
-      menuUserInfo.style.display = 'none';
-      menuDashboard.style.display = 'none';
-      menuDashboard.setAttribute('tabindex', '-1');
-      menuDashboard.setAttribute('aria-hidden', 'true');
-      menuAdmin.style.display = 'none';
-      menuAdmin.setAttribute('tabindex', '-1');
-      menuAdmin.setAttribute('aria-hidden', 'true');
-      menuNewBox.style.display = 'none';
-      menuNewBox.setAttribute('tabindex', '-1');
-      menuNewBox.setAttribute('aria-hidden', 'true');
-      menuSignOut.style.display = 'none';
-      menuSignOut.setAttribute('tabindex', '-1');
-      menuSignOut.setAttribute('aria-hidden', 'true');
-      menuSignIn.style.display = 'block';
+      // Not authenticated or anonymous
+      // Check if user was previously authorized
+      const wasAuthorized = localStorage.getItem('t4t_wasAuthorized') === 'true';
 
-      // Close menu if it's open
-      closeMenu();
+      if (wasAuthorized) {
+        // Show hamburger for previously authorized users (not logged in)
+        hamburgerBtn.style.display = 'flex';
+        menuUserInfo.style.display = 'none';
+        menuDashboard.style.display = 'none';
+        menuDashboard.setAttribute('tabindex', '-1');
+        menuDashboard.setAttribute('aria-hidden', 'true');
+        menuAdmin.style.display = 'none';
+        menuAdmin.setAttribute('tabindex', '-1');
+        menuAdmin.setAttribute('aria-hidden', 'true');
+        menuNewBox.style.display = 'none';
+        menuNewBox.setAttribute('tabindex', '-1');
+        menuNewBox.setAttribute('aria-hidden', 'true');
+        menuSignOut.style.display = 'none';
+        menuSignOut.setAttribute('tabindex', '-1');
+        menuSignOut.setAttribute('aria-hidden', 'true');
+        menuSignIn.style.display = 'block';
+      } else {
+        // Never authorized - hide hamburger button completely
+        hamburgerBtn.style.display = 'none';
+        menuUserInfo.style.display = 'none';
+        menuDashboard.style.display = 'none';
+        menuDashboard.setAttribute('tabindex', '-1');
+        menuDashboard.setAttribute('aria-hidden', 'true');
+        menuAdmin.style.display = 'none';
+        menuAdmin.setAttribute('tabindex', '-1');
+        menuAdmin.setAttribute('aria-hidden', 'true');
+        menuNewBox.style.display = 'none';
+        menuNewBox.setAttribute('tabindex', '-1');
+        menuNewBox.setAttribute('aria-hidden', 'true');
+        menuSignOut.style.display = 'none';
+        menuSignOut.setAttribute('tabindex', '-1');
+        menuSignOut.setAttribute('aria-hidden', 'true');
+        menuSignIn.style.display = 'block';
+
+        // Close menu if it's open
+        closeMenu();
+      }
     }
   }
 

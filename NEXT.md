@@ -1,98 +1,141 @@
-# Firebase Auth Emulator CSP Fix - 2025-11-09
+# Hamburger Menu UX Enhancement - 2025-11-09
 
 ## Summary
 
-**SOLVED!** All 3 failing smoke tests are now passing. The root cause was a Content Security Policy (CSP) configuration issue that blocked the Firebase Auth emulator from connecting.
+Improved hamburger menu UX to persist for previously authorized users even when not logged in, making it easier for returning volunteers to access the Sign In option.
 
-### Test Results
-- ✅ **12/12 smoke tests passing** (was 2/5 passing before)
-- ✅ Anonymous auth test now works
-- ✅ Both redirect tests now work
+## Problem
 
-## Root Cause
+Previously, the hamburger menu was completely hidden when a user was not logged in. This meant that authorized volunteers who returned to the site while logged out had no easy way to navigate to the Sign In page - they'd have to manually type `/login` or use browser bookmarks.
 
-The Firebase Auth emulator uses `http://127.0.0.1:9099` for connections, but the CSP `connect-src` directive in `firebase.json` did NOT include `http://localhost:*` or `http://127.0.0.1:*`. This caused all Firebase Auth operations to be blocked by the browser's CSP.
+## Solution
 
-**Key Discovery Process:**
-1. Added browser console logging to tests to capture errors
-2. Saw CSP violation errors: `Refused to connect to 'http://127.0.0.1:9099/...'`
-3. Found CSP headers were set in BOTH places:
-   - HTML `<meta>` tags in each page
-   - HTTP headers in `firebase.json` (which take precedence)
-4. Updated both locations to include emulator endpoints
+Implemented localStorage-based persistence to remember when a user has been authorized, and show a simplified hamburger menu for returning volunteers.
 
-## The Fix
+### Behavior
 
-### 1. Updated `firebase.json` CSP Header (Line 50)
-**Changed `connect-src` from:**
-```
-connect-src 'self' https://*.googleapis.com https://*.gstatic.com ...
-```
+**1. New/Never Authorized Users (Current Behavior):**
+- Hamburger menu is **hidden**
+- Only public navigation available (MCL logo → dashboard redirect → login)
 
-**To:**
-```
-connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.googleapis.com https://*.gstatic.com ...
-```
+**2. Logged In Authorized Users:**
+- Hamburger menu **visible** with full menu items:
+  - User info display (username with * if not yet authorized)
+  - Map
+  - Dashboard
+  - Admin Panel (if applicable)
+  - New Box
+  - Sign Out
+- localStorage flag `t4t_wasAuthorized` set to `true`
 
-### 2. Updated HTML Meta Tags
-Updated CSP in all 9 HTML pages to match (for consistency):
-- `/public/index.html`
-- `/public/box/index.html`
-- `/public/status/index.html`
-- `/public/dashboard/index.html`
-- `/public/setup/index.html`
-- `/public/login/index.html`
-- `/public/authorize/index.html`
-- `/public/admin/index.html`
-- `/public/print/index.html`
+**3. Previously Authorized Users (Not Currently Logged In) - NEW:**
+- Hamburger menu **visible** with limited menu items:
+  - Map
+  - **Sign In** ← Easy access to login!
+- Hidden items: Dashboard, Admin, New Box, Sign Out, User Info
 
-### 3. Updated `firebase-init.js`
-Changed emulator connection from `localhost` to `127.0.0.1`:
+### Implementation Details
+
+**File: `/public/js/hamburger-menu.js`**
+
+Added localStorage persistence on lines 98-101:
 ```javascript
-connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-connectFirestoreEmulator(db, '127.0.0.1', 8080);
-connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+// Remember authorization status in localStorage
+if (isAuthorized) {
+  localStorage.setItem('t4t_wasAuthorized', 'true');
+}
 ```
 
-## Why This Matters
+Updated not-logged-in logic on lines 125-166:
+```javascript
+// Not authenticated or anonymous
+// Check if user was previously authorized
+const wasAuthorized = localStorage.getItem('t4t_wasAuthorized') === 'true';
 
-**CSP Priority:** HTTP headers set in `firebase.json` override HTML `<meta>` tags. The hosting emulator was sending the restrictive CSP header that blocked emulator connections, even though the HTML meta tags were updated.
-
-**Production Safety:** The `http://localhost:*` and `http://127.0.0.1:*` directives only work in development (localhost). In production, these resolve to different hosts and won't create security vulnerabilities.
+if (wasAuthorized) {
+  // Show hamburger for previously authorized users (not logged in)
+  hamburgerBtn.style.display = 'flex';
+  // ... show Map and Sign In only
+} else {
+  // Never authorized - hide hamburger button completely
+  hamburgerBtn.style.display = 'none';
+  // ... current behavior
+}
+```
 
 ## Files Modified
 
-1. `firebase.json` - Added localhost/127.0.0.1 to CSP header
-2. `public/js/firebase-init.js` - Use 127.0.0.1 for emulator connections
-3. All 9 HTML pages - Updated CSP meta tags for consistency
-4. `public/box/index.html` - ID validation fix (from previous session)
-5. `public/status/index.html` - ID validation fix (from previous session)
+1. `public/js/hamburger-menu.js` - Added localStorage logic
+2. `public/_header.html` - Updated with minified script
 
-## Test Execution
+## Testing Manually
 
-```bash
-# Run smoke tests
-npm run test:smoke
+To test this behavior:
 
-# Run specific test
-npx playwright test tests/e2e/box-and-status.spec.js -g "should display box information for anonymous users"
-```
+1. **Clear localStorage** (to simulate new user):
+   ```javascript
+   localStorage.removeItem('t4t_wasAuthorized');
+   ```
+   - Verify hamburger is hidden when not logged in ✓
 
-## Important Notes
+2. **Log in as authorized volunteer**:
+   - Visit `/login`, sign in with valid credentials
+   - Dashboard should load (triggers authorization check)
+   - Hamburger should show with all menu items ✓
 
-- **Emulator restart required** after changing `firebase.json`
-- The CSP fix allows Firebase SDK to connect to local emulators during testing
-- Production deployments are unaffected (localhost/127.0.0.1 don't apply)
-- Tests now run reliably without auth/network-request-failed errors
+3. **Log out**:
+   - Click Sign Out in hamburger menu
+   - Should redirect to `/login`
+   - **Hamburger should still be visible** with Map and Sign In options ✓
 
-## Previous Issues (Now Resolved)
+4. **Close tab and return** (or reload page):
+   - Open site in new tab (still logged out)
+   - Hamburger should still be visible ✓
+   - Can easily click hamburger → Sign In ✓
 
-~~1. Anonymous auth timeout - Firebase Auth emulator connection blocked by CSP~~ ✅ FIXED
-~~2. Box redirect test - Auth failure prevented redirect logic~~ ✅ FIXED
-~~3. Status redirect test - Auth failure prevented redirect logic~~ ✅ FIXED
+## localStorage Key
 
-## Next Steps
+- **Key:** `t4t_wasAuthorized`
+- **Value:** `"true"` (string)
+- **Set when:** User successfully passes `isAuthorizedVolunteerV2` check
+- **Never cleared:** Persists across sessions
+- **Security:** No sensitive data stored, only a flag indicating past authorization
 
-- All smoke tests passing ✅
-- Ready to commit changes
-- Consider running full test suite to verify no regressions
+## Benefits
+
+1. **Better UX for returning volunteers** - Easy access to Sign In
+2. **No breaking changes** - New users still see current behavior
+3. **Progressive enhancement** - Persists across browser sessions
+4. **No server-side changes** - Pure client-side enhancement
+
+## Privacy Considerations
+
+The localStorage flag does not contain:
+- ❌ User credentials
+- ❌ Email addresses
+- ❌ Authorization tokens
+- ❌ Any personally identifiable information
+
+It only indicates:
+- ✅ "This browser was used by someone who was once authorized"
+
+This is safe and comparable to "remember me" functionality.
+
+## Edge Cases Handled
+
+1. **Anonymous users** - Hamburger hidden (no localStorage flag)
+2. **Not-yet-authorized users** - Hamburger shows when logged in (with * indicator), localStorage not set until authorized
+3. **Authorized users** - localStorage set, hamburger persists after logout
+4. **localStorage cleared** - Reverts to new-user behavior (hamburger hidden when logged out)
+5. **Multiple browsers** - Each browser has independent localStorage (expected behavior)
+
+## Future Enhancements (Optional)
+
+- Add "Clear my data" option in hamburger menu to remove localStorage flag
+- Add expiration to localStorage (e.g., clear after 30 days of inactivity)
+- Store last-used username (non-sensitive) to show in hamburger when logged out
+
+---
+
+**Status:** ✅ Implemented and ready to commit
+**Next:** Test manually in browser, then commit changes
