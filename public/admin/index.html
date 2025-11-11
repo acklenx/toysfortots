@@ -292,14 +292,30 @@
 		.search-box {
 			flex: 0 1 400px;
 			min-width: 250px;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 10px;
 		}
 
-		.search-box input {
-			width: 100%;
+		.search-box input[type="text"] {
+			flex: 1 1 auto;
+			min-width: 200px;
 			padding: 10px 15px;
 			border: 1px solid var(--gray-300);
 			border-radius: 4px;
 			font-size: 1rem;
+		}
+
+		.search-box label {
+			flex: 0 0 auto;
+			font-size: 0.9rem;
+			white-space: nowrap;
+		}
+
+		.search-box input[type="checkbox"] {
+			width: auto;
+			margin-right: 5px;
 		}
 
 		.search-box input:focus {
@@ -567,8 +583,8 @@
 				<div class="section-controls">
 					<div class="search-box">
 						<input type="text" id="boxes-search" placeholder="Search boxes by ID, location, address, city, or volunteer... (regex supported)">
-						<label style="margin-left: 10px; font-size: 0.9rem;">
-							<input type="checkbox" id="boxes-search-invert" style="width: auto; margin-right: 5px;">
+						<label>
+							<input type="checkbox" id="boxes-search-invert">
 							Invert match
 						</label>
 					</div>
@@ -596,8 +612,8 @@
 				<div class="section-controls">
 					<div class="search-box">
 						<input type="text" id="reports-search" placeholder="Search reports by ID, box ID, type, or status... (regex supported)">
-						<label style="margin-left: 10px; font-size: 0.9rem;">
-							<input type="checkbox" id="reports-search-invert" style="width: auto; margin-right: 5px;">
+						<label>
+							<input type="checkbox" id="reports-search-invert">
 							Invert match
 						</label>
 					</div>
@@ -625,8 +641,8 @@
 				<div class="section-controls">
 					<div class="search-box">
 						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID or name... (regex supported)">
-						<label style="margin-left: 10px; font-size: 0.9rem;">
-							<input type="checkbox" id="volunteers-search-invert" style="width: auto; margin-right: 5px;">
+						<label>
+							<input type="checkbox" id="volunteers-search-invert">
 							Invert match
 						</label>
 					</div>
