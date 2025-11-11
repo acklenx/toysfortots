@@ -2544,16 +2544,10 @@ No Action: ${noActionViews}`;
 				return;
 			}
 
-			// Check if target is root user
-			try {
-				const docRef = doc(db, authorizedVolunteersCollectionPath, volunteerId);
-				const docSnap = await getDoc(docRef);
-				if (docSnap.exists() && docSnap.data().role === 'root') {
-					alert('Cannot delete root user (Quincy Acklen).');
-					return;
-				}
-			} catch (error) {
-				alert('Error checking volunteer: ' + error.message);
+			// Check if target is root user (using in-memory data instead of Firestore read)
+			const targetVolunteer = allVolunteers.find(v => v.id === volunteerId);
+			if (targetVolunteer && targetVolunteer.role === 'root') {
+				alert('Cannot delete root user (Quincy Acklen).');
 				return;
 			}
 
