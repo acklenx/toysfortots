@@ -142,6 +142,15 @@
 			background-color: #001a3d;
 		}
 
+		.view-btn {
+			background-color: var(--gray-600);
+			color: white;
+		}
+
+		.view-btn:hover {
+			background-color: var(--gray-700);
+		}
+
 		.delete-btn {
 			background-color: var(--t4t-red);
 			color: white;
@@ -799,6 +808,54 @@
 		</div>
 	</div>
 
+	<!-- View Report Modal -->
+	<div id="view-report-modal" class="modal">
+		<div class="modal-content">
+			<h3>View Report</h3>
+			<div style="display: grid; gap: 15px;">
+				<div class="form-group">
+					<label>Report ID</label>
+					<div id="view-report-id" style="padding: 10px; background: var(--gray-100); border-radius: 4px; font-family: monospace;"></div>
+				</div>
+				<div class="form-group">
+					<label>Box ID</label>
+					<div id="view-report-box-id" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Report Type</label>
+					<div id="view-report-type" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Status</label>
+					<div id="view-report-status" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Reported</label>
+					<div id="view-report-timestamp" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Description</label>
+					<div id="view-report-description" style="padding: 10px; background: var(--gray-100); border-radius: 4px; min-height: 60px; white-space: pre-wrap;"></div>
+				</div>
+				<div class="form-group">
+					<label>Reporter Name</label>
+					<div id="view-report-reporter-name" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Reporter Email</label>
+					<div id="view-report-reporter-email" style="padding: 10px; background: var(--gray-100); border-radius: 4px;"></div>
+				</div>
+				<div class="form-group">
+					<label>Notes</label>
+					<div id="view-report-notes" style="padding: 10px; background: var(--gray-100); border-radius: 4px; min-height: 60px; white-space: pre-wrap;"></div>
+				</div>
+			</div>
+			<div class="form-buttons" style="margin-top: 20px;">
+				<button type="button" class="primary-btn" id="view-report-close">Close</button>
+			</div>
+		</div>
+	</div>
+
 	<div id="footer-placeholder"></div>
 	<script src="/js/loader.min.js" defer></script>
 	<script type="module">
@@ -873,6 +930,31 @@
 			const minutes = String(date.getMinutes()).padStart(2, '0');
 
 			return `${year}-${month}-${day} ${hours}:${minutes}`;
+		};
+
+		// Get relative time (e.g., "1h ago", "2d ago")
+		const getRelativeTime = (timestamp) => {
+			if (!timestamp) return 'Never';
+
+			const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+			const now = new Date();
+			const diffMs = now - date;
+			const diffMins = Math.floor(diffMs / 60000);
+			const diffHours = Math.floor(diffMs / 3600000);
+			const diffDays = Math.floor(diffMs / 86400000);
+
+			if (diffMins < 1) {
+				return 'Just now';
+			} else if (diffMins < 60) {
+				return `${diffMins}m ago`;
+			} else if (diffHours < 24) {
+				return `${diffHours}h ago`;
+			} else if (diffDays < 7) {
+				return `${diffDays}d ago`;
+			} else {
+				// For older dates, show the actual date
+				return formatMilitaryDateTime(timestamp).split(' ')[0]; // Just the date part
+			}
 		};
 
 		// Data storage for filtering/sorting/pagination
@@ -1790,12 +1872,13 @@ No Action: ${noActionViews}`;
 			tableHTML += '<th class="sortable" data-sort="boxId" onclick="sortReports(\'boxId\')">Box ID</th>';
 			tableHTML += '<th class="sortable" data-sort="reportType" onclick="sortReports(\'reportType\')">Type</th>';
 			tableHTML += '<th class="sortable" data-sort="status" onclick="sortReports(\'status\')">Status</th>';
-			tableHTML += '<th class="sortable" data-sort="timestamp" onclick="sortReports(\'timestamp\')">Date</th>';
+			tableHTML += '<th class="sortable" data-sort="timestamp" onclick="sortReports(\'timestamp\')">Reported</th>';
 			tableHTML += '<th>Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((report) => {
-				const dateTime = formatMilitaryDateTime(report.timestamp);
+				const relativeTime = getRelativeTime(report.timestamp);
+				const fullDateTime = formatMilitaryDateTime(report.timestamp);
 
 				// Check if this report is deleted
 				const isDeleted = report.deleted === true;
@@ -1808,8 +1891,9 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
 				tableHTML += `<td>${escapeHtml(report.reportType || 'N/A')}</td>`;
 				tableHTML += `<td>${escapeHtml(report.status || 'N/A')}</td>`;
-				tableHTML += `<td>${dateTime}</td>`;
+				tableHTML += `<td title="${fullDateTime}">${relativeTime}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
+				tableHTML += `<button class="view-btn" data-report-id="${escapeHtml(report.id)}">View</button>`;
 				tableHTML += deleteRestoreBtn;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
@@ -1819,6 +1903,11 @@ No Action: ${noActionViews}`;
 			container.innerHTML = tableHTML;
 
 			// Add event listeners to buttons
+			container.querySelectorAll('.view-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.viewReport(btn.dataset.reportId);
+				});
+			});
 			container.querySelectorAll('.delete-btn').forEach(btn => {
 				btn.addEventListener('click', () => {
 					window.deleteReport(btn.dataset.reportId);
@@ -2236,8 +2325,8 @@ No Action: ${noActionViews}`;
 					const diffHours = Math.floor(diffMs / 3600000);
 					const diffDays = Math.floor(diffMs / 86400000);
 
-					// Create tooltip with full date and time
-					lastSeenTooltip = lastLoginDate.toLocaleString();
+					// Create tooltip with military date-time format
+					lastSeenTooltip = formatMilitaryDateTime(volunteer.lastLogin);
 
 					if (diffMins < 1) {
 						lastSeenText = 'Just now';
@@ -2627,6 +2716,28 @@ No Action: ${noActionViews}`;
 					}
 				}
 			);
+		});
+
+		// View report (read-only modal)
+		window.viewReport = async function(reportId) {
+			const report = allReports.find(r => r.id === reportId);
+			if (!report) return;
+
+			document.getElementById('view-report-id').textContent = report.id;
+			document.getElementById('view-report-box-id').textContent = report.boxId || 'N/A';
+			document.getElementById('view-report-type').textContent = report.reportType || 'N/A';
+			document.getElementById('view-report-status').textContent = report.status || 'N/A';
+			document.getElementById('view-report-timestamp').textContent = formatMilitaryDateTime(report.timestamp);
+			document.getElementById('view-report-description').textContent = report.description || 'N/A';
+			document.getElementById('view-report-reporter-name').textContent = report.reporterName || 'N/A';
+			document.getElementById('view-report-reporter-email').textContent = report.reporterEmail || 'N/A';
+			document.getElementById('view-report-notes').textContent = report.notes || 'N/A';
+
+			document.getElementById('view-report-modal').classList.add('active');
+		};
+
+		document.getElementById('view-report-close').addEventListener('click', () => {
+			document.getElementById('view-report-modal').classList.remove('active');
 		});
 
 		// Soft delete report
