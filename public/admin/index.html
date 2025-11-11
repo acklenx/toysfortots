@@ -801,7 +801,8 @@
 		let currentEditBoxId = null;
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
-		let showingDeleted = localStorage.getItem('showingDeleted') === 'true'; // For root users to toggle deleted items view
+		let showingDeleted = false; // Always start with deleted items hidden (checkbox resets on page load)
+		localStorage.removeItem('showingDeleted'); // Clear any old persisted state
 
 		// Listener cleanup - store unsubscribe functions to prevent duplicate listeners
 		let boxesUnsubscribe = null;
@@ -2712,14 +2713,11 @@ No Action: ${noActionViews}`;
 		if (document.getElementById('show-deleted-checkbox')) {
 			const checkbox = document.getElementById('show-deleted-checkbox');
 
-			// Restore checkbox state from localStorage
-			checkbox.checked = showingDeleted;
+			// Checkbox always starts unchecked (showingDeleted = false on page load)
+			// No localStorage persistence - toggle resets on every page load
 
 			checkbox.addEventListener('change', (e) => {
 				showingDeleted = e.target.checked;
-
-				// Save to localStorage
-				localStorage.setItem('showingDeleted', showingDeleted);
 
 				// Page refresh required to avoid duplicate listeners
 				// (loadBoxes/loadReports/loadVolunteers create new onSnapshot listeners)
