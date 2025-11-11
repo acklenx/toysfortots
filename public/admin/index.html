@@ -301,8 +301,8 @@
 		}
 
 		.search-box {
-			flex: 0 1 600px;
-			min-width: 375px;
+			flex: 0 1 500px;
+			min-width: 315px;
 			display: flex;
 			flex-wrap: wrap;
 			align-items: center;
@@ -311,7 +311,7 @@
 
 		.search-box input[type="text"] {
 			flex: 1 1 auto;
-			min-width: 300px;
+			min-width: 250px;
 			padding: 10px 15px;
 			border: 1px solid var(--gray-300);
 			border-radius: 4px;
@@ -1906,15 +1906,20 @@ No Action: ${noActionViews}`;
 			let tableHTML = '<table class="data-table"><thead><tr style="text-align: center;">';
 			tableHTML += '<th class="sortable" data-sort="id" onclick="sortReports(\'id\')">Report ID</th>';
 			tableHTML += '<th class="sortable" data-sort="boxId" onclick="sortReports(\'boxId\')">Box ID</th>';
+			tableHTML += '<th class="sortable" data-sort="location" onclick="sortReports(\'location\')">Location</th>';
 			tableHTML += '<th class="sortable" data-sort="reportType" onclick="sortReports(\'reportType\')">Type</th>';
 			tableHTML += '<th class="sortable" data-sort="status" onclick="sortReports(\'status\')">Status</th>';
 			tableHTML += '<th class="sortable" data-sort="timestamp" onclick="sortReports(\'timestamp\')">Reported</th>';
-			tableHTML += '<th class="actions-header" style="width: 200px;">Actions</th>';
+			tableHTML += '<th class="actions-header">Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((report) => {
 				const relativeTime = getRelativeTime(report.timestamp);
 				const fullDateTime = formatMilitaryDateTime(report.timestamp);
+
+				// Find the box label from allBoxes
+				const box = allBoxes.find(b => b.id === report.boxId);
+				const locationLabel = box ? box.label : 'N/A';
 
 				// Check if this report is deleted
 				const isDeleted = report.deleted === true;
@@ -1925,6 +1930,7 @@ No Action: ${noActionViews}`;
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}#report-${encodeURIComponent(report.id)}" target="_blank">${escapeHtml(report.id)}</a></td>`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
+				tableHTML += `<td>${escapeHtml(locationLabel)}</td>`;
 				tableHTML += `<td>${escapeHtml(report.reportType || 'N/A')}</td>`;
 				tableHTML += `<td>${escapeHtml(report.status || 'N/A')}</td>`;
 				tableHTML += `<td title="${fullDateTime}">${relativeTime}</td>`;
@@ -1994,6 +2000,14 @@ No Action: ${noActionViews}`;
 				if (column === 'timestamp') {
 					aVal = a[column] ? a[column].seconds : 0;
 					bVal = b[column] ? b[column].seconds : 0;
+				}
+
+				// Handle location sorting (lookup box label)
+				if (column === 'location') {
+					const aBox = allBoxes.find(box => box.id === a.boxId);
+					const bBox = allBoxes.find(box => box.id === b.boxId);
+					aVal = aBox ? aBox.label : '';
+					bVal = bBox ? bBox.label : '';
 				}
 
 				if (aVal < bVal) return reportsSortDirection === 'asc' ? -1 : 1;
@@ -2774,6 +2788,18 @@ No Action: ${noActionViews}`;
 
 		document.getElementById('view-report-close').addEventListener('click', () => {
 			document.getElementById('view-report-modal').classList.remove('active');
+		});
+
+		// Close modals when clicking outside (on backdrop)
+		const modals = ['confirmation-modal', 'edit-box-modal', 'edit-volunteer-modal', 'view-report-modal'];
+		modals.forEach(modalId => {
+			const modal = document.getElementById(modalId);
+			modal.addEventListener('click', (e) => {
+				// Only close if clicking directly on the modal backdrop, not on modal-content or its children
+				if (e.target === modal) {
+					modal.classList.remove('active');
+				}
+			});
 		});
 
 		// Soft delete report
