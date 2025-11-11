@@ -844,6 +844,21 @@
 				.replace(/'/g, '&#039;');
 		};
 
+		// Military date-time formatter (YYYY-MM-DD HH:mm)
+		const formatMilitaryDateTime = (timestamp) => {
+			if (!timestamp) return 'N/A';
+
+			const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+
+			return `${year}-${month}-${day} ${hours}:${minutes}`;
+		};
+
 		// Data storage for filtering/sorting/pagination
 		let allBoxes = [];
 		let filteredBoxes = [];
@@ -1764,7 +1779,7 @@ No Action: ${noActionViews}`;
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((report) => {
-				const date = report.timestamp ? (report.timestamp.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : new Date(report.timestamp).toLocaleDateString()) : 'N/A';
+				const dateTime = formatMilitaryDateTime(report.timestamp);
 
 				// Check if this report is deleted
 				const isDeleted = report.deleted === true;
@@ -1777,7 +1792,7 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
 				tableHTML += `<td>${escapeHtml(report.reportType || 'N/A')}</td>`;
 				tableHTML += `<td>${escapeHtml(report.status || 'N/A')}</td>`;
-				tableHTML += `<td>${date}</td>`;
+				tableHTML += `<td>${dateTime}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += deleteRestoreBtn;
 				tableHTML += `</div></td>`;
@@ -1897,6 +1912,7 @@ No Action: ${noActionViews}`;
 				const loadStart = performance.now();
 				const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
 				const volunteersRef = collection(db, volunteersPath);
+				const q = query(volunteersRef, orderBy('lastLogin', 'desc'));
 
 				// Setup one-time event listeners (only once to prevent duplicates)
 				if (!volunteersEventListenersSetup) {
@@ -1910,7 +1926,7 @@ No Action: ${noActionViews}`;
 				}
 
 				// Real-time listener - store unsubscribe function for cleanup
-				volunteersUnsubscribe = onSnapshot(volunteersRef, (snapshot) => {
+				volunteersUnsubscribe = onSnapshot(q, (snapshot) => {
 					const loadTime = Math.round(performance.now() - loadStart);
 
 					// Initial load - build complete list
