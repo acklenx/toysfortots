@@ -363,6 +363,15 @@
 			background-color: var(--gray-200);
 		}
 
+		.data-table th.actions-header {
+			text-align: center;
+			cursor: default;
+		}
+
+		.data-table th.actions-header:hover {
+			background-color: inherit;
+		}
+
 		/* Sort indicators hidden by default, shown on hover */
 		.data-table th.sortable::after,
 		.data-table th.sorted-asc::after,
@@ -1459,7 +1468,7 @@
 			tableHTML += '<th class="sortable" data-sort="volunteer" onclick="sortBoxes(\'volunteer\')">Volunteer</th>';
 			tableHTML += '<th class="sortable" data-sort="created" onclick="sortBoxes(\'created\')">Deployed</th>';
 			tableHTML += '<th class="sortable" data-sort="scans" onclick="sortBoxes(\'scans\')">Scans</th>';
-			tableHTML += '<th>Actions</th>';
+			tableHTML += '<th class="actions-header">Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((box) => {
@@ -1900,7 +1909,7 @@ No Action: ${noActionViews}`;
 			tableHTML += '<th class="sortable" data-sort="reportType" onclick="sortReports(\'reportType\')">Type</th>';
 			tableHTML += '<th class="sortable" data-sort="status" onclick="sortReports(\'status\')">Status</th>';
 			tableHTML += '<th class="sortable" data-sort="timestamp" onclick="sortReports(\'timestamp\')">Reported</th>';
-			tableHTML += '<th>Actions</th>';
+			tableHTML += '<th class="actions-header" style="width: 200px;">Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((report) => {
@@ -2301,7 +2310,7 @@ No Action: ${noActionViews}`;
 			tableHTML += '<th class="sortable" data-sort="lastLogin" onclick="sortVolunteers(\'lastLogin\')">Last Seen</th>';
 			tableHTML += '<th class="sortable" data-sort="pending" onclick="sortVolunteers(\'pending\')">Open</th>';
 			tableHTML += '<th class="sortable" data-sort="resolved" onclick="sortVolunteers(\'resolved\')">Resolved</th>';
-			tableHTML += '<th>Actions</th>';
+			tableHTML += '<th class="actions-header">Actions</th>';
 			tableHTML += '</tr></thead><tbody>';
 
 			pageData.forEach((volunteer) => {
