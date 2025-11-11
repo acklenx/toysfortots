@@ -137,15 +137,28 @@
 ## 🔐 **Admin & Management**
 
 ### 👨‍💼 Admin Dashboard
-- [ ] **Create true admin page** (`/admin/`)
-  - View all locations with search/filter
-  - Edit location details (address, contact info, label)
-  - Delete locations (with confirmation)
-  - View all submitted reports
-  - Delete reports (with confirmation)
-  - Manage authorized volunteers
-  - Remove volunteer access
-  - View system statistics (total boxes, reports, volunteers)
+- [x] ✅ **Create true admin page** (`/admin/`) ⭐ **COMPLETE - Tag: admin-page-done** (November 10, 2025)
+  - ✅ View all locations with search/filter (regex + invert match)
+  - ✅ Edit location details (address, contact info, label) - Edit modal with GPS coordinates
+  - ✅ Delete locations with confirmation (soft-delete system)
+  - ✅ Restore deleted locations (full audit trail)
+  - ✅ View all submitted reports with location context
+  - ✅ Delete/restore reports with confirmation
+  - ✅ View report details (read-only modal)
+  - ✅ Manage authorized volunteers with analytics
+  - ✅ Delete/restore volunteer access
+  - ✅ View system statistics (total boxes, reports, volunteers with real-time updates)
+  - ✅ Export to CSV (boxes, reports, volunteers)
+  - ✅ Sortable columns with hover-to-show indicators
+  - ✅ Military date-time formatting (YYYY-MM-DD HH:mm)
+  - ✅ Relative time display (1h ago, 2d ago) with full timestamp tooltips
+  - ✅ Deployed column for boxes
+  - ✅ Location column for reports
+  - ✅ Undeployed boxes tracking for volunteers
+  - ✅ Click outside to close modals
+  - ✅ Responsive search inputs with flexible sizing
+  - ✅ Right-aligned action buttons with proper spacing
+  - ✅ Centered Actions headers
 
 - [x] ✅ **Filter-aware delete buttons** (November 8, 2025 - commit: a1b1fa1)
   - Delete buttons show dynamic counts when filters are active
@@ -156,10 +169,29 @@
   - Volunteers section excludes current user from deletable count
   - Prevents accidental bulk deletions and gives admins confidence
 
+- [x] ✅ **Soft-delete system with audit trail** (November 10, 2025 - Tag: soft-deletes-working, restore-working)
+  - Soft-delete for boxes, reports, and volunteers
+  - Tracks: deleted (bool), deletedAt (timestamp), deletedBy (uid)
+  - Restore functionality with full audit trail
+  - Tracks: restoredAt (timestamp), restoredBy (uid)
+  - Preserves deletion history for compliance
+  - Root-only toggle to show/hide deleted items (?showDeleted=true URL param)
+  - Hard delete (purge) only for root users
+
 ### 🔒 Admin Authorization
-- [ ] Add admin role/permission system
-- [ ] Protect admin routes with authorization check
-- [ ] Create admin-only Cloud Function for deletions
+- [x] ✅ **RBAC role system** (Existing - uses authorizedVolunteers collection)
+  - Three roles: volunteer, admin, root
+  - Firestore security rules enforce role-based access
+  - Admins can soft-delete (but not modify self or root)
+  - Root can restore deleted items and hard delete (purge)
+- [x] ✅ **Protect admin routes** (Existing - client-side role check)
+  - Admin page checks role on page load
+  - Shows error if user is not admin or root
+  - Root-only features conditionally displayed
+- [x] ✅ **Admin-only operations** (Existing - Firestore rules enforce)
+  - Delete/restore operations restricted by Firestore rules
+  - Updates to authorized volunteers require admin role
+  - Root user cannot be modified by admins
 
 ---
 
@@ -398,5 +430,5 @@
 
 ---
 
-*Last Updated: November 8, 2025*
+*Last Updated: November 10, 2025*
 *Maintained with ❤️ for Marine Corps League Detachment #1311*
