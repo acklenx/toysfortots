@@ -118,16 +118,10 @@ service cloud.firestore {
 
         allow create: if false; // Only Cloud Functions can create
 
-        // Admins can update volunteers (but not their own role or the root user)
+        // Admins can update volunteers (but not self or root user) - wide open for all fields including soft delete
         allow update: if isAdmin() &&
                          userId != request.auth.uid && // Can't modify self
-                         (resource == null || resource.data.role != 'root') && // Can't modify root user
-                         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
-
-        // Admins can soft delete (but not root or themselves)
-        allow update: if isAdmin() &&
-                         userId != request.auth.uid &&
-                         (resource == null || resource.data.role != 'root');
+                         (resource == null || resource.data.role != 'root'); // Can't modify root user
 
         // Root can restore soft deletes
         allow update: if isRoot() &&

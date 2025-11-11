@@ -801,12 +801,21 @@
 		let currentEditBoxId = null;
 		let currentEditVolunteerId = null;
 		let confirmCallback = null;
-		let showingDeleted = false; // Always start with deleted items hidden (checkbox resets on page load)
+		// Check URL parameter for showDeleted state (persists across page reloads triggered by checkbox)
+		const urlParams = new URLSearchParams(window.location.search);
+		let showingDeleted = urlParams.get('showDeleted') === 'true';
 		localStorage.removeItem('showingDeleted'); // Clear any old persisted state
 
 		// Listener cleanup - store unsubscribe functions to prevent duplicate listeners
 		let boxesUnsubscribe = null;
 		let boxesEventListenersSetup = false; // Track if search/export listeners are already attached
+		let boxesInitialLoadComplete = false;
+		let reportsUnsubscribe = null;
+		let reportsEventListenersSetup = false;
+		let reportsInitialLoadComplete = false;
+		let volunteersUnsubscribe = null;
+		let volunteersEventListenersSetup = false;
+		let volunteersInitialLoadComplete = false;
 		let renderDebounceTimer = null; // Debounce timer to prevent duplicate re-renders during animations
 
 		const ROOT_USER_EMAIL = 'acklenx@gmail.com';
@@ -832,10 +841,7 @@
 		let filteredVolunteers = [];
 		let locationSuggestions = []; // Google Sheets data
 
-		// Live update tracking
-		let boxesInitialLoadComplete = false;
-		let reportsInitialLoadComplete = false;
-		let volunteersInitialLoadComplete = false;
+		// (Listener tracking variables moved up to line 810-818 for better organization)
 
 		// Pagination settings
 		const PAGE_SIZE = 20;
@@ -1425,45 +1431,192 @@ No Action: ${noActionViews}`;
 		}
 
 		// Load reports
-		async function loadReports() {
+		// Load reports with real-time updates
+		function loadReports() {
 			try {
+				console.log('📋 DEBUG: loadReports() called');
+
+				// Clean up old listener to prevent duplicates
+				if (reportsUnsubscribe) {
+					console.log('🔧 DEBUG: Cleaning up old reports listener to prevent duplicates');
+					reportsUnsubscribe();
+					reportsUnsubscribe = null;
+				}
+
 				const loadStart = performance.now();
 				const reportsRef = collection(db, reportsCollectionPath);
 				const q = query(reportsRef, orderBy('timestamp', 'desc'));
-				const snapshot = await getDocs(q);
-				const loadTime = Math.round(performance.now() - loadStart);
 
-				allReports = [];
-				snapshot.forEach((doc) => {
-					const data = doc.data();
-					// Filter out soft-deleted items (unless root viewing deleted)
-					if (data.deleted && !showingDeleted) return;
-					allReports.push({ id: doc.id, ...data });
+				// Setup one-time event listeners (only once to prevent duplicates)
+				if (!reportsEventListenersSetup) {
+					const searchInput = document.getElementById('reports-search');
+					searchInput.addEventListener('input', () => filterAndRenderReports());
+					const exportBtn = document.getElementById('export-reports-btn');
+					exportBtn.addEventListener('click', () => exportReportsToCSV());
+					reportsEventListenersSetup = true;
+				}
+
+				// Real-time listener - store unsubscribe function for cleanup
+				reportsUnsubscribe = onSnapshot(q, (snapshot) => {
+					const loadTime = Math.round(performance.now() - loadStart);
+
+					// Initial load - build complete list
+					if (!reportsInitialLoadComplete) {
+						console.log('📋 DEBUG: Initial reports load from Firestore');
+						allReports = [];
+						snapshot.forEach((doc) => {
+							const data = doc.data();
+							// Filter out soft-deleted items (unless root viewing deleted)
+							if (data.deleted && !showingDeleted) return;
+							allReports.push({ id: doc.id, ...data });
+						});
+
+						document.getElementById('stat-reports').textContent = allReports.length;
+						document.getElementById('reports-loading').style.display = 'none';
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+						document.getElementById('reports-last-updated').textContent =
+							`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
+
+						filterAndRenderReports();
+						reportsInitialLoadComplete = true;
+					} else {
+						// Subsequent updates - handle changes with animations
+						console.log('🔄 DEBUG: Reports listener fired - processing changes');
+						snapshot.docChanges().forEach((change) => {
+							const report = { id: change.doc.id, ...change.doc.data() };
+
+							if (change.type === 'added') {
+								// New report added - check if it should be displayed
+								if (report.deleted && !showingDeleted) {
+									console.log(`🔍 DEBUG: Skipping deleted report ${report.id} (showingDeleted: false)`);
+									return; // Don't add deleted reports unless showing deleted items
+								}
+								allReports.push(report);
+								handleReportAdded(report);
+							} else if (change.type === 'modified') {
+								// Report updated - might have been soft-deleted!
+								const index = allReports.findIndex(r => r.id === report.id);
+
+								// Check if report was soft-deleted and we're not showing deleted items
+								if (report.deleted && !showingDeleted) {
+									console.log(`🗑️ DEBUG: Report ${report.id} was soft-deleted, removing from display`);
+									if (index !== -1) {
+										allReports.splice(index, 1);
+										handleReportRemoved(report.id);
+									}
+								} else if (index !== -1) {
+									// Normal update
+									allReports[index] = report;
+									handleReportModified(report);
+								} else if (!report.deleted || showingDeleted) {
+									// Report exists in Firestore but not in our array - add it
+									allReports.push(report);
+									handleReportAdded(report);
+								}
+							} else if (change.type === 'removed') {
+								// Report permanently deleted from Firestore
+								const index = allReports.findIndex(r => r.id === report.id);
+								if (index !== -1) {
+									allReports.splice(index, 1);
+									handleReportRemoved(report.id);
+								}
+							}
+						});
+
+						// Update count
+						document.getElementById('stat-reports').textContent = allReports.length;
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						document.getElementById('reports-last-updated').textContent =
+							`Synced: ${timeStr} 🔄 (live)`;
+					}
+				}, (error) => {
+					document.getElementById('reports-loading').style.display = 'none';
+					document.getElementById('reports-error').textContent = 'Error loading reports: ' + error.message;
+					document.getElementById('reports-error').style.display = 'block';
 				});
 
-				document.getElementById('stat-reports').textContent = allReports.length;
-				document.getElementById('reports-loading').style.display = 'none';
-
-				// Update last updated timestamp with cache indicator
-				const now = new Date();
-				const timeStr = now.toLocaleTimeString();
-				const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
-				document.getElementById('reports-last-updated').textContent =
-					`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
-
-				// Setup search
-				const searchInput = document.getElementById('reports-search');
-				searchInput.addEventListener('input', () => filterAndRenderReports());
-
-				// Setup export
-				const exportBtn = document.getElementById('export-reports-btn');
-				exportBtn.addEventListener('click', () => exportReportsToCSV());
-
-				filterAndRenderReports();
+				console.log('✅ DEBUG: Reports listener created and stored successfully');
 			} catch (error) {
 				document.getElementById('reports-loading').style.display = 'none';
 				document.getElementById('reports-error').textContent = 'Error loading reports: ' + error.message;
 				document.getElementById('reports-error').style.display = 'block';
+			}
+		}
+
+		// Handle new report added with green flash animation
+		function handleReportAdded(report) {
+			// Re-filter and render to include new report
+			filterAndRenderReports();
+
+			// Find the new row and apply animation
+			const container = document.getElementById('reports-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === report.id) {
+					row.classList.add('new-row');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('new-row');
+					}, 3000);
+					// Scroll into view
+					row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}
+			});
+		}
+
+		// Handle report modified with yellow flash animation
+		function handleReportModified(report) {
+			// Re-filter and render with updated data
+			filterAndRenderReports();
+
+			// Find the modified row and apply animation
+			const container = document.getElementById('reports-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === report.id) {
+					row.classList.add('flashing');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('flashing');
+					}, 1800);
+				}
+			});
+		}
+
+		// Handle report removed with red flash + collapse animation
+		function handleReportRemoved(reportId) {
+			// Find the row first
+			const container = document.getElementById('reports-container');
+			const rows = container.querySelectorAll('tbody tr');
+			let foundRow = null;
+
+			rows.forEach(row => {
+				const link = row.querySelector('td:first-child a');
+				if (link && link.textContent === reportId) {
+					foundRow = row;
+				}
+			});
+
+			if (foundRow) {
+				// Apply deletion animation
+				foundRow.classList.add('deleting-row');
+
+				// Re-render after animation completes
+				setTimeout(() => {
+					filterAndRenderReports();
+				}, 1400);
+			} else {
+				// Row not found (maybe filtered out), just re-render
+				filterAndRenderReports();
 			}
 		}
 
@@ -1625,45 +1778,193 @@ No Action: ${noActionViews}`;
 		}
 
 		// Load volunteers
-		async function loadVolunteers() {
+		// Load volunteers with real-time updates
+		function loadVolunteers() {
 			try {
+				console.log('👥 DEBUG: loadVolunteers() called');
+
+				// Clean up old listener to prevent duplicates
+				if (volunteersUnsubscribe) {
+					console.log('🔧 DEBUG: Cleaning up old volunteers listener to prevent duplicates');
+					volunteersUnsubscribe();
+					volunteersUnsubscribe = null;
+				}
+
 				const loadStart = performance.now();
 				const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
 				const volunteersRef = collection(db, volunteersPath);
-				const snapshot = await getDocs(volunteersRef);
-				const loadTime = Math.round(performance.now() - loadStart);
 
-				allVolunteers = [];
-				snapshot.forEach((doc) => {
-					const data = doc.data();
-					// Filter out soft-deleted items (unless root viewing deleted)
-					if (data.deleted && !showingDeleted) return;
-					allVolunteers.push({ id: doc.id, ...data });
+				// Setup one-time event listeners (only once to prevent duplicates)
+				if (!volunteersEventListenersSetup) {
+					const searchInput = document.getElementById('volunteers-search');
+					searchInput.addEventListener('input', () => filterAndRenderVolunteers());
+					const exportBtn = document.getElementById('export-volunteers-btn');
+					exportBtn.addEventListener('click', () => exportVolunteersToCSV());
+					volunteersEventListenersSetup = true;
+				}
+
+				// Real-time listener - store unsubscribe function for cleanup
+				volunteersUnsubscribe = onSnapshot(volunteersRef, (snapshot) => {
+					const loadTime = Math.round(performance.now() - loadStart);
+
+					// Initial load - build complete list
+					if (!volunteersInitialLoadComplete) {
+						console.log('👥 DEBUG: Initial volunteers load from Firestore');
+						allVolunteers = [];
+						snapshot.forEach((doc) => {
+							const data = doc.data();
+							// Filter out soft-deleted items (unless root viewing deleted)
+							if (data.deleted && !showingDeleted) return;
+							allVolunteers.push({ id: doc.id, ...data });
+						});
+
+						document.getElementById('stat-volunteers').textContent = allVolunteers.length;
+						document.getElementById('volunteers-loading').style.display = 'none';
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
+						document.getElementById('volunteers-last-updated').textContent =
+							`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
+
+						filterAndRenderVolunteers();
+						volunteersInitialLoadComplete = true;
+					} else {
+						// Subsequent updates - handle changes with animations
+						console.log('🔄 DEBUG: Volunteers listener fired - processing changes');
+						snapshot.docChanges().forEach((change) => {
+							const volunteer = { id: change.doc.id, ...change.doc.data() };
+
+							if (change.type === 'added') {
+								// New volunteer added - check if it should be displayed
+								if (volunteer.deleted && !showingDeleted) {
+									console.log(`🔍 DEBUG: Skipping deleted volunteer ${volunteer.id} (showingDeleted: false)`);
+									return; // Don't add deleted volunteers unless showing deleted items
+								}
+								allVolunteers.push(volunteer);
+								handleVolunteerAdded(volunteer);
+							} else if (change.type === 'modified') {
+								// Volunteer updated - might have been soft-deleted!
+								const index = allVolunteers.findIndex(v => v.id === volunteer.id);
+
+								// Check if volunteer was soft-deleted and we're not showing deleted items
+								if (volunteer.deleted && !showingDeleted) {
+									console.log(`🗑️ DEBUG: Volunteer ${volunteer.id} was soft-deleted, removing from display`);
+									if (index !== -1) {
+										allVolunteers.splice(index, 1);
+										handleVolunteerRemoved(volunteer.id);
+									}
+								} else if (index !== -1) {
+									// Normal update
+									allVolunteers[index] = volunteer;
+									handleVolunteerModified(volunteer);
+								} else if (!volunteer.deleted || showingDeleted) {
+									// Volunteer exists in Firestore but not in our array - add it
+									allVolunteers.push(volunteer);
+									handleVolunteerAdded(volunteer);
+								}
+							} else if (change.type === 'removed') {
+								// Volunteer permanently deleted from Firestore
+								const index = allVolunteers.findIndex(v => v.id === volunteer.id);
+								if (index !== -1) {
+									allVolunteers.splice(index, 1);
+									handleVolunteerRemoved(volunteer.id);
+								}
+							}
+						});
+
+						// Update count
+						document.getElementById('stat-volunteers').textContent = allVolunteers.length;
+
+						// Update timestamp
+						const now = new Date();
+						const timeStr = now.toLocaleTimeString();
+						document.getElementById('volunteers-last-updated').textContent =
+							`Synced: ${timeStr} 🔄 (live)`;
+					}
+				}, (error) => {
+					document.getElementById('volunteers-loading').style.display = 'none';
+					document.getElementById('volunteers-error').textContent = 'Error loading volunteers: ' + error.message;
+					document.getElementById('volunteers-error').style.display = 'block';
 				});
 
-				document.getElementById('stat-volunteers').textContent = allVolunteers.length;
-				document.getElementById('volunteers-loading').style.display = 'none';
-
-				// Update last updated timestamp with cache indicator
-				const now = new Date();
-				const timeStr = now.toLocaleTimeString();
-				const cacheIndicator = loadTime < 300 ? ' 🚀 (cached)' : '';
-				document.getElementById('volunteers-last-updated').textContent =
-					`Last updated: ${timeStr}${cacheIndicator} • ${loadTime}ms`;
-
-				// Setup search
-				const searchInput = document.getElementById('volunteers-search');
-				searchInput.addEventListener('input', () => filterAndRenderVolunteers());
-
-				// Setup export
-				const exportBtn = document.getElementById('export-volunteers-btn');
-				exportBtn.addEventListener('click', () => exportVolunteersToCSV());
-
-				filterAndRenderVolunteers();
+				console.log('✅ DEBUG: Volunteers listener created and stored successfully');
 			} catch (error) {
 				document.getElementById('volunteers-loading').style.display = 'none';
 				document.getElementById('volunteers-error').textContent = 'Error loading volunteers: ' + error.message;
 				document.getElementById('volunteers-error').style.display = 'block';
+			}
+		}
+
+		// Handle new volunteer added with green flash animation
+		function handleVolunteerAdded(volunteer) {
+			// Re-filter and render to include new volunteer
+			filterAndRenderVolunteers();
+
+			// Find the new row and apply animation
+			const container = document.getElementById('volunteers-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cell = row.querySelector('td:first-child');
+				if (cell && cell.textContent.includes(volunteer.displayName)) {
+					row.classList.add('new-row');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('new-row');
+					}, 3000);
+					// Scroll into view
+					row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}
+			});
+		}
+
+		// Handle volunteer modified with yellow flash animation
+		function handleVolunteerModified(volunteer) {
+			// Re-filter and render with updated data
+			filterAndRenderVolunteers();
+
+			// Find the modified row and apply animation
+			const container = document.getElementById('volunteers-container');
+			const rows = container.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cell = row.querySelector('td:first-child');
+				if (cell && cell.textContent.includes(volunteer.displayName)) {
+					row.classList.add('flashing');
+					// Remove animation class after it completes
+					setTimeout(() => {
+						row.classList.remove('flashing');
+					}, 1800);
+				}
+			});
+		}
+
+		// Handle volunteer removed with red flash + collapse animation
+		function handleVolunteerRemoved(volunteerId) {
+			// Find the row first
+			const container = document.getElementById('volunteers-container');
+			const rows = container.querySelectorAll('tbody tr');
+			let foundRow = null;
+
+			rows.forEach(row => {
+				// Look for row with data-volunteer-id attribute
+				const deleteBtn = row.querySelector('.delete-btn');
+				if (deleteBtn && deleteBtn.dataset.volunteerId === volunteerId) {
+					foundRow = row;
+				}
+			});
+
+			if (foundRow) {
+				// Apply deletion animation
+				foundRow.classList.add('deleting-row');
+
+				// Re-render after animation completes
+				setTimeout(() => {
+					filterAndRenderVolunteers();
+				}, 1400);
+			} else {
+				// Row not found (maybe filtered out), just re-render
+				filterAndRenderVolunteers();
 			}
 		}
 
@@ -2713,15 +3014,21 @@ No Action: ${noActionViews}`;
 		if (document.getElementById('show-deleted-checkbox')) {
 			const checkbox = document.getElementById('show-deleted-checkbox');
 
-			// Checkbox always starts unchecked (showingDeleted = false on page load)
-			// No localStorage persistence - toggle resets on every page load
+			// Set checkbox state from URL parameter
+			checkbox.checked = showingDeleted;
 
 			checkbox.addEventListener('change', (e) => {
-				showingDeleted = e.target.checked;
+				// Update URL parameter and reload page
+				const url = new URL(window.location);
+				if (e.target.checked) {
+					url.searchParams.set('showDeleted', 'true');
+				} else {
+					url.searchParams.delete('showDeleted');
+				}
 
 				// Page refresh required to avoid duplicate listeners
 				// (loadBoxes/loadReports/loadVolunteers create new onSnapshot listeners)
-				window.location.reload();
+				window.location.href = url.toString();
 			});
 		}
 
