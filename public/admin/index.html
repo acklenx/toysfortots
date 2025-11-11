@@ -566,7 +566,11 @@
 				</div>
 				<div class="section-controls">
 					<div class="search-box">
-						<input type="text" id="boxes-search" placeholder="Search boxes by ID, location, address, city, or volunteer...">
+						<input type="text" id="boxes-search" placeholder="Search boxes by ID, location, address, city, or volunteer... (regex supported)">
+						<label style="margin-left: 10px; font-size: 0.9rem;">
+							<input type="checkbox" id="boxes-search-invert" style="width: auto; margin-right: 5px;">
+							Invert match
+						</label>
 					</div>
 					<div class="control-buttons">
 						<button class="export-btn" id="export-boxes-btn">Export CSV</button>
@@ -591,7 +595,11 @@
 				</div>
 				<div class="section-controls">
 					<div class="search-box">
-						<input type="text" id="reports-search" placeholder="Search reports by ID, box ID, type, or status...">
+						<input type="text" id="reports-search" placeholder="Search reports by ID, box ID, type, or status... (regex supported)">
+						<label style="margin-left: 10px; font-size: 0.9rem;">
+							<input type="checkbox" id="reports-search-invert" style="width: auto; margin-right: 5px;">
+							Invert match
+						</label>
 					</div>
 					<div class="control-buttons">
 						<button class="export-btn" id="export-reports-btn">Export CSV</button>
@@ -616,7 +624,11 @@
 				</div>
 				<div class="section-controls">
 					<div class="search-box">
-						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID or name...">
+						<input type="text" id="volunteers-search" placeholder="Search volunteers by ID or name... (regex supported)">
+						<label style="margin-left: 10px; font-size: 0.9rem;">
+							<input type="checkbox" id="volunteers-search-invert" style="width: auto; margin-right: 5px;">
+							Invert match
+						</label>
 					</div>
 					<div class="control-buttons">
 						<button class="export-btn" id="export-volunteers-btn">Export CSV</button>
@@ -1057,6 +1069,8 @@
 				if (!boxesEventListenersSetup) {
 					const searchInput = document.getElementById('boxes-search');
 					searchInput.addEventListener('input', () => filterAndRenderBoxes());
+					const searchInvert = document.getElementById('boxes-search-invert');
+					searchInvert.addEventListener('change', () => filterAndRenderBoxes());
 					const exportBtn = document.getElementById('export-boxes-btn');
 					exportBtn.addEventListener('click', () => exportBoxesToCSV());
 					boxesEventListenersSetup = true;
@@ -1231,15 +1245,48 @@
 			// This prevents duplicate items when Firestore events fire during the 1400ms deletion animation
 			clearTimeout(renderDebounceTimer);
 			renderDebounceTimer = setTimeout(() => {
-				const searchTerm = document.getElementById('boxes-search').value.toLowerCase();
+				const searchTerm = document.getElementById('boxes-search').value;
+				const invertMatch = document.getElementById('boxes-search-invert').checked;
+
+				// Try to use search term as regex, fall back to string matching if invalid
+				let regex = null;
+				let useRegex = false;
+				if (searchTerm) {
+					try {
+						regex = new RegExp(searchTerm, 'i'); // Case-insensitive
+						useRegex = true;
+					} catch (e) {
+						// Invalid regex, fall back to string matching
+						useRegex = false;
+					}
+				}
+
 				filteredBoxes = allBoxes.filter(box => {
-					return (
-						box.id.toLowerCase().includes(searchTerm) ||
-						(box.label || '').toLowerCase().includes(searchTerm) ||
-						(box.address || '').toLowerCase().includes(searchTerm) ||
-						(box.city || '').toLowerCase().includes(searchTerm) ||
-						(box.volunteer || '').toLowerCase().includes(searchTerm)
-					);
+					if (!searchTerm) return !invertMatch; // Empty search: show all (or none if inverted)
+
+					let matches = false;
+					if (useRegex) {
+						// Regex matching
+						matches = (
+							regex.test(box.id) ||
+							regex.test(box.label || '') ||
+							regex.test(box.address || '') ||
+							regex.test(box.city || '') ||
+							regex.test(box.volunteer || '')
+						);
+					} else {
+						// String matching (case-insensitive)
+						const lowerSearch = searchTerm.toLowerCase();
+						matches = (
+							box.id.toLowerCase().includes(lowerSearch) ||
+							(box.label || '').toLowerCase().includes(lowerSearch) ||
+							(box.address || '').toLowerCase().includes(lowerSearch) ||
+							(box.city || '').toLowerCase().includes(lowerSearch) ||
+							(box.volunteer || '').toLowerCase().includes(lowerSearch)
+						);
+					}
+
+					return invertMatch ? !matches : matches;
 				});
 
 				updateDeleteAllBoxesButton();
@@ -1462,6 +1509,8 @@ No Action: ${noActionViews}`;
 				if (!reportsEventListenersSetup) {
 					const searchInput = document.getElementById('reports-search');
 					searchInput.addEventListener('input', () => filterAndRenderReports());
+					const searchInvert = document.getElementById('reports-search-invert');
+					searchInvert.addEventListener('change', () => filterAndRenderReports());
 					const exportBtn = document.getElementById('export-reports-btn');
 					exportBtn.addEventListener('click', () => exportReportsToCSV());
 					reportsEventListenersSetup = true;
@@ -1632,14 +1681,46 @@ No Action: ${noActionViews}`;
 		}
 
 		function filterAndRenderReports() {
-			const searchTerm = document.getElementById('reports-search').value.toLowerCase();
+			const searchTerm = document.getElementById('reports-search').value;
+			const invertMatch = document.getElementById('reports-search-invert').checked;
+
+			// Try to use search term as regex, fall back to string matching if invalid
+			let regex = null;
+			let useRegex = false;
+			if (searchTerm) {
+				try {
+					regex = new RegExp(searchTerm, 'i'); // Case-insensitive
+					useRegex = true;
+				} catch (e) {
+					// Invalid regex, fall back to string matching
+					useRegex = false;
+				}
+			}
+
 			filteredReports = allReports.filter(report => {
-				return (
-					report.id.toLowerCase().includes(searchTerm) ||
-					(report.boxId || '').toLowerCase().includes(searchTerm) ||
-					(report.reportType || '').toLowerCase().includes(searchTerm) ||
-					(report.status || '').toLowerCase().includes(searchTerm)
-				);
+				if (!searchTerm) return !invertMatch; // Empty search: show all (or none if inverted)
+
+				let matches = false;
+				if (useRegex) {
+					// Regex matching
+					matches = (
+						regex.test(report.id) ||
+						regex.test(report.boxId || '') ||
+						regex.test(report.reportType || '') ||
+						regex.test(report.status || '')
+					);
+				} else {
+					// String matching (case-insensitive)
+					const lowerSearch = searchTerm.toLowerCase();
+					matches = (
+						report.id.toLowerCase().includes(lowerSearch) ||
+						(report.boxId || '').toLowerCase().includes(lowerSearch) ||
+						(report.reportType || '').toLowerCase().includes(lowerSearch) ||
+						(report.status || '').toLowerCase().includes(lowerSearch)
+					);
+				}
+
+				return invertMatch ? !matches : matches;
 			});
 
 			updateDeleteAllReportsButton();
@@ -1821,6 +1902,8 @@ No Action: ${noActionViews}`;
 				if (!volunteersEventListenersSetup) {
 					const searchInput = document.getElementById('volunteers-search');
 					searchInput.addEventListener('input', () => filterAndRenderVolunteers());
+					const searchInvert = document.getElementById('volunteers-search-invert');
+					searchInvert.addEventListener('change', () => filterAndRenderVolunteers());
 					const exportBtn = document.getElementById('export-volunteers-btn');
 					exportBtn.addEventListener('click', () => exportVolunteersToCSV());
 					volunteersEventListenersSetup = true;
@@ -1992,12 +2075,42 @@ No Action: ${noActionViews}`;
 		}
 
 		function filterAndRenderVolunteers() {
-			const searchTerm = document.getElementById('volunteers-search').value.toLowerCase();
+			const searchTerm = document.getElementById('volunteers-search').value;
+			const invertMatch = document.getElementById('volunteers-search-invert').checked;
+
+			// Try to use search term as regex, fall back to string matching if invalid
+			let regex = null;
+			let useRegex = false;
+			if (searchTerm) {
+				try {
+					regex = new RegExp(searchTerm, 'i'); // Case-insensitive
+					useRegex = true;
+				} catch (e) {
+					// Invalid regex, fall back to string matching
+					useRegex = false;
+				}
+			}
+
 			filteredVolunteers = allVolunteers.filter(volunteer => {
-				return (
-					volunteer.id.toLowerCase().includes(searchTerm) ||
-					(volunteer.displayName || '').toLowerCase().includes(searchTerm)
-				);
+				if (!searchTerm) return !invertMatch; // Empty search: show all (or none if inverted)
+
+				let matches = false;
+				if (useRegex) {
+					// Regex matching
+					matches = (
+						regex.test(volunteer.id) ||
+						regex.test(volunteer.displayName || '')
+					);
+				} else {
+					// String matching (case-insensitive)
+					const lowerSearch = searchTerm.toLowerCase();
+					matches = (
+						volunteer.id.toLowerCase().includes(lowerSearch) ||
+						(volunteer.displayName || '').toLowerCase().includes(lowerSearch)
+					);
+				}
+
+				return invertMatch ? !matches : matches;
 			});
 
 			updateDeleteAllVolunteersButton();
