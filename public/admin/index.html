@@ -1309,6 +1309,12 @@ No Action: ${noActionViews}`;
 
 				const contactTooltip = box.contactName ? `Manager: ${escapeHtml(box.contactName)}` : '';
 
+				// Check if this box is deleted
+				const isDeleted = box.deleted === true;
+				const deleteRestoreBtn = isDeleted
+					? `<button class="restore-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Restore</button>`
+					: `<button class="delete-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Delete</button>`;
+
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(box.id)}" target="_blank">${escapeHtml(box.id)}</a></td>`;
 				tableHTML += `<td title="${contactTooltip}">${escapedLabel}</td>`;
@@ -1318,7 +1324,7 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${scans}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-box-id="${escapeHtml(box.id)}">Edit</button>`;
-				tableHTML += `<button class="delete-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Delete</button>`;
+				tableHTML += deleteRestoreBtn;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -1335,6 +1341,11 @@ No Action: ${noActionViews}`;
 			container.querySelectorAll('.delete-btn').forEach(btn => {
 				btn.addEventListener('click', () => {
 					window.deleteBox(btn.dataset.boxId, btn.dataset.boxLabel);
+				});
+			});
+			container.querySelectorAll('.restore-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.restoreBox(btn.dataset.boxId, btn.dataset.boxLabel);
 				});
 			});
 
@@ -1673,6 +1684,13 @@ No Action: ${noActionViews}`;
 
 			pageData.forEach((report) => {
 				const date = report.timestamp ? (report.timestamp.seconds ? new Date(report.timestamp.seconds * 1000).toLocaleDateString() : new Date(report.timestamp).toLocaleDateString()) : 'N/A';
+
+				// Check if this report is deleted
+				const isDeleted = report.deleted === true;
+				const deleteRestoreBtn = isDeleted
+					? `<button class="restore-btn" data-report-id="${escapeHtml(report.id)}">Restore</button>`
+					: `<button class="delete-btn" data-report-id="${escapeHtml(report.id)}">Delete</button>`;
+
 				tableHTML += '<tr>';
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}#report-${encodeURIComponent(report.id)}" target="_blank">${escapeHtml(report.id)}</a></td>`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
@@ -1680,7 +1698,7 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td>${escapeHtml(report.status || 'N/A')}</td>`;
 				tableHTML += `<td>${date}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="delete-btn" data-report-id="${escapeHtml(report.id)}">Delete</button>`;
+				tableHTML += deleteRestoreBtn;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -1692,6 +1710,11 @@ No Action: ${noActionViews}`;
 			container.querySelectorAll('.delete-btn').forEach(btn => {
 				btn.addEventListener('click', () => {
 					window.deleteReport(btn.dataset.reportId);
+				});
+			});
+			container.querySelectorAll('.restore-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.restoreReport(btn.dataset.reportId);
 				});
 			});
 
@@ -2094,6 +2117,12 @@ No Action: ${noActionViews}`;
 					report.status === 'new' && volunteerBoxIds.includes(report.boxId)
 				).length;
 
+				// Check if this volunteer is deleted
+				const isDeleted = volunteer.deleted === true;
+				const deleteRestoreBtn = isDeleted
+					? `<button class="restore-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Restore</button>`
+					: `<button class="delete-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+
 				tableHTML += '<tr>';
 				tableHTML += `<td title="${escapeHtml(volunteer.id)}"><a href="/dashboard?volunteer=${encodeURIComponent(volunteer.displayName || volunteer.email || 'N/A')}" style="color: var(--marine-blue); text-decoration: underline;">${escapedDisplayName}</a></td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
@@ -2104,7 +2133,7 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td style="text-align: center;">${resolvedCount}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
 				tableHTML += `<button class="edit-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
-				tableHTML += `<button class="delete-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
+				tableHTML += deleteRestoreBtn;
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -2124,6 +2153,13 @@ No Action: ${noActionViews}`;
 				if (!btn.disabled) {
 					btn.addEventListener('click', () => {
 						window.deleteVolunteer(btn.dataset.volunteerId, btn.dataset.volunteerName);
+					});
+				}
+			});
+			container.querySelectorAll('.restore-btn').forEach(btn => {
+				if (!btn.disabled) {
+					btn.addEventListener('click', () => {
+						window.restoreVolunteer(btn.dataset.volunteerId, btn.dataset.volunteerName);
 					});
 				}
 			});
@@ -2364,6 +2400,52 @@ No Action: ${noActionViews}`;
 			);
 		};
 
+		// Restore soft-deleted box
+		window.restoreBox = function(boxId, label) {
+			showConfirmation(
+				'Restore Box',
+				`Restore "${label}"? This will make it visible again.`,
+				async () => {
+					try {
+						console.log('🔄 BOX RESTORE: Starting restore operation', {
+							boxId,
+							label,
+							userId: currentUser.uid
+						});
+
+						const docRef = doc(db, locationsCollectionPath, boxId);
+
+						// Restore with full audit trail
+						const updateData = {
+							deleted: false,
+							restoredAt: serverTimestamp(),
+							restoredBy: currentUser.uid
+							// Keep deletedAt and deletedBy for audit history
+						};
+
+						await updateDoc(docRef, updateData);
+						console.log('✅ BOX RESTORE: updateDoc SUCCESS!');
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.RESTORE_BOX, currentUser, {
+							targetId: boxId,
+							targetType: 'box',
+							targetLabel: label
+						});
+
+						console.log('✅ BOX RESTORE: Restore operation completed successfully');
+					} catch (error) {
+						console.error('❌ BOX RESTORE: Error caught!', {
+							message: error.message,
+							code: error.code,
+							fullError: error
+						});
+						alert('Error restoring box: ' + error.message);
+					}
+				}
+			);
+		};
+
 		// Soft delete all boxes (bulk)
 		document.getElementById('delete-all-boxes-btn').addEventListener('click', () => {
 			const deleteCount = filteredBoxes.length;
@@ -2444,6 +2526,50 @@ No Action: ${noActionViews}`;
 							fullError: error
 						});
 						alert('Error deleting report: ' + error.message);
+					}
+				}
+			);
+		};
+
+		// Restore soft-deleted report
+		window.restoreReport = function(reportId) {
+			showConfirmation(
+				'Restore Report',
+				`Restore this report? This will make it visible again.`,
+				async () => {
+					try {
+						console.log('🔄 REPORT RESTORE: Starting restore operation', {
+							reportId,
+							userId: currentUser.uid
+						});
+
+						const docRef = doc(db, reportsCollectionPath, reportId);
+
+						// Restore with full audit trail
+						const updateData = {
+							deleted: false,
+							restoredAt: serverTimestamp(),
+							restoredBy: currentUser.uid
+							// Keep deletedAt and deletedBy for audit history
+						};
+
+						await updateDoc(docRef, updateData);
+						console.log('✅ REPORT RESTORE: updateDoc SUCCESS!');
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.RESTORE_REPORT, currentUser, {
+							targetId: reportId,
+							targetType: 'report'
+						});
+
+						console.log('✅ REPORT RESTORE: Restore operation completed successfully');
+					} catch (error) {
+						console.error('❌ REPORT RESTORE: Error caught!', {
+							message: error.message,
+							code: error.code,
+							fullError: error
+						});
+						alert('Error restoring report: ' + error.message);
 					}
 				}
 			);
@@ -2591,6 +2717,52 @@ No Action: ${noActionViews}`;
 							fullError: error
 						});
 						alert('Error deleting volunteer: ' + error.message);
+					}
+				}
+			);
+		};
+
+		// Restore soft-deleted volunteer
+		window.restoreVolunteer = function(volunteerId, name) {
+			showConfirmation(
+				'Restore Volunteer',
+				`Restore "${name}"? This will grant them access again.`,
+				async () => {
+					try {
+						console.log('🔄 VOLUNTEER RESTORE: Starting restore operation', {
+							volunteerId,
+							name,
+							userId: currentUser.uid
+						});
+
+						const docRef = doc(db, authorizedVolunteersCollectionPath, volunteerId);
+
+						// Restore with full audit trail
+						const updateData = {
+							deleted: false,
+							restoredAt: serverTimestamp(),
+							restoredBy: currentUser.uid
+							// Keep deletedAt and deletedBy for audit history
+						};
+
+						await updateDoc(docRef, updateData);
+						console.log('✅ VOLUNTEER RESTORE: updateDoc SUCCESS!');
+
+						// Log audit
+						await logAudit(AUDIT_ACTIONS.RESTORE_VOLUNTEER, currentUser, {
+							targetId: volunteerId,
+							targetType: 'volunteer',
+							targetLabel: name
+						});
+
+						console.log('✅ VOLUNTEER RESTORE: Restore operation completed successfully');
+					} catch (error) {
+						console.error('❌ VOLUNTEER RESTORE: Error caught!', {
+							message: error.message,
+							code: error.code,
+							fullError: error
+						});
+						alert('Error restoring volunteer: ' + error.message);
 					}
 				}
 			);
