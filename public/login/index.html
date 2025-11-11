@@ -96,13 +96,23 @@
 					showAuthMessage('error', 'Username cannot contain "@" symbol. Just enter the username.');
 					return;
 				}
+
+				// Disable button and show loading state
+				emailSignInBtn.disabled = true;
+				const originalText = emailSignInBtn.textContent;
+				emailSignInBtn.textContent = 'Signing In...';
+
 				// Replace spaces with underscores to match how email was created during signup
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 				try {
 					await signInWithEmailAndPassword(auth, email, password);
+					// Keep button disabled - redirect will happen
 				} catch (error) {
 					console.error('Email Sign In Error:', error);
+					// Re-enable button on error
+					emailSignInBtn.disabled = false;
+					emailSignInBtn.textContent = originalText;
 					if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
 						showAuthMessage('error', 'Sign in failed: Invalid username or password.');
 					} else {
@@ -125,6 +135,12 @@
 					showAuthMessage('error', 'Username cannot contain "@" symbol.');
 					return;
 				}
+
+				// Disable button and show loading state
+				emailSignUpBtn.disabled = true;
+				const originalText = emailSignUpBtn.textContent;
+				emailSignUpBtn.textContent = 'Creating Account...';
+
 				// Create email with spaces replaced by underscores (email addresses can't have spaces)
 				// but keep the original username with spaces for displayName
 				const emailUsername = username.replace(/\s+/g, '_');
@@ -141,8 +157,12 @@
 					// Force a token refresh to ensure displayName is in the ID token
 					await userCredential.user.getIdToken(true);
 					isNewSignup = true; // Mark as new signup
+					// Keep button disabled - redirect will happen
 				} catch (error) {
 					console.error('Email Sign Up Error:', error);
+					// Re-enable button on error
+					emailSignUpBtn.disabled = false;
+					emailSignUpBtn.textContent = originalText;
 					if (error.code === 'auth/email-already-in-use') {
 						showAuthMessage('error', 'Sign up failed: This username is already taken.');
 					} else {
