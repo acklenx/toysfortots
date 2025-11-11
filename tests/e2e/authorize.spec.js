@@ -22,20 +22,10 @@ test.describe('Authorization Page', () => {
     await page.locator('#toggle-sign-up-btn').click();
     await page.fill('#auth-email', testUsername);
     await page.fill('#auth-password', testPassword);
+    await page.locator('#email-sign-up-btn').click();
 
-    // Wait for the button to be visible and enabled
-    const signUpBtn = page.locator('#email-sign-up-btn');
-    await expect(signUpBtn).toBeVisible();
-    await expect(signUpBtn).toBeEnabled();
-
-    // Start waiting for navigation BEFORE clicking to avoid race condition
-    const navigationPromise = page.waitForURL(/\/authorize/, { timeout: 15000 });
-
-    // Click the button - this triggers auth + redirect
-    await signUpBtn.click();
-
-    // Wait for navigation to complete
-    await navigationPromise;
+    // Wait for redirect to authorize page
+    await page.waitForURL(/\/authorize/);
   });
 
   test.afterEach(async () => {
