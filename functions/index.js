@@ -723,6 +723,10 @@ async function syncLocationSuggestionsFromSheets()
 			// Create normalized search fields (lowercase for case-insensitive search)
 			const searchLabel = label.toLowerCase();
 			const searchAddress = address.toLowerCase();
+			const searchContactName = contactName ? contactName.toLowerCase() : '';
+			const searchContactEmail = contactEmail ? contactEmail.toLowerCase() : '';
+			// For phone: remove all non-digit characters for search
+			const searchContactPhone = contactPhone ? contactPhone.replace( /\D/g, '' ) : '';
 
 			// Generate document ID from label+address hash (for idempotency)
 			const docId = Buffer.from( `${ label }|${ address }` )
@@ -740,6 +744,9 @@ async function syncLocationSuggestionsFromSheets()
 				contactEmail,
 				searchLabel,
 				searchAddress,
+				searchContactName,
+				searchContactPhone,
+				searchContactEmail,
 				syncedAt: FieldValue.serverTimestamp(),
 				sourceRow: index + 2 // Row number in spreadsheet (1-indexed + header)
 			};

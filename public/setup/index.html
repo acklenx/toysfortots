@@ -81,6 +81,10 @@
 			import {
 				findExactMatchByAddress,
 				searchByLabel,
+				searchByAddress,
+				searchByContactName,
+				searchByContactPhone,
+				searchByContactEmail,
 				autoFillFormFields,
 				createAutocomplete
 			} from '../js/location-autocomplete.min.js';
@@ -481,26 +485,43 @@
 					};
 					form.onsubmit = handleFormSubmit;
 				
-				// Setup autocomplete on label field
+				// Setup autocomplete on multiple fields
 				const labelInput = document.getElementById( 'label' );
-				createAutocomplete(
-					labelInput,
-					searchByLabel,
-					( selected ) =>
+				const addressInput = document.getElementById( 'address' );
+				const contactNameInput = document.getElementById( 'contactName' );
+				const contactPhoneInput = document.getElementById( 'contactPhone' );
+				const contactEmailInput = document.getElementById( 'contactEmail' );
+
+				// Helper function to handle autocomplete selection
+				const handleAutocompleteSelect = ( selected ) =>
+				{
+					console.log( 'User selected from autocomplete:', selected );
+					autoFillFormFields( selected );
+
+					// Auto-expand address fields if they're hidden
+					if( manualAddressFields.classList.contains( 'hidden' ) )
 					{
-						console.log( 'User selected:', selected );
-						autoFillFormFields( selected );
-
-						// Auto-expand address fields if they're hidden
-						if( manualAddressFields.classList.contains( 'hidden' ) )
-						{
-							manualAddressFields.classList.remove( 'hidden' );
-							showAddressBtn.classList.add( 'hidden' );
-						}
-
-						showMessage( 'success', 'Location info filled from records!' );
+						manualAddressFields.classList.remove( 'hidden' );
+						showAddressBtn.classList.add( 'hidden' );
 					}
-				);
+
+					showMessage( 'success', 'Location info filled from records!' );
+				};
+
+				// Label field autocomplete
+				createAutocomplete( labelInput, searchByLabel, handleAutocompleteSelect );
+
+				// Address field autocomplete
+				createAutocomplete( addressInput, searchByAddress, handleAutocompleteSelect );
+
+				// Contact name field autocomplete
+				createAutocomplete( contactNameInput, searchByContactName, handleAutocompleteSelect );
+
+				// Contact phone field autocomplete
+				createAutocomplete( contactPhoneInput, searchByContactPhone, handleAutocompleteSelect );
+
+				// Contact email field autocomplete
+				createAutocomplete( contactEmailInput, searchByContactEmail, handleAutocompleteSelect );
 					onAuthStateChanged( auth, async( user ) =>
 					{
 						// Redirect to login if not authenticated or anonymous

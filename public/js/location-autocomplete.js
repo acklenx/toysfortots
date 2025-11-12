@@ -116,6 +116,142 @@ export async function searchByLabel(label, maxResults = 10) {
 }
 
 /**
+ * Searches for location suggestions by contact name
+ * @param {string} name - Contact name to search for
+ * @param {number} maxResults - Maximum number of results to return
+ * @returns {Promise<Array>} - Array of matching location suggestions
+ */
+export async function searchByContactName(name, maxResults = 10) {
+	if (!name || name.length < 2) {
+		return [];
+	}
+
+	const normalized = normalizeForSearch(name);
+	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
+
+	try {
+		// Search for contact names that contain the search term
+		const q = query(
+			suggestionsRef,
+			where('searchContactName', '>=', normalized),
+			where('searchContactName', '<=', normalized + '\uf8ff'),
+			orderBy('searchContactName'),
+			limit(maxResults)
+		);
+
+		const snapshot = await getDocs(q);
+		const results = [];
+
+		snapshot.forEach(doc => {
+			const data = doc.data();
+			// Only include if contactName exists
+			if (data.contactName) {
+				results.push({
+					id: doc.id,
+					...data
+				});
+			}
+		});
+
+		return results;
+	} catch (error) {
+		console.error('Error searching by contact name:', error);
+		return [];
+	}
+}
+
+/**
+ * Searches for location suggestions by contact phone
+ * @param {string} phone - Phone number to search for
+ * @param {number} maxResults - Maximum number of results to return
+ * @returns {Promise<Array>} - Array of matching location suggestions
+ */
+export async function searchByContactPhone(phone, maxResults = 10) {
+	if (!phone || phone.length < 3) {
+		return [];
+	}
+
+	// Normalize phone: remove all non-digit characters
+	const digitsOnly = phone.replace(/\D/g, '');
+	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
+
+	try {
+		// Search for phones that start with the digits
+		const q = query(
+			suggestionsRef,
+			where('searchContactPhone', '>=', digitsOnly),
+			where('searchContactPhone', '<=', digitsOnly + '\uf8ff'),
+			orderBy('searchContactPhone'),
+			limit(maxResults)
+		);
+
+		const snapshot = await getDocs(q);
+		const results = [];
+
+		snapshot.forEach(doc => {
+			const data = doc.data();
+			// Only include if contactPhone exists
+			if (data.contactPhone) {
+				results.push({
+					id: doc.id,
+					...data
+				});
+			}
+		});
+
+		return results;
+	} catch (error) {
+		console.error('Error searching by contact phone:', error);
+		return [];
+	}
+}
+
+/**
+ * Searches for location suggestions by contact email
+ * @param {string} email - Email to search for
+ * @param {number} maxResults - Maximum number of results to return
+ * @returns {Promise<Array>} - Array of matching location suggestions
+ */
+export async function searchByContactEmail(email, maxResults = 10) {
+	if (!email || email.length < 3) {
+		return [];
+	}
+
+	const normalized = normalizeForSearch(email);
+	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
+
+	try {
+		// Search for emails that start with the search term
+		const q = query(
+			suggestionsRef,
+			where('searchContactEmail', '>=', normalized),
+			where('searchContactEmail', '<=', normalized + '\uf8ff'),
+			orderBy('searchContactEmail'),
+			limit(maxResults)
+		);
+
+		const snapshot = await getDocs(q);
+		const results = [];
+
+		snapshot.forEach(doc => {
+			const data = doc.data();
+			// Only include if contactEmail exists
+			if (data.contactEmail) {
+				results.push({
+					id: doc.id,
+					...data
+				});
+			}
+		});
+
+		return results;
+	} catch (error) {
+		console.error('Error searching by contact email:', error);
+		return [];
+	}
+}
+
+/**
  * Finds an exact match by address (case-insensitive)
  * @param {string} address - Address to match
  * @returns {Promise<Object|null>} - Matching location or null
