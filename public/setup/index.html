@@ -143,67 +143,72 @@
 						try
 						{
 							gpsBtn.textContent = 'Got GPS, Getting Address...';
-							const geoApiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${ lat }&lon=${ lon }`;
-							const response = await fetch( geoApiUrl );
-							if( !response.ok )
+							console.log( 'Attempting Google reverse geocoding...' );
+
+							// Primary: Use Google Reverse Geocoding via Cloud Function (more accurate)
+							const reverseGeocode = httpsCallable( functions, 'reverseGeocode' );
+							const result = await reverseGeocode( { lat, lon } );
+
+							if( result.data.success )
 							{
-								throw new Error( `Address lookup failed (status: ${ response.status })` );
-							}
-							const data = await response.json();
-							console.log( 'Reverse Geocode Response:', data ); // For your debugging
-							if( data && data.address )
-							{
-								const addr = data.address;
-								addressInput.value = `${ addr.house_number || '' } ${ addr.road || '' }`.trim();
-								cityInput.value = addr.city || addr.town || addr.village || '';
-								stateInput.value = addr.state || 'GA'; // Use found state, default to GA
-								countyInput.value = addr.county || '';
-								postalCodeInput.value = addr.postcode || '';
-								const labelInput = document.getElementById( 'label' );
-								if( labelInput.value === '' )
-								{ // Only if not already filled
-									labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
-								}
+								const data = result.data;
+								addressInput.value = data.address || '';
+								cityInput.value = data.city || '';
+								stateInput.value = data.state || 'GA';
+								countyInput.value = data.county || '';
+								postalCodeInput.value = data.postalCode || '';
+
+								console.log( 'Google reverse geocoding successful:', data );
 								showMessage( 'success', 'Location and Address captured!' );
 							}
 							else
 							{
-								throw new Error( 'Address not found in API response.' );
+								throw new Error( 'Google geocoding returned no results' );
 							}
 						}
 						catch( geoError )
 						{
-							console.error( 'OpenStreetMap geocoding error:', geoError );
+							console.error( 'Google geocoding error:', geoError );
 
-							// Fallback to Google Reverse Geocoding via Cloud Function
+							// Fallback to OpenStreetMap
 							try
 							{
 								gpsBtn.textContent = 'Trying alternate geocoding...';
-								console.log( 'Attempting Google reverse geocoding fallback...' );
+								console.log( 'Attempting OpenStreetMap reverse geocoding fallback...' );
 
-								const reverseGeocode = httpsCallable( functions, 'reverseGeocode' );
-								const result = await reverseGeocode( { lat, lon } );
-
-								if( result.data.success )
+								const geoApiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${ lat }&lon=${ lon }`;
+								const response = await fetch( geoApiUrl );
+								if( !response.ok )
 								{
-									const data = result.data;
-									addressInput.value = data.address || '';
-									cityInput.value = data.city || '';
-									stateInput.value = data.state || 'GA';
-									countyInput.value = data.county || '';
-									postalCodeInput.value = data.postalCode || '';
+									throw new Error( `Address lookup failed (status: ${ response.status })` );
+								}
+								const data = await response.json();
+								console.log( 'OpenStreetMap Reverse Geocode Response:', data );
+								if( data && data.address )
+								{
+									const addr = data.address;
+									addressInput.value = `${ addr.house_number || '' } ${ addr.road || '' }`.trim();
+									cityInput.value = addr.city || addr.town || addr.village || '';
+									stateInput.value = addr.state || 'GA';
+									countyInput.value = addr.county || '';
+									postalCodeInput.value = addr.postcode || '';
+									const labelInput = document.getElementById( 'label' );
+									if( labelInput.value === '' )
+									{
+										labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
+									}
 
-									console.log( 'Google reverse geocoding successful:', data );
+									console.log( 'OpenStreetMap reverse geocoding successful' );
 									showMessage( 'success', 'Location and Address captured!' );
 								}
 								else
 								{
-									throw new Error( 'Google geocoding returned no results' );
+									throw new Error( 'Address not found in API response.' );
 								}
 							}
-							catch( googleError )
+							catch( osmError )
 							{
-								console.error( 'Google geocoding fallback also failed:', googleError );
+								console.error( 'OpenStreetMap geocoding fallback also failed:', osmError );
 								gpsErrorMsg.textContent = 'Got GPS, but failed to get address. Please type it manually.';
 							}
 						}
