@@ -330,6 +330,94 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 		console.log( '--- provisionBoxV2 FINISHED ---' );
 	}
 } );
+
+/**
+ * Reverse Geocoding Cloud Function
+ * Converts GPS coordinates to a human-readable address using Google Maps Geocoding API
+ * This keeps the API key secure on the server side
+ */
+exports.reverseGeocode = onCall( async( request ) =>
+{
+	const { lat, lon } = request.data;
+
+	// Validate input
+	if( !lat || !lon )
+	{
+		throw new HttpsError( 'invalid-argument', 'Latitude and longitude are required.' );
+	}
+
+	// Validate coordinate ranges
+	if( lat < -90 || lat > 90 || lon < -180 || lon > 180 )
+	{
+		throw new HttpsError( 'invalid-argument', 'Invalid coordinates. Lat must be -90 to 90, Lon must be -180 to 180.' );
+	}
+
+	console.log( `reverseGeocode: Attempting to reverse geocode coordinates: ${ lat }, ${ lon }` );
+
+	const apiKey = GEOCODING_API_KEY.value();
+	if( !apiKey )
+	{
+		console.error( 'reverseGeocode: GEOCODING_API_KEY is missing!' );
+		throw new HttpsError( 'internal', 'Geocoding service is not configured.' );
+	}
+
+	try
+	{
+		const geoResponse = await mapsClient.reverseGeocode( {
+			params: {
+				latlng: `${ lat },${ lon }`,
+				key: apiKey
+			}
+		} );
+
+		if( geoResponse.data.status === 'OK' && geoResponse.data.results.length > 0 )
+		{
+			const result = geoResponse.data.results[ 0 ];
+			const addressComponents = result.address_components;
+
+			// Extract address parts from components
+			const getComponent = ( types ) =>
+			{
+				const component = addressComponents.find( comp =>
+					types.some( type => comp.types.includes( type ) )
+				);
+				return component ? component.long_name : '';
+			};
+
+			const streetNumber = getComponent( [ 'street_number' ] );
+			const route = getComponent( [ 'route' ] );
+			const city = getComponent( [ 'locality', 'sublocality', 'postal_town' ] );
+			const county = getComponent( [ 'administrative_area_level_2' ] );
+			const state = getComponent( [ 'administrative_area_level_1' ] );
+			const postalCode = getComponent( [ 'postal_code' ] );
+
+			const address = `${ streetNumber } ${ route }`.trim();
+
+			console.log( `reverseGeocode: Success - Address: ${ address }, City: ${ city }, State: ${ state }` );
+
+			return {
+				success: true,
+				address: address || '',
+				city: city || '',
+				state: state || '',
+				county: county || '',
+				postalCode: postalCode || '',
+				formattedAddress: result.formatted_address
+			};
+		}
+		else
+		{
+			console.warn( `reverseGeocode: API returned status: ${ geoResponse.data.status }` );
+			throw new HttpsError( 'not-found', 'No address found for the given coordinates.' );
+		}
+	}
+	catch( error )
+	{
+		console.error( 'reverseGeocode: Error during API call:', error.response ? JSON.stringify( error.response.data ) : error.message );
+		throw new HttpsError( 'internal', 'Failed to reverse geocode coordinates.' );
+	}
+} );
+
 exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 {
 	if( !request.auth || !request.auth.uid )
