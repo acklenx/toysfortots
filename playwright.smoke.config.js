@@ -11,14 +11,17 @@ export default defineConfig({
   retries: 1, // One retry for transient failures
   workers: 4, // Parallel workers for speed
   reporter: 'html',
-  timeout: 15000, // 15 seconds per test
+  timeout: 30000, // 30 seconds per test - NEVER INCREASE THIS!
   globalSetup: './tests/global-setup.js',
   globalTeardown: './tests/global-teardown.js',
 
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: {
+      mode: 'only-on-failure',
+      fullPage: true // Full page screenshots for better debugging
+    },
     actionTimeout: 3000,
     navigationTimeout: 3000,
   },

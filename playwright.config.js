@@ -33,7 +33,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: {
+      mode: 'only-on-failure',
+      fullPage: true // Full page screenshots for better debugging
+    },
     video: 'retain-on-failure',
     actionTimeout: 3000, // 3 seconds for actions
     navigationTimeout: 3000, // 3 seconds for page navigations

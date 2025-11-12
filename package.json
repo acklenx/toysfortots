@@ -59,7 +59,7 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.10.0",
+    "@types/node": "^22.10.0",
     "chrome-launcher": "^1.2.1",
     "csso-cli": "^4.0.2",
     "firebase-admin": "^13.6.0",
