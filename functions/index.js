@@ -931,11 +931,18 @@ async function generateLocationsCache()
 			return { success: true, count: 0, message: 'No locations to cache.' };
 		}
 
-		// Build locations array (already sorted by query, but explicit sort for safety)
+		// Build locations array (filter out deleted boxes)
 		const locations = [];
 		snapshot.forEach( doc =>
 		{
 			const data = doc.data();
+
+			// Skip soft-deleted boxes (don't include in public cache)
+			if( data.deleted === true )
+			{
+				return;
+			}
+
 			locations.push( {
 				id: doc.id,
 				label: data.label,

@@ -123,6 +123,12 @@
 
 					locationsArray.forEach( ( location ) =>
 					{
+						// Skip soft-deleted boxes (safety net in case cache includes them)
+						if( location.deleted === true )
+						{
+							return;
+						}
+
 						if( location.lat && location.lon )
 						{
 							const marker = L.marker( [ location.lat, location.lon ], { icon: customIcon } ).addTo( map );
