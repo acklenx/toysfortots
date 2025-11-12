@@ -1344,6 +1344,7 @@
 
 		// Handle box modified with yellow flash animation
 		function handleBoxModified(box) {
+			console.log('🟡 ANIMATION: handleBoxModified called for box', box.id);
 			// Re-filter and render with updated data
 			filterAndRenderBoxes();
 
@@ -1351,12 +1352,17 @@
 			setTimeout(() => {
 				const container = document.getElementById('boxes-container');
 				const row = container.querySelector(`tbody tr[data-box-id="${box.id}"]`);
+				console.log('🟡 ANIMATION: Looking for row with data-box-id:', box.id, 'Found:', !!row);
 				if (row) {
+					console.log('🟡 ANIMATION: Adding flashing class to row');
 					row.classList.add('flashing');
 					// Remove animation class after it completes
 					setTimeout(() => {
 						row.classList.remove('flashing');
+						console.log('🟡 ANIMATION: Removed flashing class');
 					}, 1800);
+				} else {
+					console.warn('🟡 ANIMATION: Row not found! Available rows:', container.querySelectorAll('tbody tr[data-box-id]').length);
 				}
 			}, 50); // Small delay to ensure DOM has updated
 		}
