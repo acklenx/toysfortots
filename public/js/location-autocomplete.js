@@ -34,7 +34,7 @@ function normalizeForSearch(str) {
 }
 
 /**
- * Searches for location suggestions by address
+ * Searches for location suggestions by address (substring match anywhere)
  * @param {string} address - Address to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Promise<Array>} - Array of matching location suggestions
@@ -48,26 +48,34 @@ export async function searchByAddress(address, maxResults = 10) {
 	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
 
 	try {
-		// Search for addresses that start with the search term
-		const q = query(
-			suggestionsRef,
-			where('searchAddress', '>=', normalized),
-			where('searchAddress', '<=', normalized + '\uf8ff'),
-			orderBy('searchAddress'),
-			limit(maxResults)
-		);
-
-		const snapshot = await getDocs(q);
+		// Fetch all suggestions and filter client-side for substring matching
+		const snapshot = await getDocs(suggestionsRef);
 		const results = [];
 
 		snapshot.forEach(doc => {
-			results.push({
-				id: doc.id,
-				...doc.data()
-			});
+			const data = doc.data();
+			// Check if search term appears anywhere in the address
+			if (data.searchAddress && data.searchAddress.includes(normalized)) {
+				results.push({
+					id: doc.id,
+					...data
+				});
+			}
 		});
 
-		return results;
+		// Sort by relevance: exact matches first, then by position of match
+		results.sort((a, b) => {
+			const aIndex = a.searchAddress.indexOf(normalized);
+			const bIndex = b.searchAddress.indexOf(normalized);
+			// Prioritize matches at the beginning
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			// Then alphabetically
+			return a.searchAddress.localeCompare(b.searchAddress);
+		});
+
+		return results.slice(0, maxResults);
 	} catch (error) {
 		console.error('Error searching by address:', error);
 		return [];
@@ -75,7 +83,7 @@ export async function searchByAddress(address, maxResults = 10) {
 }
 
 /**
- * Searches for location suggestions by label/name
+ * Searches for location suggestions by label/name (substring match anywhere)
  * @param {string} label - Label to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Promise<Array>} - Array of matching location suggestions
@@ -89,26 +97,34 @@ export async function searchByLabel(label, maxResults = 10) {
 	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
 
 	try {
-		// Search for labels that start with the search term
-		const q = query(
-			suggestionsRef,
-			where('searchLabel', '>=', normalized),
-			where('searchLabel', '<=', normalized + '\uf8ff'),
-			orderBy('searchLabel'),
-			limit(maxResults)
-		);
-
-		const snapshot = await getDocs(q);
+		// Fetch all suggestions and filter client-side for substring matching
+		const snapshot = await getDocs(suggestionsRef);
 		const results = [];
 
 		snapshot.forEach(doc => {
-			results.push({
-				id: doc.id,
-				...doc.data()
-			});
+			const data = doc.data();
+			// Check if search term appears anywhere in the label
+			if (data.searchLabel && data.searchLabel.includes(normalized)) {
+				results.push({
+					id: doc.id,
+					...data
+				});
+			}
 		});
 
-		return results;
+		// Sort by relevance: exact matches first, then by position of match
+		results.sort((a, b) => {
+			const aIndex = a.searchLabel.indexOf(normalized);
+			const bIndex = b.searchLabel.indexOf(normalized);
+			// Prioritize matches at the beginning
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			// Then alphabetically
+			return a.searchLabel.localeCompare(b.searchLabel);
+		});
+
+		return results.slice(0, maxResults);
 	} catch (error) {
 		console.error('Error searching by label:', error);
 		return [];
@@ -116,7 +132,7 @@ export async function searchByLabel(label, maxResults = 10) {
 }
 
 /**
- * Searches for location suggestions by contact name
+ * Searches for location suggestions by contact name (substring match anywhere)
  * @param {string} name - Contact name to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Promise<Array>} - Array of matching location suggestions
@@ -130,22 +146,14 @@ export async function searchByContactName(name, maxResults = 10) {
 	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
 
 	try {
-		// Search for contact names that contain the search term
-		const q = query(
-			suggestionsRef,
-			where('searchContactName', '>=', normalized),
-			where('searchContactName', '<=', normalized + '\uf8ff'),
-			orderBy('searchContactName'),
-			limit(maxResults)
-		);
-
-		const snapshot = await getDocs(q);
+		// Fetch all suggestions and filter client-side for substring matching
+		const snapshot = await getDocs(suggestionsRef);
 		const results = [];
 
 		snapshot.forEach(doc => {
 			const data = doc.data();
-			// Only include if contactName exists
-			if (data.contactName) {
+			// Check if search term appears anywhere in the contact name
+			if (data.contactName && data.searchContactName && data.searchContactName.includes(normalized)) {
 				results.push({
 					id: doc.id,
 					...data
@@ -153,7 +161,19 @@ export async function searchByContactName(name, maxResults = 10) {
 			}
 		});
 
-		return results;
+		// Sort by relevance: exact matches first, then by position of match
+		results.sort((a, b) => {
+			const aIndex = a.searchContactName.indexOf(normalized);
+			const bIndex = b.searchContactName.indexOf(normalized);
+			// Prioritize matches at the beginning
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			// Then alphabetically
+			return a.searchContactName.localeCompare(b.searchContactName);
+		});
+
+		return results.slice(0, maxResults);
 	} catch (error) {
 		console.error('Error searching by contact name:', error);
 		return [];
@@ -161,7 +181,7 @@ export async function searchByContactName(name, maxResults = 10) {
 }
 
 /**
- * Searches for location suggestions by contact phone
+ * Searches for location suggestions by contact phone (substring match anywhere - great for last 4 digits)
  * @param {string} phone - Phone number to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Promise<Array>} - Array of matching location suggestions
@@ -176,22 +196,14 @@ export async function searchByContactPhone(phone, maxResults = 10) {
 	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
 
 	try {
-		// Search for phones that start with the digits
-		const q = query(
-			suggestionsRef,
-			where('searchContactPhone', '>=', digitsOnly),
-			where('searchContactPhone', '<=', digitsOnly + '\uf8ff'),
-			orderBy('searchContactPhone'),
-			limit(maxResults)
-		);
-
-		const snapshot = await getDocs(q);
+		// Fetch all suggestions and filter client-side for substring matching
+		const snapshot = await getDocs(suggestionsRef);
 		const results = [];
 
 		snapshot.forEach(doc => {
 			const data = doc.data();
-			// Only include if contactPhone exists
-			if (data.contactPhone) {
+			// Check if search term appears anywhere in the phone number (digits only)
+			if (data.contactPhone && data.searchContactPhone && data.searchContactPhone.includes(digitsOnly)) {
 				results.push({
 					id: doc.id,
 					...data
@@ -199,7 +211,19 @@ export async function searchByContactPhone(phone, maxResults = 10) {
 			}
 		});
 
-		return results;
+		// Sort by relevance: exact matches first, then by position of match
+		results.sort((a, b) => {
+			const aIndex = a.searchContactPhone.indexOf(digitsOnly);
+			const bIndex = b.searchContactPhone.indexOf(digitsOnly);
+			// Prioritize matches at the beginning
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			// Then alphabetically
+			return a.searchContactPhone.localeCompare(b.searchContactPhone);
+		});
+
+		return results.slice(0, maxResults);
 	} catch (error) {
 		console.error('Error searching by contact phone:', error);
 		return [];
@@ -207,7 +231,7 @@ export async function searchByContactPhone(phone, maxResults = 10) {
 }
 
 /**
- * Searches for location suggestions by contact email
+ * Searches for location suggestions by contact email (substring match anywhere)
  * @param {string} email - Email to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Promise<Array>} - Array of matching location suggestions
@@ -221,22 +245,14 @@ export async function searchByContactEmail(email, maxResults = 10) {
 	const suggestionsRef = collection(db, locationSuggestionsCollectionPath);
 
 	try {
-		// Search for emails that start with the search term
-		const q = query(
-			suggestionsRef,
-			where('searchContactEmail', '>=', normalized),
-			where('searchContactEmail', '<=', normalized + '\uf8ff'),
-			orderBy('searchContactEmail'),
-			limit(maxResults)
-		);
-
-		const snapshot = await getDocs(q);
+		// Fetch all suggestions and filter client-side for substring matching
+		const snapshot = await getDocs(suggestionsRef);
 		const results = [];
 
 		snapshot.forEach(doc => {
 			const data = doc.data();
-			// Only include if contactEmail exists
-			if (data.contactEmail) {
+			// Check if search term appears anywhere in the email
+			if (data.contactEmail && data.searchContactEmail && data.searchContactEmail.includes(normalized)) {
 				results.push({
 					id: doc.id,
 					...data
@@ -244,7 +260,19 @@ export async function searchByContactEmail(email, maxResults = 10) {
 			}
 		});
 
-		return results;
+		// Sort by relevance: exact matches first, then by position of match
+		results.sort((a, b) => {
+			const aIndex = a.searchContactEmail.indexOf(normalized);
+			const bIndex = b.searchContactEmail.indexOf(normalized);
+			// Prioritize matches at the beginning
+			if (aIndex !== bIndex) {
+				return aIndex - bIndex;
+			}
+			// Then alphabetically
+			return a.searchContactEmail.localeCompare(b.searchContactEmail);
+		});
+
+		return results.slice(0, maxResults);
 	} catch (error) {
 		console.error('Error searching by contact email:', error);
 		return [];
