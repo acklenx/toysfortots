@@ -205,7 +205,7 @@
 										? `/authorize?boxId=${boxId}`
 										: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
 									window.location.href = authorizeUrl;
-								}, 1000);
+								}, 100);
 								return;
 							}
 
@@ -226,7 +226,7 @@
 											? `/authorize?boxId=${boxId}`
 											: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
 										window.location.href = authorizeUrl;
-									}, 1000);
+									}, 100);
 								}
 							} catch (err) {
 								console.error('Authorization check failed:', err);
