@@ -48,6 +48,11 @@ service cloud.firestore {
         allow update: if isVolunteer() &&
                          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['deleted', 'deletedAt', 'deletedBy']);
 
+        // Allow volunteers to soft-delete ONLY their own boxes
+        allow update: if isVolunteer() &&
+                         request.resource.data.deleted == true &&
+                         resource.data.volunteer == get(/databases/$(database)/documents/artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers/$(request.auth.uid)).data.displayName;
+
         // Allow admins to soft delete (any delete-related fields)
         allow update: if isAdmin();
 
