@@ -1347,19 +1347,18 @@
 			// Re-filter and render with updated data
 			filterAndRenderBoxes();
 
-			// Find the modified row and apply animation
-			const container = document.getElementById('boxes-container');
-			const rows = container.querySelectorAll('tbody tr');
-			rows.forEach(row => {
-				const link = row.querySelector('td:first-child a');
-				if (link && link.textContent === box.id) {
+			// Wait for DOM to update, then find and animate the modified row
+			setTimeout(() => {
+				const container = document.getElementById('boxes-container');
+				const row = container.querySelector(`tbody tr[data-box-id="${box.id}"]`);
+				if (row) {
 					row.classList.add('flashing');
 					// Remove animation class after it completes
 					setTimeout(() => {
 						row.classList.remove('flashing');
 					}, 1800);
 				}
-			});
+			}, 50); // Small delay to ensure DOM has updated
 		}
 
 		// Handle box removed with red flash + collapse animation
@@ -1517,7 +1516,7 @@ No Action: ${noActionViews}`;
 					? `<button class="restore-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Restore</button>`
 					: `<button class="delete-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Delete</button>`;
 
-				tableHTML += '<tr>';
+				tableHTML += `<tr data-box-id="${escapeHtml(box.id)}">`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(box.id)}" target="_blank">${escapeHtml(box.id)}</a></td>`;
 				tableHTML += `<td title="${contactTooltip}">${escapedLabel}</td>`;
 				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(box.address || 'N/A')}</a></td>`;
@@ -1812,19 +1811,18 @@ No Action: ${noActionViews}`;
 			// Re-filter and render with updated data
 			filterAndRenderReports();
 
-			// Find the modified row and apply animation
-			const container = document.getElementById('reports-container');
-			const rows = container.querySelectorAll('tbody tr');
-			rows.forEach(row => {
-				const link = row.querySelector('td:first-child a');
-				if (link && link.textContent === report.id) {
+			// Wait for DOM to update, then find and animate the modified row
+			setTimeout(() => {
+				const container = document.getElementById('reports-container');
+				const row = container.querySelector(`tbody tr[data-report-id="${report.id}"]`);
+				if (row) {
 					row.classList.add('flashing');
 					// Remove animation class after it completes
 					setTimeout(() => {
 						row.classList.remove('flashing');
 					}, 1800);
 				}
-			});
+			}, 50); // Small delay to ensure DOM has updated
 		}
 
 		// Handle report removed with red flash + collapse animation
@@ -1953,7 +1951,7 @@ No Action: ${noActionViews}`;
 					? `<button class="restore-btn" data-report-id="${escapeHtml(report.id)}">Restore</button>`
 					: `<button class="delete-btn" data-report-id="${escapeHtml(report.id)}">Delete</button>`;
 
-				tableHTML += '<tr>';
+				tableHTML += `<tr data-report-id="${escapeHtml(report.id)}">`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}#report-${encodeURIComponent(report.id)}" target="_blank">${escapeHtml(report.id)}</a></td>`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(report.boxId)}" target="_blank">${escapeHtml(report.boxId || 'N/A')}</a></td>`;
 				tableHTML += `<td>${escapeHtml(locationLabel)}</td>`;
@@ -2232,19 +2230,18 @@ No Action: ${noActionViews}`;
 			// Re-filter and render with updated data
 			filterAndRenderVolunteers();
 
-			// Find the modified row and apply animation
-			const container = document.getElementById('volunteers-container');
-			const rows = container.querySelectorAll('tbody tr');
-			rows.forEach(row => {
-				const cell = row.querySelector('td:first-child');
-				if (cell && cell.textContent.includes(volunteer.displayName)) {
+			// Wait for DOM to update, then find and animate the modified row
+			setTimeout(() => {
+				const container = document.getElementById('volunteers-container');
+				const row = container.querySelector(`tbody tr[data-volunteer-id="${volunteer.id}"]`);
+				if (row) {
 					row.classList.add('flashing');
 					// Remove animation class after it completes
 					setTimeout(() => {
 						row.classList.remove('flashing');
 					}, 1800);
 				}
-			});
+			}, 50); // Small delay to ensure DOM has updated
 		}
 
 		// Handle volunteer removed with red flash + collapse animation
@@ -2438,7 +2435,7 @@ No Action: ${noActionViews}`;
 					? `<button class="restore-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Restore</button>`
 					: `<button class="delete-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" data-volunteer-name="${escapedDisplayNameForAttr}" ${isCurrentUser ? 'disabled' : ''}>Delete</button>`;
 
-				tableHTML += '<tr>';
+				tableHTML += `<tr data-volunteer-id="${escapeHtml(volunteer.id)}">`;
 				tableHTML += `<td title="${escapeHtml(volunteer.id)}"><a href="/dashboard?volunteer=${encodeURIComponent(volunteer.displayName || volunteer.email || 'N/A')}" style="color: var(--marine-blue); text-decoration: underline;">${escapedDisplayName}</a></td>`;
 				tableHTML += `<td style="text-align: center; font-size: 1.2rem;">${isOAuth ? '✓' : ''}</td>`;
 				tableHTML += `<td style="text-align: center;"><a href="/dashboard?volunteer=${encodeURIComponent(volunteer.displayName || volunteer.email || 'N/A')}" style="color: var(--marine-blue); text-decoration: underline;">${boxCount}</a></td>`;
