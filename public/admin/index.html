@@ -1055,9 +1055,11 @@
 
 				// Apply volunteer restrictions
 				if (currentUserRole === 'volunteer') {
-					// Hide "Delete All" buttons for reports and volunteers
+					// Hide "Delete All" buttons for all sections
+					const deleteAllBoxesBtn = document.getElementById('delete-all-boxes-btn');
 					const deleteAllReportsBtn = document.getElementById('delete-all-reports-btn');
 					const deleteAllVolunteersBtn = document.getElementById('delete-all-volunteers-btn');
+					if (deleteAllBoxesBtn) deleteAllBoxesBtn.style.display = 'none';
 					if (deleteAllReportsBtn) deleteAllReportsBtn.style.display = 'none';
 					if (deleteAllVolunteersBtn) deleteAllVolunteersBtn.style.display = 'none';
 				}
@@ -2615,6 +2617,22 @@ No Action: ${noActionViews}`;
 
 			if (!boxData) return;
 
+			// Ensure modal is in EDIT mode (not view mode)
+			const form = document.getElementById('edit-box-form');
+			form.querySelectorAll('input').forEach(input => {
+				input.removeAttribute('readonly');
+				input.style.backgroundColor = '';
+			});
+
+			// Ensure Save button is visible
+			const submitBtn = form.querySelector('button[type="submit"]');
+			if (submitBtn) submitBtn.style.display = '';
+
+			// Set modal title to "Edit"
+			const modalTitle = document.querySelector('#edit-box-modal h3');
+			if (modalTitle) modalTitle.textContent = 'Edit Box';
+
+			// Fill form fields
 			document.getElementById('edit-box-label').value = boxData.label || '';
 			document.getElementById('edit-box-address').value = boxData.address || '';
 			document.getElementById('edit-box-city').value = boxData.city || '';
@@ -3077,6 +3095,22 @@ No Action: ${noActionViews}`;
 
 			if (!volunteerData) return;
 
+			// Ensure modal is in EDIT mode (not view mode)
+			const form = document.getElementById('edit-volunteer-form');
+			form.querySelectorAll('input').forEach(input => {
+				input.removeAttribute('readonly');
+				input.style.backgroundColor = '';
+			});
+
+			// Ensure Save button is visible
+			const submitBtn = form.querySelector('button[type="submit"]');
+			if (submitBtn) submitBtn.style.display = '';
+
+			// Set modal title to "Edit"
+			const modalTitle = document.querySelector('#edit-volunteer-modal h3');
+			if (modalTitle) modalTitle.textContent = 'Edit Volunteer';
+
+			// Fill form fields
 			document.getElementById('edit-volunteer-name').value = volunteerData.displayName || '';
 			document.getElementById('edit-volunteer-email').value = volunteerData.email || '';
 
