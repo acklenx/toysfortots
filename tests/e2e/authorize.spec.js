@@ -24,8 +24,8 @@ test.describe('Authorization Page', () => {
     await page.fill('#auth-password', testPassword);
     await page.locator('#email-sign-up-btn').click();
 
-    // Wait for redirect to authorize page (allow up to 10 seconds for redirect in CI)
-    await page.waitForURL(/\/authorize/, { timeout: 10000 });
+    // Wait for redirect to authorize page (3s max - must fit in 5s overall test timeout)
+    await page.waitForURL(/\/authorize/, { timeout: 3000 });
   });
 
   test.afterEach(async () => {
