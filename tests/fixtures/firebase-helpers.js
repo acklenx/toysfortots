@@ -52,17 +52,21 @@ async function seedTestConfig(passcode = 'TEST_PASSCODE') {
   });
 
   // Verify write with retry for emulator race conditions
-  let retries = 3;
+  // CI runners are slower than local, so use more retries
   let verifyDoc;
-  while (retries > 0) {
+  for (let i = 0; i < 5; i++) {
     verifyDoc = await configRef.get();
-    if (verifyDoc.exists) break;
-    await new Promise(resolve => setTimeout(resolve, 100));
-    retries--;
+    if (verifyDoc.exists) {
+      break;
+    }
+    if (i < 4) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
   }
 
   if (!verifyDoc.exists) {
-    throw new Error('Failed to verify config was created');
+    console.error('Config write verification failed after 5 retries (750ms)');
+    throw new Error('Failed to verify config was created - write succeeded but read failed after 750ms');
   }
 
   return passcode;
@@ -83,10 +87,22 @@ async function authorizeVolunteer(uid, email, displayName) {
     deleted: false
   });
 
-  // Verify write
-  const verifyDoc = await volunteerRef.get();
+  // Verify write with retry for emulator race conditions
+  // CI runners are slower than local, so use more retries
+  let verifyDoc;
+  for (let i = 0; i < 5; i++) {
+    verifyDoc = await volunteerRef.get();
+    if (verifyDoc.exists) {
+      break;
+    }
+    if (i < 4) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+  }
+
   if (!verifyDoc.exists) {
-    throw new Error(`Failed to verify volunteer ${uid} was authorized`);
+    console.error(`Volunteer ${uid} write verification failed after 5 retries (750ms)`);
+    throw new Error(`Failed to verify volunteer ${uid} was authorized - write succeeded but read failed after 750ms`);
   }
 }
 
@@ -199,9 +215,20 @@ async function createTestReport(boxId, reportData = {}) {
   await reportRef.set(report);
 
   // Verify data is readable (ensures emulator has committed the write)
-  const verifyDoc = await reportRef.get();
+  let verifyDoc;
+  for (let i = 0; i < 5; i++) {
+    verifyDoc = await reportRef.get();
+    if (verifyDoc.exists) {
+      break;
+    }
+    if (i < 4) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+  }
+
   if (!verifyDoc.exists) {
-    throw new Error(`Failed to verify report was created`);
+    console.error(`Report write verification failed after 5 retries (750ms)`);
+    throw new Error(`Failed to verify report was created - write succeeded but read failed after 750ms`);
   }
 
   return { id: reportRef.id, ...report };
