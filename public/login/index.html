@@ -147,16 +147,12 @@
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-					// Store the username as typed (with proper capitalization and spaces) as displayName
-					// IMPORTANT: Wait for updateProfile to complete before setting isNewSignup
-					// This ensures the displayName is saved to Firebase Auth before the
-					// onAuthStateChanged handler processes the new user
-					await updateProfile(userCredential.user, {
+					// Mark as new signup immediately for fast redirect
+					isNewSignup = true;
+					// Update displayName in background (don't block redirect)
+					updateProfile(userCredential.user, {
 						displayName: username
-					});
-					// Force a token refresh to ensure displayName is in the ID token
-					await userCredential.user.getIdToken(true);
-					isNewSignup = true; // Mark as new signup
+					}).catch(err => console.error('Failed to update display name:', err));
 					// Keep button disabled - redirect will happen
 				} catch (error) {
 					console.error('Email Sign Up Error:', error);
@@ -197,7 +193,6 @@
 							// If this was a new signup, redirect to authorize page
 							if (isNewSignup) {
 								showAuthMessage('success', 'Account created! Redirecting to authorization...');
-								setTimeout(() => {
 									// Extract boxId from returnUrl if present
 									const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
 									const boxId = urlParams.get('id');
@@ -205,7 +200,6 @@
 										? `/authorize?boxId=${boxId}`
 										: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
 									window.location.href = authorizeUrl;
-								}, 100);
 								return;
 							}
 
@@ -219,14 +213,12 @@
 								} else {
 									// Existing user but not authorized - redirect to authorize page
 									showAuthMessage('success', 'Redirecting to authorization...');
-									setTimeout(() => {
 										const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
 										const boxId = urlParams.get('id');
 										const authorizeUrl = boxId
 											? `/authorize?boxId=${boxId}`
 											: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
 										window.location.href = authorizeUrl;
-									}, 100);
 								}
 							} catch (err) {
 								console.error('Authorization check failed:', err);
