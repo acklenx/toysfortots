@@ -165,15 +165,6 @@
 									labelInput.value = addr.amenity || addr.shop || addr.building || addr.office || '';
 								}
 								showMessage( 'success', 'Location and Address captured!' );
-							
-							// Auto-lookup by address after GPS
-							const match = await findExactMatchByAddress( addressInput.value );
-							if( match )
-							{
-								console.log( 'Found matching location from spreadsheet!', match );
-								autoFillFormFields( match );
-								showMessage( 'success', 'Location info auto-filled from records!' );
-							}
 							}
 							else
 							{
@@ -182,8 +173,30 @@
 						}
 						catch( geoError )
 						{
+							console.error( 'Geocoding error:', geoError );
 							gpsErrorMsg.textContent = 'Got GPS, but failed to get address. Please type it manually.';
 						}
+
+						// Auto-lookup by address after GPS (separate from geocoding error handling)
+						if( addressInput.value )
+						{
+							try
+							{
+								const match = await findExactMatchByAddress( addressInput.value );
+								if( match )
+								{
+									console.log( 'Found matching location from spreadsheet!', match );
+									autoFillFormFields( match );
+									showMessage( 'success', 'Location info auto-filled from records!' );
+								}
+							}
+							catch( autocompleteError )
+							{
+								// Non-critical error - log but don't fail GPS functionality
+								console.error( 'Autocomplete lookup failed (non-critical):', autocompleteError );
+							}
+						}
+
 						const latFixed = lat.toFixed( 4 );
 						const lonFixed = lon.toFixed( 4 );
 						gpsBtn.innerHTML = `
