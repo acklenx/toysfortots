@@ -991,6 +991,7 @@
 		let allVolunteers = [];
 		let filteredVolunteers = [];
 		let locationSuggestions = []; // Google Sheets data
+		let boxChangedFields = {}; // Track which fields changed for animation highlighting
 
 		// (Listener tracking variables moved up to line 810-818 for better organization)
 
@@ -1270,6 +1271,7 @@
 							} else if (change.type === 'modified') {
 								// Box updated - might have been soft-deleted!
 								const index = allBoxes.findIndex(b => b.id === box.id);
+								const oldBox = index !== -1 ? allBoxes[index] : null;
 
 								// Check if box was soft-deleted and we're not showing deleted items
 								if (box.deleted && !showingDeleted) {
@@ -1279,9 +1281,9 @@
 										handleBoxRemoved(box.id);
 									}
 								} else if (index !== -1) {
-									// Normal update
+									// Normal update - pass old box for delta calculation
 									allBoxes[index] = box;
-									handleBoxModified(box);
+									handleBoxModified(box, oldBox);
 								} else if (!box.deleted || showingDeleted) {
 									// Box exists in Firestore but not in our array - add it
 									allBoxes.push(box);
@@ -1343,8 +1345,24 @@
 		}
 
 		// Handle box modified with yellow flash animation
-		function handleBoxModified(box) {
+		function handleBoxModified(box, oldBox) {
 			console.log('🟡 ANIMATION: handleBoxModified called for box', box.id);
+
+			// Calculate which fields changed (compare old vs new)
+			const changedFields = [];
+			if (oldBox) {
+				const fieldsToCheck = ['label', 'address', 'city', 'state', 'volunteer', 'contactName', 'contactPhone', 'contactEmail'];
+				fieldsToCheck.forEach(field => {
+					if (oldBox[field] !== box[field]) {
+						changedFields.push(field);
+					}
+				});
+				console.log('🟡 ANIMATION: Changed fields:', changedFields);
+			}
+
+			// Store changed fields for this box
+			boxChangedFields[box.id] = changedFields;
+
 			// Re-filter and render with updated data
 			filterAndRenderBoxes();
 
@@ -1359,6 +1377,8 @@
 					// Remove animation class after it completes
 					setTimeout(() => {
 						row.classList.remove('flashing');
+						// Clear changed fields after animation
+						delete boxChangedFields[box.id];
 						console.log('🟡 ANIMATION: Removed flashing class');
 					}, 1800);
 				} else {
@@ -1522,12 +1542,18 @@ No Action: ${noActionViews}`;
 					? `<button class="restore-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Restore</button>`
 					: `<button class="delete-btn" data-box-id="${escapeHtml(box.id)}" data-box-label="${escapedLabelForAttr}">Delete</button>`;
 
+				// Check if this box has changed fields for bold highlighting
+				const changedFields = boxChangedFields[box.id] || [];
+				const wrapIfChanged = (content, field) => {
+					return changedFields.includes(field) ? `<span class="cell-content bold">${content}</span>` : content;
+				};
+
 				tableHTML += `<tr data-box-id="${escapeHtml(box.id)}">`;
 				tableHTML += `<td><a href="/status?id=${encodeURIComponent(box.id)}" target="_blank">${escapeHtml(box.id)}</a></td>`;
-				tableHTML += `<td title="${contactTooltip}">${escapedLabel}</td>`;
-				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(box.address || 'N/A')}</a></td>`;
-				tableHTML += `<td>${escapeHtml(box.city || 'N/A')}, ${escapeHtml(box.state || 'GA')}</td>`;
-				tableHTML += `<td>${escapeHtml(box.volunteer || 'N/A')}</td>`;
+				tableHTML += `<td title="${contactTooltip}">${wrapIfChanged(escapedLabel, 'label')}</td>`;
+				tableHTML += `<td><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">${wrapIfChanged(escapeHtml(box.address || 'N/A'), 'address')}</a></td>`;
+				tableHTML += `<td>${wrapIfChanged(escapeHtml(box.city || 'N/A'), 'city')}, ${wrapIfChanged(escapeHtml(box.state || 'GA'), 'state')}</td>`;
+				tableHTML += `<td>${wrapIfChanged(escapeHtml(box.volunteer || 'N/A'), 'volunteer')}</td>`;
 				tableHTML += `<td title="${deployedFull}">${deployedRelative}</td>`;
 				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${scans}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
