@@ -24,6 +24,9 @@ jobs:
     - name: 📚 Install dependencies
       run: npm ci
 
+    - name: 📦 Install function dependencies
+      run: cd functions && npm ci
+
     - name: 🎭 Install Playwright browsers
       run: npx playwright install chromium
 
@@ -32,6 +35,18 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '23'
+
+    - name: 💾 Cache Firebase emulators
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/firebase/emulators
+        key: firebase-emulators-${{ runner.os }}
+
+    - name: 🔧 Setup function environment
+      run: |
+        echo "MAILGUN_KEY=test-key-for-emulator" > functions/.env.local
+        echo "MAILGUN_DOMAIN=test-domain.com" >> functions/.env.local
+        echo "GEOCODING_API_KEY=test-geocoding-key" >> functions/.env.local
 
     - name: 🔥 Setup Firebase emulators
       run: |
