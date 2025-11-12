@@ -1034,9 +1034,9 @@
 					console.log(`User role: ${currentUserRole}`);
 				}
 
-				// Only admins/root can access admin panel
-				if (!['admin', 'root'].includes(currentUserRole)) {
-					document.getElementById('auth-check').innerHTML = '<div class="error-message">Only administrators can access this panel.</div>';
+				// Allow volunteers, admins, and root to access admin panel
+				if (!['volunteer', 'admin', 'root'].includes(currentUserRole)) {
+					document.getElementById('auth-check').innerHTML = '<div class="error-message">You do not have permission to access this panel.</div>';
 					return;
 				}
 
@@ -1051,6 +1051,15 @@
 					if (deletedToggle) deletedToggle.style.display = 'block';
 					if (purgeSection) purgeSection.style.display = 'block';
 					if (auditSection) auditSection.style.display = 'block';
+				}
+
+				// Apply volunteer restrictions
+				if (currentUserRole === 'volunteer') {
+					// Hide "Delete All" buttons for reports and volunteers
+					const deleteAllReportsBtn = document.getElementById('delete-all-reports-btn');
+					const deleteAllVolunteersBtn = document.getElementById('delete-all-volunteers-btn');
+					if (deleteAllReportsBtn) deleteAllReportsBtn.style.display = 'none';
+					if (deleteAllVolunteersBtn) deleteAllVolunteersBtn.style.display = 'none';
 				}
 
 				// Load all data
@@ -1515,8 +1524,18 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td title="${deployedFull}">${deployedRelative}</td>`;
 				tableHTML += `<td style="text-align: center;" title="${tooltipText}">${scans}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" data-box-id="${escapeHtml(box.id)}">Edit</button>`;
-				tableHTML += deleteRestoreBtn;
+
+				// Role-based permissions: volunteers can only edit/delete their own boxes
+				const isOwner = box.volunteer === currentUser?.displayName || box.volunteer === currentUser?.email;
+				const canModify = currentUserRole !== 'volunteer' || isOwner;
+
+				if (canModify) {
+					tableHTML += `<button class="edit-btn" data-box-id="${escapeHtml(box.id)}">Edit</button>`;
+					tableHTML += deleteRestoreBtn;
+				} else {
+					tableHTML += `<button class="view-btn" data-box-id="${escapeHtml(box.id)}">View</button>`;
+				}
+
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
