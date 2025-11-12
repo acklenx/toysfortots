@@ -1549,6 +1549,11 @@ No Action: ${noActionViews}`;
 					window.editBox(btn.dataset.boxId);
 				});
 			});
+			container.querySelectorAll('.view-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.viewBox(btn.dataset.boxId);
+				});
+			});
 			container.querySelectorAll('.delete-btn').forEach(btn => {
 				btn.addEventListener('click', () => {
 					window.deleteBox(btn.dataset.boxId, btn.dataset.boxLabel);
@@ -1955,7 +1960,12 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td title="${fullDateTime}">${relativeTime}</td>`;
 				tableHTML += `<td><div class="action-buttons">`;
 				tableHTML += `<button class="view-btn" data-report-id="${escapeHtml(report.id)}">View</button>`;
-				tableHTML += deleteRestoreBtn;
+
+				// Only admin/root can delete/restore reports
+				if (currentUserRole !== 'volunteer') {
+					tableHTML += deleteRestoreBtn;
+				}
+
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -2435,8 +2445,15 @@ No Action: ${noActionViews}`;
 				tableHTML += `<td style="text-align: center;">${pendingCount}</td>`;
 				tableHTML += `<td style="text-align: center;">${resolvedCount}</td>`;
 				tableHTML += `<td style="vertical-align: middle;"><div class="action-buttons">`;
-				tableHTML += `<button class="edit-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
-				tableHTML += deleteRestoreBtn;
+
+				// Volunteers can only view other volunteers, not edit/delete
+				if (currentUserRole === 'volunteer') {
+					tableHTML += `<button class="view-btn" data-volunteer-id="${escapeHtml(volunteer.id)}">View</button>`;
+				} else {
+					tableHTML += `<button class="edit-btn" data-volunteer-id="${escapeHtml(volunteer.id)}" ${isCurrentUser ? 'disabled' : ''}>Edit</button>`;
+					tableHTML += deleteRestoreBtn;
+				}
+
 				tableHTML += `</div></td>`;
 				tableHTML += '</tr>';
 			});
@@ -2451,6 +2468,11 @@ No Action: ${noActionViews}`;
 						window.editVolunteer(btn.dataset.volunteerId);
 					});
 				}
+			});
+			container.querySelectorAll('.view-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					window.viewVolunteer(btn.dataset.volunteerId);
+				});
 			});
 			container.querySelectorAll('.delete-btn').forEach(btn => {
 				if (!btn.disabled) {
@@ -2617,6 +2639,63 @@ No Action: ${noActionViews}`;
 				coordinatesSpan.textContent = 'Not available';
 				mapLink.style.display = 'none';
 			}
+
+			document.getElementById('edit-box-modal').classList.add('active');
+		};
+
+		// View box (read-only)
+		window.viewBox = async function(boxId) {
+			currentEditBoxId = boxId;
+			const docRef = doc(db, locationsCollectionPath, boxId);
+			const docSnap = await getDocs(query(collection(db, locationsCollectionPath)));
+
+			let boxData = null;
+			docSnap.forEach((d) => {
+				if (d.id === boxId) {
+					boxData = d.data();
+				}
+			});
+
+			if (!boxData) return;
+
+			// Fill the form fields
+			document.getElementById('edit-box-label').value = boxData.label || '';
+			document.getElementById('edit-box-address').value = boxData.address || '';
+			document.getElementById('edit-box-city').value = boxData.city || '';
+			document.getElementById('edit-box-state').value = boxData.state || 'GA';
+			document.getElementById('edit-box-contact-name').value = boxData.contactName || '';
+			document.getElementById('edit-box-contact-phone').value = boxData.contactPhone || '';
+			document.getElementById('edit-box-contact-email').value = boxData.contactEmail || '';
+
+			// Display GPS coordinates and map link
+			const coordinatesSpan = document.getElementById('edit-box-coordinates');
+			const mapLink = document.getElementById('edit-box-map-link');
+
+			if (boxData.lat && boxData.lon) {
+				const lat = boxData.lat.toFixed(6);
+				const lon = boxData.lon.toFixed(6);
+				coordinatesSpan.textContent = `${lat}, ${lon}`;
+				mapLink.href = `https://www.google.com/maps?q=${lat},${lon}`;
+				mapLink.style.display = 'inline';
+			} else {
+				coordinatesSpan.textContent = 'Not available';
+				mapLink.style.display = 'none';
+			}
+
+			// Make all fields readonly
+			const form = document.getElementById('edit-box-form');
+			form.querySelectorAll('input').forEach(input => {
+				input.setAttribute('readonly', true);
+				input.style.backgroundColor = '#f3f4f6';
+			});
+
+			// Hide the Save button
+			const submitBtn = form.querySelector('button[type="submit"]');
+			if (submitBtn) submitBtn.style.display = 'none';
+
+			// Change modal title to "View"
+			const modalTitle = document.querySelector('#edit-box-modal h3');
+			if (modalTitle) modalTitle.textContent = 'View Box';
 
 			document.getElementById('edit-box-modal').classList.add('active');
 		};
@@ -2817,9 +2896,36 @@ No Action: ${noActionViews}`;
 				// Only close if clicking directly on the modal backdrop, not on modal-content or its children
 				if (e.target === modal) {
 					modal.classList.remove('active');
+					resetModal(modalId);
 				}
 			});
 		});
+
+		// Reset modal to editable state
+		function resetModal(modalId) {
+			const modal = document.getElementById(modalId);
+			if (!modal) return;
+
+			// Reset all input fields to editable
+			modal.querySelectorAll('input').forEach(input => {
+				input.removeAttribute('readonly');
+				input.style.backgroundColor = '';
+			});
+
+			// Show submit buttons
+			modal.querySelectorAll('button[type="submit"]').forEach(btn => {
+				btn.style.display = '';
+			});
+
+			// Reset modal titles
+			if (modalId === 'edit-box-modal') {
+				const title = modal.querySelector('h3');
+				if (title) title.textContent = 'Edit Box';
+			} else if (modalId === 'edit-volunteer-modal') {
+				const title = modal.querySelector('h3');
+				if (title) title.textContent = 'Edit Volunteer';
+			}
+		}
 
 		// Soft delete report
 		window.deleteReport = function(reportId) {
@@ -2973,6 +3079,44 @@ No Action: ${noActionViews}`;
 
 			document.getElementById('edit-volunteer-name').value = volunteerData.displayName || '';
 			document.getElementById('edit-volunteer-email').value = volunteerData.email || '';
+
+			document.getElementById('edit-volunteer-modal').classList.add('active');
+		};
+
+		// View volunteer (read-only)
+		window.viewVolunteer = async function(volunteerId) {
+			currentEditVolunteerId = volunteerId;
+			const volunteersPath = 'artifacts/toysfortots-eae4d/private/01/data/01/authorizedVolunteers';
+			const docRef = doc(db, volunteersPath, volunteerId);
+			const docSnap = await getDocs(query(collection(db, volunteersPath)));
+
+			let volunteerData = null;
+			docSnap.forEach((d) => {
+				if (d.id === volunteerId) {
+					volunteerData = d.data();
+				}
+			});
+
+			if (!volunteerData) return;
+
+			// Fill the form fields
+			document.getElementById('edit-volunteer-name').value = volunteerData.displayName || '';
+			document.getElementById('edit-volunteer-email').value = volunteerData.email || '';
+
+			// Make all fields readonly
+			const form = document.getElementById('edit-volunteer-form');
+			form.querySelectorAll('input').forEach(input => {
+				input.setAttribute('readonly', true);
+				input.style.backgroundColor = '#f3f4f6';
+			});
+
+			// Hide the Save button
+			const submitBtn = form.querySelector('button[type="submit"]');
+			if (submitBtn) submitBtn.style.display = 'none';
+
+			// Change modal title to "View"
+			const modalTitle = document.querySelector('#edit-volunteer-modal h3');
+			if (modalTitle) modalTitle.textContent = 'View Volunteer';
 
 			document.getElementById('edit-volunteer-modal').classList.add('active');
 		};
