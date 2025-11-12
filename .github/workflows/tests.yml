@@ -51,7 +51,7 @@ jobs:
     - name: 🔥 Setup Firebase emulators
       run: |
         npm install -g firebase-tools
-        firebase emulators:start --only auth,firestore,hosting,functions &
+        firebase emulators:start --project demo-test --only auth,firestore,hosting,functions &
         echo "Waiting for emulators to start..."
         for i in {1..30}; do
           if curl -s http://localhost:5000 > /dev/null 2>&1; then
