@@ -490,7 +490,7 @@
 		/* Update flash animation (yellow) */
 		@keyframes flash-yellow {
 			0%, 100% { background-color: transparent; }
-			50% { background-color: #fefce8; }
+			50% { background-color: #fef08a; }
 		}
 
 		.flashing {
@@ -1379,7 +1379,9 @@
 						row.classList.remove('flashing');
 						// Clear changed fields after animation
 						delete boxChangedFields[box.id];
-						console.log('🟡 ANIMATION: Removed flashing class');
+						console.log('🟡 ANIMATION: Removed flashing class and cleared changed fields');
+						// Re-render to remove bold styling from cells
+						filterAndRenderBoxes();
 					}, 1800);
 				} else {
 					console.warn('🟡 ANIMATION: Row not found! Available rows:', container.querySelectorAll('tbody tr[data-box-id]').length);
