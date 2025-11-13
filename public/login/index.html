@@ -105,10 +105,16 @@
 				// Replace spaces with underscores to match how email was created during signup
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
+
+			// IMPORTANT: Set isNewSignup BEFORE creating account to prevent race condition
+			// createUserWithEmailAndPassword triggers onAuthStateChanged immediately
+			isNewSignup = true;
 				try {
 					await signInWithEmailAndPassword(auth, email, password);
 					// Keep button disabled - redirect will happen
 				} catch (error) {
+				// Reset flag on error
+				isNewSignup = false;
 					console.error('Email Sign In Error:', error);
 					// Re-enable button on error
 					emailSignInBtn.disabled = false;
@@ -145,16 +151,16 @@
 				// but keep the original username with spaces for displayName
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
+
+			// IMPORTANT: Set isNewSignup BEFORE creating account to prevent race condition
+			// createUserWithEmailAndPassword triggers onAuthStateChanged immediately
+			isNewSignup = true;
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-					// Mark as new signup immediately for fast redirect
-					isNewSignup = true;
-					// Update displayName in background (don't block redirect)
-					updateProfile(userCredential.user, {
-						displayName: username
-					}).catch(err => console.error('Failed to update display name:', err));
 					// Keep button disabled - redirect will happen
 				} catch (error) {
+				// Reset flag on error
+				isNewSignup = false;
 					console.error('Email Sign Up Error:', error);
 					// Re-enable button on error
 					emailSignUpBtn.disabled = false;
@@ -184,6 +190,7 @@
 			}
 
 			const setupFirebase = () => {
+				let isCheckingAuth = false;
 				try {
 					isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteerV2');
 					onAuthStateChanged(auth, async (user) => {
@@ -203,6 +210,10 @@
 								return;
 							}
 
+
+							// Guard against multiple simultaneous auth checks
+							if (isCheckingAuth) return;
+							isCheckingAuth = true;
 							// Existing user - check authorization
 							showAuthMessage('success', 'Checking authorization...');
 							try {
@@ -251,6 +262,8 @@
 						}
 					});
 				} catch (error) {
+				// Reset flag on error
+				isNewSignup = false;
 					console.error('Firebase Initialization Error:', error);
 				}
 			};
