@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Dependencies for Firebase and Mailgun integration.",
   "type": "module",
+  "security": {
+    "contact": "toysfortots@qlamail.com",
+    "policy": "https://github.com/YOUR_USERNAME/toysfortots/security/policy"
+  },
   "dependencies": {
     "@octokit/rest": "^22.0.0",
     "dotenv": "^16.0.0",
