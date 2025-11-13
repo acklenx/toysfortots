@@ -1,6 +1,19 @@
 // In /js/utils.js
 
 /**
+ * XSS Protection: Escape HTML to prevent script injection
+ */
+function escapeHtml(unsafe) {
+	if (!unsafe) return '';
+	return String(unsafe)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+}
+
+/**
  * Displays a formatted date.
  * Used by status/index.html
  */
@@ -40,7 +53,7 @@ export const formatDate = (timestamp) => {
 export function showMessage(type, text) {
 	const messageContainer = document.getElementById('message-container');
 	if (messageContainer) {
-		messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
+		messageContainer.innerHTML = `<div class="message ${escapeHtml(type)}">${escapeHtml(text)}</div>`;
 	}
 }
 
@@ -66,7 +79,7 @@ export function showAuthMessage(type, text) {
 	}
 	// We add 'message' for basic styling, but also 'mt-3 mb-3' which are CSS classes
 	// We should add these to our style.css file
-	msgDiv.innerHTML = `<div class="message ${type} auth-message-spacing">${text}</div>`;
+	msgDiv.innerHTML = `<div class="message ${escapeHtml(type)} auth-message-spacing">${escapeHtml(text)}</div>`;
 }
 
 /**
