@@ -139,34 +139,43 @@
 
 			}
 
-		// Fix displayName if it contains the email domain (background, non-blocking)
-		if (user.email && user.email.includes('@toysfortots.mcl1311.com') && 
-		    (!user.displayName || user.displayName.includes('@toysfortots.mcl1311.com'))) {
-			// Check if we have the original username from signup cookie
+		// Fix displayName for email auth users (background, non-blocking)
+		if (user.email && user.email.includes('@toysfortots.mcl1311.com')) {
+			// ALWAYS check for signup cookie first - if it exists, this is a fresh signup
 			const cookies = document.cookie.split('; ');
 			const signupCookie = cookies.find(c => c.startsWith('signup_username='));
-			let displayName;
 			
 			if (signupCookie) {
-				// Use the original username from cookie (preserves exact case user typed)
-				displayName = decodeURIComponent(signupCookie.split('=')[1]);
+				// Fresh signup - use the original username from cookie (preserves exact case)
+				const displayName = decodeURIComponent(signupCookie.split('=')[1]);
 				// Clear the cookie after using it
 				document.cookie = 'signup_username=; path=/; max-age=0';
-			} else {
-				// Fallback: extract from email (for legacy users or existing sign-in)
+				
+				console.log('Setting displayName from signup cookie:', displayName);
+				
+				// Update BOTH Firebase Auth AND Firestore
+				updateProfile(user, { displayName })
+					.then(() => console.log('Auth displayName updated'))
+					.catch(err => console.error('Failed to update Auth displayName:', err));
+				
+				const userDocRef = doc(db, authorizedVolunteersCollectionPath, user.uid);
+				updateDoc(userDocRef, { displayName })
+					.then(() => console.log('Firestore displayName updated'))
+					.catch(err => console.error('Failed to update Firestore displayName:', err));
+			} else if (!user.displayName || user.displayName.includes('@toysfortots.mcl1311.com')) {
+				// Fallback for existing users: fix if displayName is missing or contains domain
 				const emailUsername = user.email.split('@')[0];
-				displayName = emailUsername.replace(/_/g, ' ');
+				const displayName = emailUsername.replace(/_/g, ' ');
+				
+				console.log('Fixing displayName from email:', displayName);
+				
+				updateProfile(user, { displayName })
+					.catch(err => console.error('Failed to update Auth displayName:', err));
+				
+				const userDocRef = doc(db, authorizedVolunteersCollectionPath, user.uid);
+				updateDoc(userDocRef, { displayName })
+					.catch(err => console.error('Failed to update Firestore displayName:', err));
 			}
-			
-			// Update BOTH Firebase Auth AND Firestore (in background, non-blocking)
-			// Update Firebase Auth displayName
-			updateProfile(user, { displayName })
-				.catch(err => console.error('Failed to update Auth displayName:', err));
-			
-			// Update Firestore authorizedVolunteers displayName (THIS IS CRITICAL!)
-			const userDocRef = doc(db, authorizedVolunteersCollectionPath, user.uid);
-			updateDoc(userDocRef, { displayName })
-				.catch(err => console.error('Failed to update Firestore displayName:', err));
 		}
 
 
