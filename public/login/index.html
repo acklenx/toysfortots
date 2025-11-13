@@ -106,17 +106,20 @@
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 
-			// IMPORTANT: Set isNewSignup BEFORE creating account to prevent race condition
-			// createUserWithEmailAndPassword triggers onAuthStateChanged immediately
-			isNewSignup = true;
 				try {
 					await signInWithEmailAndPassword(auth, email, password);
-					// Keep button disabled - redirect will happen
+
+					// Success! Redirect immediately to authorize page
+					// No need to wait for onAuthStateChanged - authorize page will handle auth checks
+					const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
+					const boxId = urlParams.get('id');
+					const authorizeUrl = boxId
+						? `/authorize?boxId=${boxId}`
+						: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
+					window.location.href = authorizeUrl;
 				} catch (error) {
-				// Reset flag on error
-				isNewSignup = false;
 					console.error('Email Sign In Error:', error);
-					// Re-enable button on error
+				// Re-enable button on error so user can try again
 					emailSignInBtn.disabled = false;
 					emailSignInBtn.textContent = originalText;
 					if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -127,7 +130,6 @@
 				}
 			}
 
-			let isNewSignup = false;
 
 			async function handleEmailSignUp() {
 				clearAuthMessage();
@@ -152,17 +154,20 @@
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 
-			// IMPORTANT: Set isNewSignup BEFORE creating account to prevent race condition
-			// createUserWithEmailAndPassword triggers onAuthStateChanged immediately
-			isNewSignup = true;
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-					// Keep button disabled - redirect will happen
+
+					// Success! Redirect immediately to authorize page
+					// No need to wait for onAuthStateChanged - authorize page will handle auth checks
+					const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
+					const boxId = urlParams.get('id');
+					const authorizeUrl = boxId
+						? `/authorize?boxId=${boxId}`
+						: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
+					window.location.href = authorizeUrl;
 				} catch (error) {
-				// Reset flag on error
-				isNewSignup = false;
 					console.error('Email Sign Up Error:', error);
-					// Re-enable button on error
+				// Re-enable button on error so user can try again
 					emailSignUpBtn.disabled = false;
 					emailSignUpBtn.textContent = originalText;
 					if (error.code === 'auth/email-already-in-use') {
@@ -195,20 +200,6 @@
 					isAuthorizedVolunteer = httpsCallable(functions, 'isAuthorizedVolunteerV2');
 					onAuthStateChanged(auth, async (user) => {
 						if (user && !user.isAnonymous) {
-							clearAuthMessage();
-
-							// If this was a new signup, redirect to authorize page
-							if (isNewSignup) {
-								showAuthMessage('success', 'Account created! Redirecting to authorization...');
-									// Extract boxId from returnUrl if present
-									const urlParams = new URLSearchParams(returnUrl.split('?')[1]);
-									const boxId = urlParams.get('id');
-									const authorizeUrl = boxId
-										? `/authorize?boxId=${boxId}`
-										: '/authorize?returnUrl=' + encodeURIComponent(returnUrl);
-									window.location.href = authorizeUrl;
-								return;
-							}
 
 
 							// Guard against multiple simultaneous auth checks
@@ -262,8 +253,6 @@
 						}
 					});
 				} catch (error) {
-				// Reset flag on error
-				isNewSignup = false;
 					console.error('Firebase Initialization Error:', error);
 				}
 			};
