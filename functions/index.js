@@ -17,6 +17,82 @@ const MAILGUN_DOMAIN = defineString( 'MAILGUN_DOMAIN' );
 const GEOCODING_API_KEY = defineString( 'GEOCODING_API_KEY' );
 initializeApp();
 const mapsClient = new Client( {} );
+
+/**
+ * Rate limiting helper to prevent brute force attacks
+ * @param {string} identifier - Unique identifier (e.g., "auth:userId" or "passcode:userId")
+ * @param {number} limit - Maximum attempts allowed
+ * @param {number} windowMs - Time window in milliseconds
+ * @returns {Promise<{allowed: boolean, remaining: number, retryAfter?: number}>}
+ */
+async function checkRateLimit( identifier, limit, windowMs )
+{
+	// Skip rate limiting in emulator/test mode
+	const IS_TEST_MODE = process.env.FUNCTIONS_EMULATOR === 'true';
+	if( IS_TEST_MODE )
+	{
+		return { allowed: true, remaining: limit };
+	}
+
+	const db = getFirestore();
+	const now = Date.now();
+	const windowStart = now - windowMs;
+
+	const rateLimitRef = db.collection( 'rateLimits' ).doc( identifier );
+
+	try
+	{
+		const result = await db.runTransaction( async( transaction ) =>
+		{
+			const doc = await transaction.get( rateLimitRef );
+
+			let requests = [];
+			if( doc.exists )
+			{
+				requests = doc.data().requests || [];
+			}
+
+			// Remove old requests outside the time window
+			const recentRequests = requests.filter( t => t > windowStart );
+
+			if( recentRequests.length >= limit )
+			{
+				// Rate limit exceeded
+				const oldestRequest = recentRequests[0];
+				const retryAfterMs = oldestRequest - windowStart;
+				const retryAfterSeconds = Math.ceil( retryAfterMs / 1000 );
+
+				return {
+					allowed: false,
+					remaining: 0,
+					retryAfter: retryAfterSeconds
+				};
+			}
+
+			// Add current request timestamp
+			recentRequests.push( now );
+
+			// Update Firestore with new request list
+			transaction.set( rateLimitRef, {
+				requests: recentRequests,
+				lastUpdated: FieldValue.serverTimestamp()
+			} );
+
+			return {
+				allowed: true,
+				remaining: limit - recentRequests.length
+			};
+		} );
+
+		return result;
+	}
+	catch( error )
+	{
+		console.error( 'Rate limit check failed:', error );
+		// On error, allow the request (fail open) but log it
+		return { allowed: true, remaining: limit };
+	}
+}
 exports.sendReportEmail = onDocumentCreated(
 	'artifacts/toysfortots-eae4d/public/01/data/01/totsReports/{reportId}',
 	async( event ) =>
@@ -131,6 +207,18 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 	if( !isAlreadyAuthorized )
 	{
 		console.log( 'User not authorized. Checking passcode from request data.' );
+
+		// Rate limiting: 5 passcode attempts per 15 minutes to prevent brute force
+		const rateLimit = await checkRateLimit( `passcode:${ uid }`, 5, 15 * 60 * 1000 );
+		if( !rateLimit.allowed )
+		{
+			console.warn( `provisionBoxV2: Passcode rate limit exceeded for UID: ${ uid }. Retry after ${ rateLimit.retryAfter }s` );
+			throw new HttpsError(
+				'resource-exhausted',
+				`Too many passcode attempts. Please try again in ${ Math.ceil( rateLimit.retryAfter / 60 ) } minutes.`
+			);
+		}
+
 		let secretPasscode;
 		try
 		{
@@ -427,6 +515,18 @@ exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 	}
 	console.log( `isAuthorizedVolunteerV2: Checking authorization for UID: ${ request.auth.uid }` );
 	const uid = request.auth.uid;
+
+	// Rate limiting: 30 checks per minute to prevent enumeration attacks
+	const rateLimit = await checkRateLimit( `authcheck:${ uid }`, 30, 60 * 1000 );
+	if( !rateLimit.allowed )
+	{
+		console.warn( `isAuthorizedVolunteerV2: Rate limit exceeded for UID: ${ uid }` );
+		throw new HttpsError(
+			'resource-exhausted',
+			'Too many authorization checks. Please wait a moment and try again.'
+		);
+	}
+
 	const db = getFirestore();
 	try
 	{
@@ -471,6 +571,17 @@ exports.authorizeVolunteerV2 = onCall( async( request ) =>
 	// Prefer displayName from client (preserves case from signup cookie), fallback to token or email
 	const userName = request.data.displayName || request.auth.token.name || userEmail;
 	console.log( `authorizeVolunteerV2: User Authenticated. UID: ${ uid }, Email: ${ userEmail }, DisplayName: ${ userName }` );
+
+	// Rate limiting: 5 attempts per 15 minutes to prevent brute force attacks
+	const rateLimit = await checkRateLimit( `authorize:${ uid }`, 5, 15 * 60 * 1000 );
+	if( !rateLimit.allowed )
+	{
+		console.warn( `authorizeVolunteerV2: Rate limit exceeded for UID: ${ uid }. Retry after ${ rateLimit.retryAfter }s` );
+		throw new HttpsError(
+			'resource-exhausted',
+			`Too many authorization attempts. Please try again in ${ Math.ceil( rateLimit.retryAfter / 60 ) } minutes.`
+		);
+	}
 
 	const data = request.data;
 	const code = data.code;
