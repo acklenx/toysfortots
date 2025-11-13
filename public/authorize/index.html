@@ -54,7 +54,7 @@
 		<script src="/js/loader.min.js" defer></script>
 		<script type="module">
 			import { auth, functions } from '../js/firebase-init.js';
-			import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+			import { onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
 			import { showAuthMessage, clearAuthMessage } from '/js/utils.min.js';
 
@@ -133,7 +133,20 @@
 					// Not signed in, redirect to login
 					window.location.href = `/login?returnUrl=${encodeURIComponent('/authorize' + window.location.search)}`;
 					return;
+
+
+			// Fix displayName if it contains the email domain (background, non-blocking)
+			if (user.email && user.email.includes('@toysfortots.mcl1311.com') && 
+			    (!user.displayName || user.displayName.includes('@toysfortots.mcl1311.com'))) {
+				// Extract username from email: username@domain.com -> username
+				const emailUsername = user.email.split('@')[0];
+				// Replace underscores with spaces for proper display
+				const cleanUsername = emailUsername.replace(/_/g, ' ');
+				// Update profile in background (don't await, don't block)
+				updateProfile(user, { displayName: cleanUsername })
+					.catch(err => console.error('Failed to update display name:', err));
 				}
+			}
 
 				// Check if already authorized
 				try {
