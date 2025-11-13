@@ -128,6 +128,8 @@
 			}
 
 			// Check if user is already authorized
+			let hasCheckedAuth = false;
+
 			onAuthStateChanged(auth, async (user) => {
 				if (!user || user.isAnonymous) {
 					// Not signed in, redirect to login
@@ -148,6 +150,10 @@
 					.catch(err => console.error('Failed to update display name:', err));
 			}
 
+
+				// Guard against multiple auth checks (updateProfile triggers onAuthStateChanged again)
+				if (hasCheckedAuth) return;
+				hasCheckedAuth = true;
 
 				// Check if already authorized
 				try {
