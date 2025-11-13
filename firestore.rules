@@ -118,6 +118,11 @@ service cloud.firestore {
         allow get: if request.auth != null &&
                       request.auth.uid == userId;
 
+				// Allow users to update ONLY their displayName in their own document
+				allow update: if request.auth != null &&
+											 request.auth.uid == userId &&
+											 request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
+
         // Allow volunteers to list all volunteers (filtering happens client-side)
         allow list: if isVolunteer();
 
