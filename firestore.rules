@@ -64,9 +64,21 @@ service cloud.firestore {
         // Hard delete only for root (purging soft deletes)
         allow delete: if isRoot();
 
-        // Allow any authenticated user to create analytics events (page views, clicks)
+        // Allow authenticated users to create analytics events with validation
         match /events/{eventId} {
-          allow create: if request.auth != null;
+          allow create: if request.auth != null &&
+                           // Validate required fields exist
+                           request.resource.data.keys().hasAll(['eventType', 'timestamp']) &&
+                           // Validate field types and constraints
+                           request.resource.data.eventType is string &&
+                           request.resource.data.eventType.size() > 0 &&
+                           request.resource.data.eventType.size() < 100 &&
+                           request.resource.data.timestamp is timestamp &&
+                           // Optional fields: userId, boxId, metadata (but validate if present)
+                           (!('userId' in request.resource.data) || request.resource.data.userId is string) &&
+                           (!('boxId' in request.resource.data) || request.resource.data.boxId is string) &&
+                           // Prevent arbitrary data - only allow specific fields
+                           request.resource.data.keys().hasOnly(['eventType', 'timestamp', 'userId', 'boxId', 'metadata']);
           allow read: if isAuthorizedVolunteer();
         }
       }

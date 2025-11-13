@@ -15,6 +15,7 @@ const ADMIN_EMAIL = 'toysfortots@qlamail.com';
 const MAILGUN_KEY = defineString( 'MAILGUN_KEY' );
 const MAILGUN_DOMAIN = defineString( 'MAILGUN_DOMAIN' );
 const GEOCODING_API_KEY = defineString( 'GEOCODING_API_KEY' );
+const SHEETS_API_KEY = defineString( 'SHEETS_API_KEY' );
 initializeApp();
 const mapsClient = new Client( {} );
 
@@ -784,12 +785,12 @@ async function syncLocationSuggestionsFromSheets()
 	const sheets = google.sheets( 'v4' );
 	const db = getFirestore();
 
-	// Get API key
-	const apiKey = GEOCODING_API_KEY.value();
+	// Get API key for Google Sheets
+	const apiKey = SHEETS_API_KEY.value();
 	if( !apiKey )
 	{
-		console.error( 'GEOCODING_API_KEY is not set!' );
-		throw new HttpsError( 'internal', 'Google API key not configured.' );
+		console.error( 'SHEETS_API_KEY is not set!' );
+		throw new HttpsError( 'internal', 'Google Sheets API key not configured.' );
 	}
 
 	try
