@@ -134,6 +134,7 @@
 					window.location.href = `/login?returnUrl=${encodeURIComponent('/authorize' + window.location.search)}`;
 					return;
 
+			}
 
 			// Fix displayName if it contains the email domain (background, non-blocking)
 			if (user.email && user.email.includes('@toysfortots.mcl1311.com') && 
@@ -145,8 +146,8 @@
 				// Update profile in background (don't await, don't block)
 				updateProfile(user, { displayName: cleanUsername })
 					.catch(err => console.error('Failed to update display name:', err));
-				}
 			}
+
 
 				// Check if already authorized
 				try {
