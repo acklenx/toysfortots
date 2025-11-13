@@ -407,36 +407,13 @@
 						const result = await provisionBoxV2( payload );
 						const newBoxId = result.data.boxId;
 
-						// Trigger cache refresh after box registration
-						// Small delay ensures box is fully written to Firestore first
-						setTimeout( async () =>
-						{
-							try
-							{
-								// Get Firebase ID token for authorization
-								const idToken = await auth.currentUser.getIdToken();
-
-								const cacheRefreshUrl = 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
-								await fetch( cacheRefreshUrl, {
-									method: 'POST',
-									headers: {
-										'Authorization': `Bearer ${ idToken }`
-									}
-								} );
-								console.log( 'Cache refresh triggered after new box registration' );
-							}
-							catch( error )
-							{
-								console.warn( 'Cache refresh failed (non-critical):', error );
-							}
-						}, 1000 );
-
 						form.reset();
 						boxIdDisplay.textContent = scannedBoxId;
 						setTimeout( () =>
 						{
-							window.location.href = `/status/?id=${ newBoxId }`;
-						}, 2000 );
+							// Add newBox parameter to trigger cache refresh on status page
+							window.location.href = `/status/?id=${ newBoxId }&newBox=true`;
+						}, 1000 );
 					}
 					catch( error )
 					{

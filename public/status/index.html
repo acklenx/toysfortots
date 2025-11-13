@@ -155,6 +155,7 @@
 
 				const params = new URLSearchParams( window.location.search );
 				const boxId = params.get( 'id' );
+				const isNewBox = params.get( 'newBox' ) === 'true';
 
 				if( !boxId )
 				{
@@ -229,6 +230,29 @@
                             </div>
                         </div>
                     `;
+
+						// Refresh cache if this is a newly created box
+						// Box is definitely in Firestore now, so no race condition
+						if (isNewBox) {
+							try {
+								const idToken = await auth.currentUser.getIdToken();
+								const cacheRefreshUrl = 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
+								await fetch( cacheRefreshUrl, {
+									method: 'POST',
+									headers: {
+										'Authorization': `Bearer ${ idToken }`
+									}
+								} );
+								console.log( 'Cache refresh triggered after new box loaded on status page' );
+
+								// Clean up URL by removing newBox parameter
+								const cleanUrl = new URL(window.location);
+								cleanUrl.searchParams.delete('newBox');
+								window.history.replaceState({}, '', cleanUrl);
+							} catch( error ) {
+								console.warn( 'Cache refresh failed (non-critical):', error );
+							}
+						}
 					}
 					else
 					{
