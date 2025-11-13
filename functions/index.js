@@ -1018,7 +1018,7 @@ async function generateLocationsCache()
  * HTTP endpoint to serve cached locations (CORS-enabled)
  * Usage: fetch('https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache')
  */
-exports.getLocationsCache = onRequest( { cors: true }, async( req, res ) =>
+exports.getLocationsCache = onRequest( { cors: ['https://toysfortots.mcl1311.com', 'http://localhost:5000'] }, async( req, res ) =>
 {
 	console.log( '--- getLocationsCache STARTED ---' );
 	const { getStorage } = require( 'firebase-admin/storage' );

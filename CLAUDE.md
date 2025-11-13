@@ -293,7 +293,7 @@ artifacts/toysfortots-eae4d/private/01/data/01/
 - **Columns mapped**: Label, Address, City, State, Owner/Manager Name, Phone, Email
 
 **triggerSyncLocationSuggestions** (HTTP endpoint):
-- Manual trigger via HTTP POST request (no authentication required)
+- Manual trigger via HTTP POST request (requires Bearer token authentication)
 - URL: `https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions`
 - Optional `delay` query parameter (in seconds): `?delay=30`
 - Returns: `{ success: boolean, synced: number, message: string }`
@@ -657,7 +657,7 @@ limit(maxResults)
 
 **Triggering Manual Sync**:
 ```bash
-# HTTP endpoint (no authentication required)
+# HTTP endpoint (requires Bearer token authentication)
 curl -X POST https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerSyncLocationSuggestions
 
 # With optional delay (in seconds)

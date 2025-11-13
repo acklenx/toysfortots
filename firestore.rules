@@ -101,8 +101,8 @@ service cloud.firestore {
     match /artifacts/toysfortots-eae4d/private/01/data/01 {
 
       match /contacts/{contactId} {
-        // REMOVED GOOGLE.COM CHECK: Allow any authenticated user to list/get contacts
-        allow list, get: if request.auth != null;
+        // Only authorized volunteers can read contacts
+        allow list, get: if isVolunteer();
         allow write: if false;
       }
 
