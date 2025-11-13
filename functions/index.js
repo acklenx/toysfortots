@@ -517,8 +517,8 @@ exports.isAuthorizedVolunteerV2 = onCall( async( request ) =>
 	console.log( `isAuthorizedVolunteerV2: Checking authorization for UID: ${ request.auth.uid }` );
 	const uid = request.auth.uid;
 
-	// Rate limiting: 30 checks per minute to prevent enumeration attacks
-	const rateLimit = await checkRateLimit( `authcheck:${ uid }`, 30, 60 * 1000 );
+	// Rate limiting: 90 checks per minute to prevent enumeration attacks
+	const rateLimit = await checkRateLimit( `authcheck:${ uid }`, 90, 60 * 1000 );
 	if( !rateLimit.allowed )
 	{
 		console.warn( `isAuthorizedVolunteerV2: Rate limit exceeded for UID: ${ uid }` );
