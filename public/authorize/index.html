@@ -53,10 +53,11 @@
 		<div id="footer-placeholder"></div>
 		<script src="/js/loader.min.js" defer></script>
 		<script type="module">
-			import { auth, functions } from '../js/firebase-init.js';
-			import { onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-			import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
-			import { showAuthMessage, clearAuthMessage } from '/js/utils.min.js';
+		import { auth, functions, db, authorizedVolunteersCollectionPath } from '../js/firebase-init.js';
+		import { onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+		import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js';
+		import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+		import { showAuthMessage, clearAuthMessage } from '/js/utils.min.js';
 
 			const authCodeInput = document.getElementById('auth-code');
 			const authorizeBtn = document.getElementById('authorize-btn');
@@ -157,9 +158,15 @@
 				displayName = emailUsername.replace(/_/g, ' ');
 			}
 			
-			// Update profile in background (don't await, don't block)
+			// Update BOTH Firebase Auth AND Firestore (in background, non-blocking)
+			// Update Firebase Auth displayName
 			updateProfile(user, { displayName })
-				.catch(err => console.error('Failed to update display name:', err));
+				.catch(err => console.error('Failed to update Auth displayName:', err));
+			
+			// Update Firestore authorizedVolunteers displayName (THIS IS CRITICAL!)
+			const userDocRef = doc(db, authorizedVolunteersCollectionPath, user.uid);
+			updateDoc(userDocRef, { displayName })
+				.catch(err => console.error('Failed to update Firestore displayName:', err));
 		}
 
 
