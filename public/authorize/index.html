@@ -138,17 +138,29 @@
 
 			}
 
-			// Fix displayName if it contains the email domain (background, non-blocking)
-			if (user.email && user.email.includes('@toysfortots.mcl1311.com') && 
-			    (!user.displayName || user.displayName.includes('@toysfortots.mcl1311.com'))) {
-				// Extract username from email: username@domain.com -> username
+		// Fix displayName if it contains the email domain (background, non-blocking)
+		if (user.email && user.email.includes('@toysfortots.mcl1311.com') && 
+		    (!user.displayName || user.displayName.includes('@toysfortots.mcl1311.com'))) {
+			// Check if we have the original username from signup cookie
+			const cookies = document.cookie.split('; ');
+			const signupCookie = cookies.find(c => c.startsWith('signup_username='));
+			let displayName;
+			
+			if (signupCookie) {
+				// Use the original username from cookie (preserves exact case user typed)
+				displayName = decodeURIComponent(signupCookie.split('=')[1]);
+				// Clear the cookie after using it
+				document.cookie = 'signup_username=; path=/; max-age=0';
+			} else {
+				// Fallback: extract from email (for legacy users or existing sign-in)
 				const emailUsername = user.email.split('@')[0];
-				// Replace underscores with spaces for proper display
-				const cleanUsername = emailUsername.replace(/_/g, ' ');
-				// Update profile in background (don't await, don't block)
-				updateProfile(user, { displayName: cleanUsername })
-					.catch(err => console.error('Failed to update display name:', err));
+				displayName = emailUsername.replace(/_/g, ' ');
 			}
+			
+			// Update profile in background (don't await, don't block)
+			updateProfile(user, { displayName })
+				.catch(err => console.error('Failed to update display name:', err));
+		}
 
 
 				// Guard against multiple auth checks (updateProfile triggers onAuthStateChanged again)

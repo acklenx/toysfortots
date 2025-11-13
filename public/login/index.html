@@ -154,6 +154,10 @@
 				const emailUsername = username.replace(/\s+/g, '_');
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 
+			// Store original username in cookie so authorize page can set displayName correctly
+			// Cookie expires in 5 minutes (enough time for signup flow)
+			document.cookie = `signup_username=${encodeURIComponent(username)}; path=/; max-age=300; SameSite=Strict`;
+
 				try {
 					const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
