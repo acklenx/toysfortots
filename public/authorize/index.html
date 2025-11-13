@@ -99,9 +99,16 @@
 						return;
 					}
 
-					// Call the authorize function with the code
-					const authorizeFunction = httpsCallable(functions, 'authorizeVolunteerV2');
-					const result = await authorizeFunction({ code });
+				// Call the authorize function with the code AND displayName from cookie
+				// Check for signup cookie to preserve original username case
+				const cookies = document.cookie.split('; ');
+				const signupCookie = cookies.find(c => c.startsWith('signup_username='));
+				const displayName = signupCookie ? decodeURIComponent(signupCookie.split('=')[1]) : null;
+				
+				console.log('Sending displayName to authorize function:', displayName);
+				
+				const authorizeFunction = httpsCallable(functions, 'authorizeVolunteerV2');
+				const result = await authorizeFunction({ code, displayName });
 
 					if (result.data.success) {
 						showAuthMessage('success', 'Authorization successful! Redirecting...');

@@ -468,8 +468,9 @@ exports.authorizeVolunteerV2 = onCall( async( request ) =>
 	}
 	const uid = request.auth.uid;
 	const userEmail = request.auth.token.email;
-	const userName = request.auth.token.name || userEmail;
-	console.log( `authorizeVolunteerV2: User Authenticated. UID: ${ uid }, Email: ${ userEmail }` );
+	// Prefer displayName from client (preserves case from signup cookie), fallback to token or email
+	const userName = request.data.displayName || request.auth.token.name || userEmail;
+	console.log( `authorizeVolunteerV2: User Authenticated. UID: ${ uid }, Email: ${ userEmail }, DisplayName: ${ userName }` );
 
 	const data = request.data;
 	const code = data.code;
