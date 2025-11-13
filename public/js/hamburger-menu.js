@@ -87,15 +87,29 @@
         username = username.split('@')[0];
       }
 
-      // Check authorization status
+      // Check authorization status with session caching
       if (window.functions) {
         try {
-          const { httpsCallable } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js');
-          const checkAuth = httpsCallable(window.functions, 'isAuthorizedVolunteerV2');
-          const result = await checkAuth();
-          const isAuthorized = result.data.isAuthorized;
+          // Check session cache first
+          const cacheKey = `t4t_auth_${user.uid}`;
+          const cachedAuth = sessionStorage.getItem(cacheKey);
 
-          // Remember authorization status in localStorage
+          let isAuthorized;
+          if (cachedAuth !== null) {
+            // Use cached result (no need to call function)
+            isAuthorized = cachedAuth === 'true';
+          } else {
+            // No cache - call function and cache result
+            const { httpsCallable } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js');
+            const checkAuth = httpsCallable(window.functions, 'isAuthorizedVolunteerV2');
+            const result = await checkAuth();
+            isAuthorized = result.data.isAuthorized;
+
+            // Cache for this session
+            sessionStorage.setItem(cacheKey, isAuthorized ? 'true' : 'false');
+          }
+
+          // Remember authorization status in localStorage (persists across sessions)
           if (isAuthorized) {
             localStorage.setItem('t4t_wasAuthorized', 'true');
           }
