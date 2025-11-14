@@ -1300,3 +1300,275 @@ This would be a clean, robust solution that fixes the root cause.
 **Status:** Permissions fixed ✅, Duplicate items bug still active ❌
 **Priority:** Implement proper listener cleanup OR add extensive debug logging to trace remaining issue
 
+---
+
+# Firebase Functions v7 Upgrade Plan - 2025-11-13
+
+## Current Status
+- **Current Version**: firebase-functions v6.6.0
+- **Target Version**: firebase-functions v7.x (latest)
+- **Node.js Version**: 22 ✅ (v7 requires Node.js 18+)
+
+## Emulator Warning
+```
+⚠️  functions: package.json indicates an outdated version of firebase-functions.
+    Please upgrade using npm install --save firebase-functions@latest in your functions directory.
+⚠️  functions: Please note that there will be breaking changes when you upgrade.
+```
+
+## Breaking Changes Assessment
+
+### 1. ✅ Node.js Version Requirement - COMPLIANT
+**Change**: Minimum Node.js version is now 18 (dropped support for Node.js 16)
+
+**Our Status**: Already using Node.js 22
+```json
+// functions/package.json
+"engines": {
+  "node": "22"
+}
+```
+**Action Required**: None - we're already compliant
+
+---
+
+### 2. ✅ Deprecated `functions.config()` Removed - COMPLIANT
+**Change**: The deprecated `functions.config()` API has been removed. Use `params` module instead.
+
+**Our Status**: Already migrated to params module
+```javascript
+// functions/index.js (lines 8, 15-18)
+const { defineString } = require('firebase-functions/params');
+const MAILGUN_KEY = defineString('MAILGUN_KEY');
+const MAILGUN_DOMAIN = defineString('MAILGUN_DOMAIN');
+const GEOCODING_API_KEY = defineString('GEOCODING_API_KEY');
+const SHEETS_API_KEY = defineString('SHEETS_API_KEY');
+```
+**Action Required**: None - we're already compliant
+
+---
+
+### 3. ✅ TypeScript v5 / ES2022 Target - NOT APPLICABLE
+**Change**: Upgraded to TypeScript v5 and targets ES2022
+
+**Our Status**: We use plain JavaScript (not TypeScript), so this doesn't affect us
+
+**Action Required**: None - JavaScript code is unaffected
+
+---
+
+### 4. ⚠️ Unhandled Errors in `onRequest` Handlers - LOW RISK
+**Change**: Unhandled errors in async `onRequest` handlers in the Emulator now return a 500 error immediately
+
+**Our Status**: We have 3 HTTP endpoint functions that use `onRequest`:
+- `triggerSyncLocationSuggestions` (functions/index.js:961-1029)
+- `getLocationsCache` (functions/index.js:1133-1177)
+- `triggerRefreshLocationsCache` (functions/index.js:1246-1306)
+
+**Current Error Handling**: All functions have try-catch blocks ✅
+
+**Example** (triggerRefreshLocationsCache):
+```javascript
+exports.triggerRefreshLocationsCache = onRequest( { cors: true }, async( req, res ) => {
+  try {
+    // ... function logic
+  } catch( error ) {
+    console.error( 'Error refreshing locations cache:', error );
+    res.status( 500 ).json( { success: false, message: error.message } );
+  }
+});
+```
+
+**Action Required**:
+- Review error handling to ensure all async operations are wrapped in try-catch
+- Test in emulator after upgrade to verify 500 responses are properly handled
+- **Priority**: Low (our code already has proper error handling)
+
+---
+
+### 5. ✅ `Event` Renamed to `LegacyEvent` - NOT APPLICABLE
+**Change**: v1 Event type renamed to LegacyEvent to avoid api-extractor conflicts
+
+**Our Status**: We don't use the `Event` type in our code (verified via grep)
+
+**Action Required**: None - not applicable to our codebase
+
+---
+
+## New Features (Optional Adoption)
+
+### 1. ESM (ECMAScript Modules) Support
+**Feature**: v7 now supports ESM alongside CommonJS
+
+**Current**: We use CommonJS (`require()`)
+
+**Consideration**:
+- ESM would allow using `import`/`export` syntax
+- Better for modern JavaScript practices
+- **Recommendation**: Consider migrating to ESM in a future phase, but not required for v7 upgrade
+
+---
+
+### 2. `onMutationExecuted()` for Firebase Data Connect
+**Feature**: New trigger for Firebase Data Connect
+
+**Current**: We don't use Firebase Data Connect
+
+**Action Required**: None - not applicable
+
+---
+
+## Upgrade Plan
+
+### Phase 1: Pre-Upgrade Preparation ✅ COMPLETE
+- [x] Audit current code for breaking changes
+- [x] Verify Node.js version compatibility (Node 22 ✅)
+- [x] Verify params module usage (Already using ✅)
+- [x] Verify no deprecated `functions.config()` usage (Clean ✅)
+- [x] Review error handling in onRequest functions (All have try-catch ✅)
+
+### Phase 2: Upgrade Execution
+1. **Update package.json**
+   ```bash
+   cd functions
+   npm install --save firebase-functions@latest
+   ```
+
+2. **Verify dependencies**
+   ```bash
+   npm list firebase-functions
+   # Should show v7.x.x
+   ```
+
+3. **Test locally with emulators**
+   ```bash
+   # From project root
+   ./start-emulators.sh
+   ```
+
+4. **Run smoke tests**
+   ```bash
+   npm run test:smoke
+   ```
+
+5. **Deploy to production** (only after all tests pass)
+   ```bash
+   firebase deploy --only functions
+   ```
+
+### Phase 3: Post-Upgrade Validation
+- [ ] Monitor Cloud Functions logs for errors
+- [ ] Test all function endpoints:
+  - [ ] provisionBoxV2
+  - [ ] reverseGeocode
+  - [ ] isAuthorizedVolunteerV2
+  - [ ] authorizeVolunteerV2
+  - [ ] updateVolunteerRole
+  - [ ] syncLocationSuggestions
+  - [ ] triggerSyncLocationSuggestions
+  - [ ] getLocationsCache
+  - [ ] refreshLocationsCache
+  - [ ] triggerRefreshLocationsCache
+  - [ ] createReportV2
+- [ ] Verify scheduled functions run correctly:
+  - [ ] scheduledSyncLocationSuggestions (every 10 minutes)
+  - [ ] scheduledRefreshLocationsCache (every 6 hours)
+- [ ] Test Firestore triggers:
+  - [ ] sendReportEmail (on report creation)
+
+---
+
+## Risk Assessment
+
+### Low Risk ✅
+Our codebase is **already compliant** with all v7 breaking changes:
+- ✅ Using Node.js 22 (v7 requires 18+)
+- ✅ Using params module (not deprecated `functions.config()`)
+- ✅ Not using TypeScript (ES2022 upgrade doesn't affect us)
+- ✅ Proper error handling in all onRequest handlers
+- ✅ Not using the renamed `Event` type
+
+### Minimal Code Changes Required
+**Zero code changes needed** - upgrade is primarily a version bump.
+
+### Testing Strategy
+1. **Emulator testing** - All functions work in local emulator
+2. **Smoke tests** - Automated E2E tests pass
+3. **Production deployment** - Deploy during low-traffic period
+4. **Monitoring** - Watch Cloud Functions logs for 24 hours post-deployment
+
+---
+
+## Timeline Estimate
+
+- **Preparation**: Already complete ✅
+- **Upgrade execution**: 15 minutes
+- **Testing**: 30 minutes (emulator + smoke tests)
+- **Deployment**: 10 minutes
+- **Monitoring**: 24 hours (passive)
+
+**Total Active Time**: ~1 hour
+
+---
+
+## Rollback Plan
+
+If issues are discovered post-upgrade:
+
+1. **Revert package.json**
+   ```bash
+   cd functions
+   npm install --save firebase-functions@6.6.0
+   ```
+
+2. **Redeploy**
+   ```bash
+   firebase deploy --only functions
+   ```
+
+3. **Estimated rollback time**: 10 minutes
+
+---
+
+## Additional Notes
+
+### Warning Message Context
+The emulator shows:
+```
+⚠️  functions: package.json indicates an outdated version of firebase-functions.
+    Please upgrade using npm install --save firebase-functions@latest in your functions directory.
+⚠️  functions: Please note that there will be breaking changes when you upgrade.
+```
+
+This warning appears for **any version below v7**, but our analysis shows:
+- We're already compliant with all breaking changes
+- Upgrade should be smooth with zero code modifications
+
+### Future Considerations
+
+1. **ESM Migration** (Optional)
+   - Could migrate from CommonJS to ESM in future
+   - Benefits: Modern syntax, better tree-shaking
+   - Timeline: Post-v7 upgrade, separate project
+
+2. **TypeScript Adoption** (Optional)
+   - Could add TypeScript for better type safety
+   - Would benefit from v7's TypeScript v5 support
+   - Timeline: Long-term consideration
+
+---
+
+## Recommendation
+
+✅ **Proceed with upgrade**
+
+The upgrade from v6.6.0 → v7.x is **low risk** and requires **no code changes**. Our codebase is already compliant with all breaking changes. The main benefit is staying current with Firebase's supported versions and eliminating the emulator warning.
+
+**Suggested Timing**: Next maintenance window or whenever convenient (no urgency, but good housekeeping).
+
+---
+
+**Analysis completed**: 2025-11-13
+**Status**: Ready to upgrade
+**Priority**: Low (maintenance task, no urgent issues)
+
