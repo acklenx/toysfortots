@@ -429,11 +429,14 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('🎁 Testing anonymous box reporting...');
 
     // Clear auth to simulate anonymous user
+    console.log('Clearing cookies to simulate anonymous user...');
     await context.clearCookies();
 
     // Go to box page
+    console.log(`Navigating to box page: /box?id=${santaBox.id}`);
     await page.goto(`/box?id=${santaBox.id}`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
+    console.log(`Current URL: ${page.url()}`);
 
     // Wait for the page to load - could redirect to /box/ with trailing slash
     await page.waitForURL(/\/box\/?\?id=/, { timeout: 5000 }).catch(() => {
@@ -441,28 +444,40 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     });
 
     // Should load report page with box info - look for the "Drop Box" heading specifically
+    console.log('Looking for Drop Box or Report heading...');
     await expect(page.locator(':has-text("Drop Box"), :has-text("Report")').first()).toBeVisible({ timeout: 5000 });
+    console.log('✅ Box page loaded');
 
     // Click "Report a Problem" link to expand the form
-    const problemLink = page.locator('#problem-btn, :has-text("Report a Problem")').first();
+    console.log('Looking for Report a Problem button...');
+    const problemLink = page.locator('#problem-btn, button:has-text("Report a Problem"), a:has-text("Report a Problem")').first();
     await expect(problemLink).toBeVisible({ timeout: 5000 });
+    const problemLinkText = await problemLink.textContent();
+    console.log(`Found problem button: "${problemLinkText}", clicking...`);
     await problemLink.click();
     await page.waitForTimeout(500);
 
     // Fill description in the problem form
+    console.log('Looking for problem description field...');
     const descriptionField = page.locator('#problemDescription, textarea[name="description"]').first();
     await expect(descriptionField).toBeVisible({ timeout: 5000 });
+    console.log('Filling in problem description...');
     await descriptionField.fill('Box is overflowing with toys! 🎄🎁');
 
     // Submit the problem report
-    const submitBtn = page.locator('#problem-submit-btn, :has-text("Send Problem Report")').first();
+    console.log('Looking for submit button...');
+    const submitBtn = page.locator('#problem-submit-btn, button:has-text("Send Problem Report"), button:has-text("Submit")').first();
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
+    const submitBtnText = await submitBtn.textContent();
+    console.log(`Found submit button: "${submitBtnText}", clicking...`);
     await submitBtn.click();
 
     // Wait for submission
     await page.waitForTimeout(2000);
+    console.log(`Current URL after submit: ${page.url()}`);
 
     // Should show success message
+    console.log('Looking for success message...');
     const successMsg = page.locator('#problem-details-success, .confirmation-message.success, :has-text("Thank you")').first();
     await expect(successMsg).toBeVisible({ timeout: 5000 });
     console.log('✅ Anonymous problem report submitted successfully');
