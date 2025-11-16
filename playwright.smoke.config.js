@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Run with: npx playwright test --config=playwright.smoke.config.js
  */
 export default defineConfig({
-  testDir: './tests/e2e', // Only e2e tests, not unit tests
+  testDir: './tests/smoke', // Smoke tests in dedicated directory
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 1, // One retry for transient failures
