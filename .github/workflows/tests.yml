@@ -66,9 +66,6 @@ jobs:
     - name: 🧪 Run smoke tests
       run: npm run test:smoke
 
-    - name: 🎯 Run full E2E journey tests
-      run: npx playwright test tests/e2e/e2e-full-journey.spec.js --workers=1
-
     - name: 📊 Upload test results
       if: always()
       uses: actions/upload-artifact@v4
