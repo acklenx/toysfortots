@@ -19,7 +19,7 @@
 - [x] ✅ **Add hamburger menu for authenticated users**
   - Replace hidden icon navigation with proper menu
   - Include: Dashboard, Setup New Box, View All Boxes, Sign Out
-  - Mobile-friendly slide-out design
+  - Mobile-friendly slide-out desi
   - Accessibility: menu items unfocusable until expanded
   - Use appropriate icons for menu items
 

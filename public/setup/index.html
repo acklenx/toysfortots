@@ -20,6 +20,14 @@
 						<label>Box ID to Set Up</label>
 						<div id="box-id-display">Loading...</div>
 					</div>
+					<!-- Passcode field (shown only in emulator mode for first-time volunteers) -->
+					<div id="passcode-field-container" class="form-group hidden">
+						<label for="passcode">Authorization Passcode</label>
+						<input type="password" id="passcode" name="passcode" placeholder="Enter shared passcode">
+						<p style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
+							Required for first-time setup in emulator mode
+						</p>
+					</div>
 					<div class="hr-divider"></div>
 					<div style="margin-bottom: 1.25rem;">
 						<button id="gps-btn" type="button">
@@ -392,7 +400,7 @@
 						state: formData.get( 'state' ),
 						postalcode: formData.get( 'postalcode' ),
 						boxes: 1,
-						passcode: '', // No passcode needed - user is already authorized
+						passcode: formData.get( 'passcode' ) || '', // Use passcode from form (required in emulator mode for first-time volunteers)
 						displayName: displayName, // Pass displayName explicitly
 						contactName: contactName,
 						contactEmail: contactEmail,
@@ -509,23 +517,38 @@
 							return;
 						}
 
-						// Check authorization
-						try
+						// Check authorization (skip in emulator mode to avoid CORS issues)
+						const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+						if( !isLocalhost )
 						{
-							const result = await isAuthorizedVolunteer();
-							if( !result.data.isAuthorized )
+							try
 							{
-								// Not authorized - redirect to authorize page with boxId
+								const result = await isAuthorizedVolunteer();
+								if( !result.data.isAuthorized )
+								{
+									// Not authorized - redirect to authorize page with boxId
+									window.location.href = `/authorize?boxId=${ scannedBoxId }`;
+									return;
+								}
+							}
+							catch( error )
+							{
+								console.error( 'Authorization check failed:', error );
+								// On error, redirect to authorize page
 								window.location.href = `/authorize?boxId=${ scannedBoxId }`;
 								return;
 							}
 						}
-						catch( error )
+						else
 						{
-							console.error( 'Authorization check failed:', error );
-							// On error, redirect to authorize page
-							window.location.href = `/authorize?boxId=${ scannedBoxId }`;
-							return;
+							console.log( '[setup] Skipping authorization check in emulator mode (localhost). Authorization will be validated server-side in provisionBoxV2.' );
+							// Show passcode field in emulator mode so users can authorize via setup page
+							const passcodeContainer = document.getElementById( 'passcode-field-container' );
+							if( passcodeContainer )
+							{
+								passcodeContainer.classList.remove( 'hidden' );
+								console.log( '[setup] Showing passcode field for first-time authorization in emulator mode' );
+							}
 						}
 
 						// User is authenticated and authorized - proceed
