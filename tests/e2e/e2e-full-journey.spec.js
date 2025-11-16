@@ -262,8 +262,19 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('Waiting for setup page to load...');
     await page.waitForTimeout(3000);
 
-    // Since we're already authorized, we don't need to enter passcode again
-    // Just fill in the location details
+    // In CI mode, we're not authorized yet - need to fill passcode on setup page
+    if (isCI) {
+      console.log('🔧 In CI mode - filling passcode on setup page to authorize');
+      const passcodeInput = page.locator('#passcode, input[placeholder*="shared code"]').first();
+      if (await passcodeInput.isVisible()) {
+        await passcodeInput.fill(TEST_CONFIG.PASSCODE);
+        console.log('   Passcode entered - will be validated when submitting the form');
+      } else {
+        console.log('⚠️  Passcode field not visible - may cause authorization issues');
+      }
+    }
+
+    // Since we're already authorized (or will be via passcode above), fill in the location details
     console.log('Looking for location name input field...');
     const labelInput = page.locator('#label, input[placeholder*="Location Name"]').first();
     await labelInput.waitFor({ state: 'visible', timeout: 5000 });
