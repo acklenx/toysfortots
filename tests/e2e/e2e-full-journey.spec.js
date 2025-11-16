@@ -489,26 +489,41 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('🎅 Managing reports...');
 
     // Login as Santa
+    console.log('Navigating to login page...');
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
 
+    console.log('Filling in Santa\'s credentials...');
     await page.fill('#auth-email', TEST_CONFIG.USERS.santa.username);
     await page.fill('#auth-password', TEST_CONFIG.USERS.santa.password);
+    console.log('Clicking sign-in button...');
     await page.locator('#email-sign-in-btn').click();
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    console.log(`Current URL after sign-in: ${page.url()}`);
+    await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 10000 });
+    console.log('✅ On dashboard');
     await page.waitForTimeout(2000);
 
     // Click View Full History link to see all reports (including the one from Part 3)
     // It's an <a> tag with class view-history-btn
-    const historyLink = page.locator('a.view-history-btn, a:has-text("View Full History")').first();
+    console.log('Looking for View Full History link...');
+    const historyLink = page.locator(
+      'a.view-history-btn, ' +
+      'button.view-history-btn, ' +
+      'a:has-text("View Full History"), ' +
+      'button:has-text("View Full History"), ' +
+      'a:has-text("View History")'
+    ).first();
     await expect(historyLink).toBeVisible({ timeout: 5000 });
+    const historyText = await historyLink.textContent();
+    console.log(`Found history link: "${historyText}", clicking...`);
 
     // Wait for navigation after clicking
     await Promise.all([
-      page.waitForURL(/\/status/, { timeout: 10000 }),
+      page.waitForURL(/\/status\/?\?/, { timeout: 10000 }),
       historyLink.click()
     ]);
+    console.log(`Current URL after clicking history: ${page.url()}`);
 
     await page.waitForTimeout(2000);
 
@@ -519,23 +534,28 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
 
   test('Part 5: Multi-user permissions', async ({ page }) => {
       console.log('');
-      console.log('Ⅴ Part 5: Report management');
-
+      console.log('Ⅴ Part 5: Multi-user permissions');
       console.log('🦌 Testing multi-user scenarios (simplified)...');
 
     // Just verify we can log in as Santa and see the dashboard
+    console.log('Navigating to login page...');
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
 
+    console.log('Filling in Santa\'s credentials...');
     await page.fill('#auth-email', TEST_CONFIG.USERS.santa.username);
     await page.fill('#auth-password', TEST_CONFIG.USERS.santa.password);
+    console.log('Clicking sign-in button...');
     await page.locator('#email-sign-in-btn').click();
 
     // Should reach dashboard
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    console.log(`Current URL after sign-in: ${page.url()}`);
+    await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 10000 });
+    console.log('✅ On dashboard');
     await page.waitForTimeout(2000);
 
     // Should see Santa's box
+    console.log(`Looking for Santa's box: "${santaBox.label}"...`);
     await expect(page.locator(`text="${santaBox.label}"`)).toBeVisible();
     console.log('✅ Multi-user scenario verified - Santa can see their box');
   });
@@ -546,11 +566,14 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('⛄ Testing unauthorized access (simplified)...');
 
     // Just verify that unauthenticated users can't access dashboard
+    console.log('Clearing cookies to simulate unauthenticated user...');
     await page.context().clearCookies();
+    console.log('Attempting to access dashboard without authentication...');
     await page.goto('/dashboard');
 
     // Should redirect to login
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+    console.log(`Current URL after attempting dashboard access: ${page.url()}`);
+    await expect(page).toHaveURL(/\/login\/?/, { timeout: 10000 });
     console.log('✅ Unauthorized access blocked - redirected to login');
   });
 
@@ -560,17 +583,19 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('🔍 Testing edge cases (simplified)...');
 
     // Test missing box ID
+    console.log('Navigating to /box without ID parameter...');
     await page.goto('/box', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     // Should show some error or redirect
+    console.log(`Current URL after navigating to /box: ${page.url()}`);
     const hasError = await page.locator('text=/missing|error|invalid/i').count() > 0;
     const redirected = !page.url().includes('/box');
 
     if (hasError || redirected) {
       console.log('✅ Missing ID handled appropriately');
     } else {
-      console.log('✅ Box page loaded');
+      console.log('✅ Box page loaded (may show default state)');
     }
   });
 
@@ -580,12 +605,14 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('🖨️ Testing print functionality (simplified)...');
 
     // Just verify the print page loads
+    console.log('Navigating to /print page...');
     await page.goto('/print', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     // Check if page loaded (might redirect to login if auth required)
+    console.log(`Current URL after navigating to /print: ${page.url()}`);
     if (page.url().includes('/login')) {
-      console.log('✅ Print page requires authentication');
+      console.log('✅ Print page requires authentication (redirected to login)');
     } else {
       console.log('✅ Print page loaded');
     }
@@ -597,23 +624,30 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('🗺️ Verifying map functionality (simplified)...');
 
     // Go to home page
+    console.log('Navigating to home page (/)...');
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
 
+    console.log(`Current URL: ${page.url()}`);
+
     // Check if map container is visible
+    console.log('Checking for map container...');
     const mapVisible = await page.locator('.leaflet-container, #map, [id*="map"]').isVisible().catch(() => false);
 
     if (mapVisible) {
       console.log('✅ Map loaded successfully');
     } else {
       // Might be a different layout or map not loaded yet
-      console.log('✅ Home page loaded');
+      console.log('✅ Home page loaded (map container may take time to render)');
     }
 
     // Check if Santa's box appears somewhere on the page
+    console.log(`Searching for Santa's box: "${santaBox.label}"...`);
     const hasSantaBox = await page.locator(`text="${santaBox.label}"`).count() > 0;
     if (hasSantaBox) {
       console.log('✅ Found Santa\'s Workshop on page');
+    } else {
+      console.log('⚠️ Santa\'s box not visible (may be in sidebar or not yet loaded)');
     }
   });
 
