@@ -64,5 +64,6 @@ export default defineConfig({
     command: 'npx firebase emulators:start --only hosting,auth,firestore,functions',
     url: 'http://localhost:5000',
     timeout: 120 * 1000,
+    reuseExistingServer: true, // Reuse emulators started by GitHub Actions workflow
   } : undefined,
 });
