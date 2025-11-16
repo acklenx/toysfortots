@@ -1243,7 +1243,7 @@ exports.scheduledRefreshLocationsCache = onSchedule( {
  * HTTP endpoint to trigger cache refresh via curl (REQUIRES AUTHORIZATION)
  * Usage: curl -X POST -H "Authorization: Bearer <ID_TOKEN>" https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache
  */
-exports.triggerRefreshLocationsCache = onRequest( { cors: ['https://toysfortots.mcl1311.com'] }, async( req, res ) =>
+exports.triggerRefreshLocationsCache = onRequest( { cors: ['https://toysfortots.mcl1311.com', 'http://localhost:5000'] }, async( req, res ) =>
 {
 	console.log( '--- triggerRefreshLocationsCache (HTTP) STARTED ---' );
 

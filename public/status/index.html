@@ -236,7 +236,11 @@
 						if (isNewBox) {
 							try {
 								const idToken = await auth.currentUser.getIdToken();
-								const cacheRefreshUrl = 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
+								// Use emulator URL in development, production URL otherwise
+								const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+								const cacheRefreshUrl = isLocalhost
+									? 'http://localhost:5001/toysfortots-eae4d/us-central1/triggerRefreshLocationsCache'
+									: 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/triggerRefreshLocationsCache';
 								await fetch( cacheRefreshUrl, {
 									method: 'POST',
 									headers: {
