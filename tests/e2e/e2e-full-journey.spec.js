@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clearTestData, seedTestConfig } from '../fixtures/firebase-helpers.js';
+import { clearTestData, seedTestConfig, authorizeVolunteer } from '../fixtures/firebase-helpers.js';
 
 /**
  * Local End-to-End Tests (Emulator Version)
@@ -197,12 +197,21 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('✅ Account created and redirected to authorize page');
 
     // WORKAROUND: Firebase Functions emulator has CORS issues with callable functions in CI
-    // Skip the authorize page in GitHub Actions and go directly to setup with passcode
+    // In CI, authorize the user directly using test helper instead of navigating through authorize page
     const isCI = !!process.env.CI;
 
     if (isCI) {
-      console.log('🔧 Running in CI - skipping authorize page due to Functions emulator CORS limitations');
-      console.log('   Going directly to setup page (passcode will be entered there)');
+      console.log('🔧 Running in CI - authorizing user directly via test helper to avoid CORS issues');
+
+      // Get the user's UID from the browser
+      await page.waitForFunction(() => window.auth?.currentUser !== null, { timeout: 10000 });
+      const uid = await page.evaluate(() => window.auth?.currentUser?.uid);
+      const email = await page.evaluate(() => window.auth?.currentUser?.email);
+      console.log(`   User UID: ${uid}, Email: ${email}`);
+
+      // Authorize the user directly using test helper (bypasses CORS-prone Cloud Function)
+      await authorizeVolunteer(uid, email, TEST_CONFIG.USERS.santa.username);
+      console.log('   ✅ User authorized directly via Firestore');
 
       // Extract boxId from authorize page URL
       const urlParams = new URL(page.url()).searchParams;
@@ -262,17 +271,8 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('Waiting for setup page to load...');
     await page.waitForTimeout(3000);
 
-    // In CI mode, we're not authorized yet - need to fill passcode on setup page
-    if (isCI) {
-      console.log('🔧 In CI mode - filling passcode on setup page to authorize');
-      const passcodeInput = page.locator('#passcode, input[placeholder*="passcode"], input[placeholder*="shared code"]').first();
-      // Wait for passcode field to become visible (setup page shows it after auth check in onAuthStateChanged)
-      await passcodeInput.waitFor({ state: 'visible', timeout: 10000 });
-      await passcodeInput.fill(TEST_CONFIG.PASSCODE);
-      console.log('   Passcode entered - will be validated when submitting the form');
-    }
-
-    // Since we're already authorized (or will be via passcode above), fill in the location details
+    // User is now authorized (either via authorize page in local mode, or directly via test helper in CI)
+    // Fill in the location details
     console.log('Looking for location name input field...');
     const labelInput = page.locator('#label, input[placeholder*="Location Name"]').first();
     await labelInput.waitFor({ state: 'visible', timeout: 5000 });
