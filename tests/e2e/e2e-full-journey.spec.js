@@ -271,6 +271,17 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('Waiting for setup page to load...');
     await page.waitForTimeout(3000);
 
+    // ALWAYS fill passcode field (whether visible or not) - belt and suspenders approach
+    // This ensures provisionBoxV2 can authorize the user if the direct DB write doesn't work
+    console.log('⚙️ Filling passcode field (may be hidden)...');
+    const passcodeInput = page.locator('#passcode, input[name="passcode"]').first();
+    try {
+      await passcodeInput.fill('semperfi', { timeout: 1000 });
+      console.log('   ✅ Passcode filled');
+    } catch (e) {
+      console.log('   ⚠️ Passcode field not found (may not exist in production mode)');
+    }
+
     // User is now authorized (either via authorize page in local mode, or directly via test helper in CI)
     // Fill in the location details
     console.log('Looking for location name input field...');
