@@ -349,53 +349,77 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
       console.log('🎅 Testing dashboard functionality...');
 
     // Login as Santa
+    console.log('Navigating to login page...');
     await page.goto('/login', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
+    console.log(`Current URL: ${page.url()}`);
 
+    console.log('Filling in login credentials...');
     await page.fill('#auth-email', TEST_CONFIG.USERS.santa.username);
     await page.fill('#auth-password', TEST_CONFIG.USERS.santa.password);
+    console.log('Clicking sign-in button...');
     await page.locator('#email-sign-in-btn').click();
 
     // Wait for auth and redirect
     await page.waitForTimeout(2000);
+    console.log(`Current URL after sign-in: ${page.url()}`);
 
     // Navigate to dashboard
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 15000 });
+    console.log('✅ Redirected to dashboard');
+
     // Wait for dashboard to load
     await page.waitForTimeout(2000);  // Wait for page to render instead of network idle
 
     // Verify Santa's box is visible on dashboard
+    console.log(`Looking for box: "${santaBox.label}"`);
     await expect(page.locator(`text="${santaBox.label}"`)).toBeVisible({ timeout: 10000 });
+    console.log('✅ Found box on dashboard');
 
     // Check box status shows as Good
+    console.log('Checking box status...');
     const statusSection = page.locator('text="Status: Good"');
     await expect(statusSection).toBeVisible();
     await expect(page.locator('text="All reports are resolved."')).toBeVisible();
+    console.log('✅ Box status is Good');
 
     // Click View Full History link/button
-    const historyBtn = page.locator('.view-history-btn');
+    console.log('Looking for View Full History button...');
+    const historyBtn = page.locator('.view-history-btn, a:has-text("View Full History"), button:has-text("View Full History")').first();
     await expect(historyBtn).toBeVisible();
+    const historyBtnText = await historyBtn.textContent();
+    console.log(`Found history button: "${historyBtnText}", clicking...`);
     await historyBtn.click();
 
     // Should navigate to status page
-      await expect(page).toHaveURL(/\/status\/?\?id=/, { timeout: 10000 });
+    await page.waitForTimeout(1000);
+    console.log(`Current URL after history click: ${page.url()}`);
+    await expect(page).toHaveURL(/\/status\/?\?id=/, { timeout: 10000 });
+    console.log('✅ Navigated to status page');
 
     // Verify we can see the box history
+    console.log('Checking for box history elements...');
     await expect(page.locator('h1:has-text("Box Report History")')).toBeVisible();
     await expect(page.locator('.report-title')).toBeVisible({ timeout: 15000 });
-      console.log(page.locator('.report-title').innerHTML)
     await expect(page.locator(':has-text("Box registered by")').first()).toBeVisible({ timeout: 15000 });
 
     console.log('✅ Dashboard operations successful');
 
     // Navigate back to dashboard
+    console.log('Navigating back to dashboard...');
     await page.goto('/dashboard');
     await page.waitForTimeout(2000);
+    console.log(`Current URL: ${page.url()}`);
 
     // Logout (button could be link or button)
-    await page.locator('[aria-label="Menu"], :has-text("Menu")').first().click();
+    console.log('Looking for menu button...');
+    const menuBtn = page.locator('[aria-label="Menu"], button:has-text("Menu"), a:has-text("Menu")').first();
+    await menuBtn.click();
     await page.waitForTimeout(500); // Wait for menu to open
-    await page.locator(':has-text("Sign Out")').first().click();
+    console.log('Menu opened, looking for Sign Out...');
+
+    const signOutBtn = page.locator('button:has-text("Sign Out"), a:has-text("Sign Out")').first();
+    await signOutBtn.click();
     console.log('✅ Logged out successfully');
   });
 

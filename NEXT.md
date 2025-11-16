@@ -1,145 +1,175 @@
 # E2E Test Fixes - 2025-11-16
 
-## Current Situation
+## Current Status: Part 1 Fixed! ✅
 
-We had all tests passing locally, including the big E2E test suite (e2e-full-journey.spec.js). However:
-- Smoke tests work both locally and in GitHub Actions ✅
-- Full E2E tests work locally but NOT in GitHub Actions ❌
-- When we tried to roll back to previous working commit (c53ba1b), tests became "not found" ❌
-- Fixed the "not found" issue by adding `'**/e2e-full-journey.spec.js'` to testMatch in playwright.config.js ✅
-- Now tests run but are failing again ❌
+**Last Commit:** `9f14dc1` - Fix E2E test Part 1 with comprehensive logging and improved selectors
 
-## Root Causes Identified
+### What We Accomplished
 
-### 1. Test Discovery Issue (FIXED)
-The e2e-full-journey.spec.js was not in the testMatch array in playwright.config.js. This was added locally but never committed, so git reset removed it.
+1. ✅ **Test Discovery Issue Documented** - Created HELP.md explaining the root cause (see HELP.md for details)
+2. ✅ **Part 1 Enhanced** - Added comprehensive logging and improved selectors
+3. ✅ **Part 1 Passing** - Test runs successfully with clear logging
+4. ✅ **Smoke Tests Verified** - All 12 smoke tests still passing (no regressions)
 
-**Fix Applied:** Added to testMatch array in playwright.config.js
+### Key Improvements Made
 
-### 2. URL Path Flexibility Issue
-URLs can vary between environments:
-- `/setup?id=123` ← Works in some cases
-- `/setup/?id=123` ← Works in other cases (trailing slash)
-
-**Solution:** All URL checks must handle BOTH patterns using regex like `/\/setup\/?\\?id=/`
-
-### 3. Button vs Link Confusion
-Many elements that look like buttons are actually `<a>` links styled as buttons.
-
-**Solution:** Use flexible selectors like `'button:has-text("Text"), a:has-text("Text")'` or `.first()`
-
-### 4. Sign In vs Sign Up Flow
-Tests need to check which page they're on before clicking toggle buttons:
-- If on sign-in page but need to sign up → click "Create an account" link
-- If on sign-up page but need to sign in → click sign-in link
-
-**Solution:** Check current state before toggling
-
-### 5. Authorization Redirects
-When accessing protected pages (like /setup) without authorization:
-- Unauthenticated → redirects to /login
-- Authenticated but not authorized → redirects to /authorize
-- Both are REAL redirects that happen automatically
-
-**Solution:** Expect and handle these redirects in tests
-
-### 6. Authorize Flow Issues with Emulators
-The authorize flow has been problematic in emulators, causing flaky tests.
-
-**Temporary Solution:** Skip the authorize page for now, we'll add it back later once basic tests are stable
-
-## The Plan
-
-### Step 1: Add Comprehensive Logging
-Before every assertion, log the current state:
-- Current URL
-- What element we're looking for
-- Whether element was found
-
-This helps debug failures without guessing.
-
-### Step 2: Fix URL Pattern Matching
-Replace all URL assertions to handle optional trailing slash:
-- Change `/\/setup\?id=/` to `/\/setup\/?\\?id=/`
-- Change `/\/status\?id=/` to `/\/status\/?\\?id=/`
-- Change `/\/box\?id=/` to `/\/box\/?\\?id=/`
-
-### Step 3: Fix Button/Link Selectors
-Use flexible selectors that work for both:
-```javascript
-// BAD
-page.locator('button:has-text("Submit")')
-
-// GOOD
-page.locator('button:has-text("Submit"), a:has-text("Submit")').first()
+#### Comprehensive Logging
+Every major step now logs its state before asserting:
+```
+Current URL after /box navigation: http://localhost:5000/login/?returnUrl=...
+✅ Redirected to login with setup return URL
+Checking login page state...
+Auth page title: Sign In with Username
+Currently on sign-in page, clicking toggle to switch to sign-up...
+✅ On sign-up page
 ```
 
-### Step 4: Add State Checks Before Actions
-Before clicking sign-in/sign-up buttons, check what page we're on:
+#### Smart State Checking
+Before toggling between sign-in/sign-up, check current state:
 ```javascript
-// Check if we need to toggle
-const currentTitle = await page.locator('#email-auth-title').textContent();
-if (currentTitle.includes('Sign In') && needSignUp) {
-  await page.locator('#toggle-sign-up-btn').click();
+const titleText = await authTitle.textContent();
+if (titleText && titleText.includes('Sign In')) {
+  console.log('Currently on sign-in page, clicking toggle to switch to sign-up...');
+  await toggleSignUpBtn.click();
 }
 ```
 
-### Step 5: Skip Authorize Flow Temporarily
-Instead of going through /authorize, we'll:
-1. Create account
-2. Manually call authorizeVolunteer() helper
-3. Navigate directly to destination
-
-This bypasses the problematic authorize page while we fix core issues.
-
-### Step 6: Run Smoke Tests First
-Before committing any changes, ALWAYS run:
-```bash
-npm run test:smoke
+#### Flexible Selectors
+Handle both `<button>` and `<a>` tags:
+```javascript
+const authorizeBtn = page.locator(
+  'button:has-text("Authorize Access"), ' +
+  'button:has-text("Authorize"), ' +
+  'a:has-text("Authorize Access"), ' +
+  'a:has-text("Authorize")'
+).first();
 ```
 
-Only commit if all 12 smoke tests pass.
+#### URL Pattern Support
+Already handles trailing slashes correctly:
+```javascript
+await expect(page).toHaveURL(/\/login\/.*returnUrl.*(setup|%2Fsetup)/i);
+await expect(page).toHaveURL(/\/authorize\/?/);
+await expect(page).toHaveURL(/\/setup\/?\?id=/);
+await expect(page).toHaveURL(/\/status\/?\?id=.*&newBox=true/);
+```
 
-### Step 7: Incremental Testing
-Fix one test at a time:
-1. Fix Part 1 (signup and provisioning)
-2. Run test to verify
-3. Fix Part 2 (dashboard operations)
-4. Run test to verify
-5. Continue until all parts pass
+---
 
-## Files to Modify
+## Next Steps: Fix Remaining Parts (2-14)
 
-1. **tests/e2e/e2e-full-journey.spec.js**
-   - Add logging before assertions
-   - Fix URL patterns
-   - Fix button/link selectors
-   - Add state checks
-   - Temporarily skip authorize flow
+### Immediate Priority: Part 2
 
-2. **playwright.config.js**
-   - Already has e2e-full-journey.spec.js in testMatch ✅
+Part 2 tests dashboard operations. Apply the same fixes:
+1. Add logging before all assertions
+2. Make selectors flexible (buttons vs links)
+3. Check page state before actions
+4. Handle URL patterns with optional trailing slashes
+
+### Pattern to Apply
+
+For each remaining test part:
+
+```javascript
+// BEFORE every assertion, log current state
+console.log(`Current URL: ${page.url()}`);
+
+// BEFORE clicking, log what we found
+const button = page.locator('#btn, button:has-text("Text"), a:has-text("Text")').first();
+const btnText = await button.textContent();
+console.log(`Found button: "${btnText}", clicking...`);
+
+// URL assertions with trailing slash support
+await expect(page).toHaveURL(/\/page\/?\?param=/);
+```
+
+### Testing Strategy
+
+1. Fix one part at a time
+2. Test in isolation: `npx playwright test --grep "Part 2"`
+3. Verify smoke tests still pass: `npm run test:smoke`
+4. Commit after each working part
+5. Move to next part
+
+---
+
+## Files Modified
+
+- **HELP.md** (new) - Documents test discovery issue
+- **NEXT.md** (this file) - Tracks progress
+- **tests/e2e/e2e-full-journey.spec.js** - Enhanced Part 1 with logging
+- **playwright.config.js** - Already has testMatch pattern ✅
+
+---
+
+## Important Notes
+
+### Test Discovery Issue (See HELP.md)
+
+The `e2e-full-journey.spec.js` file must be in the testMatch array in playwright.config.js:
+
+```javascript
+testMatch: [
+  '**/dashboard.spec.js',
+  // ... other patterns ...
+  '**/e2e-full-journey.spec.js'  // <-- MUST BE HERE
+],
+```
+
+This was added locally but never committed, causing "No tests found" errors after git reset.
+
+### Testing Checklist
+
+Before committing each part:
+- [ ] Part passes in isolation
+- [ ] Smoke tests still pass (12/12)
+- [ ] Logging shows clear execution path
+- [ ] No hardcoded timeouts (use default config)
+- [ ] Selectors handle both buttons and links
+- [ ] URL patterns handle trailing slashes
+
+---
+
+## Remaining Work
+
+### Parts Still Needing Fixes
+
+- [ ] Part 2: Volunteer dashboard operations
+- [ ] Part 3: Anonymous reporting
+- [ ] Part 4: Report management
+- [ ] Part 5: Multi-user permissions
+- [ ] Part 6: Unauthorized user flow
+- [ ] Part 7: Edge cases and error handling
+- [ ] Part 8: Print page functionality
+- [ ] Part 9: Comprehensive map verification
+- [ ] Part 10: Full logout/login cycle (already passing!)
+- [ ] Part 11: Test data verification (already passing!)
+- [ ] Part 12: Concurrent user interactions
+- [ ] Part 13: Rapid sequential operations
+- [ ] Part 14: Session persistence
+
+### Expected Timeline
+
+- **Part 1**: ✅ DONE (2 hours)
+- **Parts 2-11**: Est. 30 min each = 5 hours
+- **Parts 12-14**: Est. 45 min each = 2.25 hours
+- **Total Remaining**: ~7.25 hours
+
+---
 
 ## Success Criteria
 
-- [ ] All smoke tests pass (12/12)
-- [ ] Part 1 (signup and provisioning) passes
-- [ ] Part 2 (dashboard operations) passes
-- [ ] Part 3 (anonymous reporting) passes
-- [ ] All 14 E2E tests pass
+- [ ] All 14 E2E test parts passing
+- [ ] All 12 smoke tests passing
 - [ ] Can roll back to this commit and tests still work
-- [ ] All changes committed (no uncommitted working changes)
-
-## Notes
-
-- DO NOT skip critical flows like authorization unless absolutely necessary
-- Always log state before assertions to aid debugging
-- URL patterns MUST handle trailing slash variations
-- Many "buttons" are actually styled links - use flexible selectors
-- Test in BOTH environments: emulator (localhost) AND CI (GitHub Actions)
+- [ ] All changes committed (no uncommitted working files)
+- [ ] Tests work in both environments:
+  - [ ] Local (emulators)
+  - [ ] CI (GitHub Actions)
 
 ---
 
 **Created:** 2025-11-16
-**Status:** Ready to start fixing
+**Last Updated:** 2025-11-16
+**Status:** Part 1 complete, ready to fix Part 2
 **Priority:** HIGH - Need working E2E tests for CI/CD pipeline
