@@ -22,7 +22,8 @@ export default defineConfig({
     '**/login.spec.js',          // Light: Auth only
     '**/authorize.spec.js',      // Light: Auth + authorization flow
     '**/user-journeys.spec.js',  // Real-world user scenarios (sequential)
-    '**/admin.spec.js'           // Heavy but sequential (run last to avoid interference)
+    '**/admin.spec.js',          // Heavy but sequential (run last to avoid interference)
+    '**/e2e-full-journey.spec.js' // Comprehensive E2E journey tests
   ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
