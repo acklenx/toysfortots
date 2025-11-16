@@ -22,11 +22,12 @@ export const functions = getFunctions( app, 'us-central1' );
 
 // Connect to emulators IMMEDIATELY after getting instances (CRITICAL: must be before any auth/db operations)
 if (isLocalhost) {
-	// Use 127.0.0.1 instead of localhost to avoid DNS resolution issues in browser contexts
+	// Use localhost for Functions to avoid CORS issues when page is loaded from localhost
+	// Auth and Firestore can use 127.0.0.1 since they don't make fetch requests
 	connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
 	connectFirestoreEmulator(db, '127.0.0.1', 8080);
-	connectFunctionsEmulator(functions, '127.0.0.1', 5001);
-	console.log('[firebase-init] Connected to emulators (auth: 127.0.0.1:9099, firestore: 127.0.0.1:8080, functions: 127.0.0.1:5001)');
+	connectFunctionsEmulator(functions, 'localhost', 5001);
+	console.log('[firebase-init] Connected to emulators (auth: 127.0.0.1:9099, firestore: 127.0.0.1:8080, functions: localhost:5001)');
 } else {
 	// Enable offline persistence for production only (not in emulators)
 	enableMultiTabIndexedDbPersistence(db)

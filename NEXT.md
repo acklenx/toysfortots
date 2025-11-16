@@ -175,3 +175,33 @@ Skip the authorize page entirely. Go directly to setup page and use the passcode
 
 **Next:** Commit and push to see CI behavior with new logging
 
+
+---
+
+## ITERATION 3: Fix CORS Issue - Functions Emulator Origin Mismatch
+
+**Root Cause Identified via Debug Logging:**
+The browser console errors from iteration 2 revealed the real problem:
+```
+❌ Browser console error: Access to fetch at 'http://127.0.0.1:5001/toysfortots-eae4d/us-central1/authorizeVolunteerV2' from origin 'http://localhost:5000' has been blocked by CORS policy
+```
+
+**The Problem:**
+- Page loads from `http://localhost:5000` (Playwright baseURL)
+- firebase-init.js connects Functions emulator to `127.0.0.1:5001`
+- Browser treats `localhost` and `127.0.0.1` as different origins
+- CORS blocks the preflight request to the Cloud Function
+- This works locally (when you browse manually to 127.0.0.1) but fails in CI (where Playwright uses localhost)
+
+**The Fix:**
+Changed `public/js/firebase-init.js` line 29:
+- Before: `connectFunctionsEmulator(functions, '127.0.0.1', 5001)`
+- After: `connectFunctionsEmulator(functions, 'localhost', 5001)`
+
+**Why This Works:**
+- Functions emulator makes HTTP fetch requests (subject to CORS)
+- Auth and Firestore emulators use native protocol connections (not subject to CORS)
+- Using `localhost` for Functions matches the page origin, avoiding cross-origin issues
+
+**Next:** Test locally to ensure no regression, then commit and push
+
