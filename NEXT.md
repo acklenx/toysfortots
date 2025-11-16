@@ -107,22 +107,44 @@ if (titleText && titleText.includes('Sign In')) {
 
 ## Next Steps
 
-### 1. Push to GitHub and Test CI
+### Phase 1: Local Testing ✅ COMPLETE
+
+All files verified and committed:
+- ✅ playwright.config.js (with testMatch pattern)
+- ✅ tests/e2e/e2e-full-journey.spec.js (all 14 test parts)
+- ✅ tests/global-setup.js & tests/global-teardown.js
+- ✅ tests/fixtures/firebase-helpers.js
+- ✅ tests/fixtures/test-id-generator.js
+- ✅ HELP.md (documents test discovery issue)
+- ✅ NEXT.md (this file)
+
+**How to reproduce locally:**
 ```bash
-git push origin fix-e2e-test-discovery
+# Terminal 1: Start emulators
+./start-emulators.sh
+
+# Terminal 2: Run E2E tests
+npx playwright test tests/e2e/e2e-full-journey.spec.js --workers=1
 ```
 
-Verify E2E tests pass in GitHub Actions CI environment.
+### Phase 2: GitHub Actions Integration ⏳ NEXT
 
-### 2. Create Pull Request
+Need to configure GitHub Actions workflow to:
+1. Start Firebase emulators
+2. Run E2E tests with `--workers=1`
+3. Upload test artifacts on failure
+
+### Phase 3: Pull Request
+
 Once CI passes, create PR to merge into main branch.
 
-### 3. Monitor for Flakiness
+### Phase 4: Monitor for Flakiness
+
 The tests include advanced scenarios (concurrent users, rapid operations, session persistence) that may need monitoring for stability.
 
 ---
 
 **Created:** 2025-11-16
-**Completed:** 2025-11-16
-**Status:** ✅ COMPLETE - All 14 E2E tests passing locally
-**Priority:** Ready to test in CI/CD pipeline
+**Completed:** 2025-11-16 (local testing)
+**Status:** ✅ All 14 E2E tests passing locally - Ready for GitHub Actions
+**Priority:** HIGH - Configure GitHub Actions to run E2E tests
