@@ -11,19 +11,11 @@ export default defineConfig({
   globalSetup: './tests/global-setup.js',
   globalTeardown: './tests/global-teardown.js',
 
-  // Test order: Heavy tests first (performs 0.7% better than light-first)
-  // Testing showed: 90.7% pass rate vs 90% with original order
-  // Hypothesis: Heavy tests "warm up" the emulator, reducing later contention
+  // Run all e2e tests
   testMatch: [
-    '**/dashboard.spec.js',      // Heavy: Multiple data operations
-    '**/setup.spec.js',          // Medium: Auth + provisioning
-    '**/box-and-status.spec.js', // Medium: Box and status ops
-    '**/home.spec.js',           // Light: Minimal data
-    '**/login.spec.js',          // Light: Auth only
-    '**/authorize.spec.js',      // Light: Auth + authorization flow
-    '**/user-journeys.spec.js',  // Real-world user scenarios (sequential)
-    '**/admin.spec.js',          // Heavy but sequential (run last to avoid interference)
-    '**/e2e-full-journey.spec.js' // Comprehensive E2E journey tests
+    '**/e2e-full-journey.spec.js', // Comprehensive E2E journey tests (14 tests)
+    '**/admin.spec.js',            // Admin panel tests (2 tests)
+    '**/xss-security.spec.js'      // XSS security tests (4 tests)
   ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
