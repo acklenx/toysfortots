@@ -142,23 +142,39 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     // Wait a bit for any redirects to complete
     await page.waitForTimeout(2000);
 
+    // Log current URL for debugging
+    console.log(`Current URL after /box navigation: ${page.url()}`);
+
     // Should redirect to login with return URL to setup (since user is not authenticated)
     // URL might be encoded, and might have trailing slash
-    await expect(page).toHaveURL(/\/login.*returnUrl.*(setup|%2Fsetup)/i, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/login\/.*returnUrl.*(setup|%2Fsetup)/i, { timeout: 10000 });
     console.log('✅ Redirected to login with setup return URL');
 
     // Wait for login page to fully load and render
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000); // Give scripts time to initialize
 
-    // Click toggle to switch to sign-up mode
-    const toggleSignUpBtn = page.locator('#toggle-sign-up-btn');
-    await toggleSignUpBtn.waitFor({ state: 'visible', timeout: 5000 });
-    await toggleSignUpBtn.click();
+    // Check if we're on sign-in or sign-up page
+    console.log('Checking login page state...');
+    const authTitle = page.locator('#email-auth-title');
+    await authTitle.waitFor({ state: 'visible', timeout: 5000 });
+    const titleText = await authTitle.textContent();
+    console.log(`Auth page title: ${titleText}`);
 
-    // Wait for sign-up form to appear
-    await page.waitForTimeout(500);
+    // Only click toggle if we need to switch to sign-up
+    if (titleText && titleText.includes('Sign In')) {
+      console.log('Currently on sign-in page, clicking toggle to switch to sign-up...');
+      const toggleSignUpBtn = page.locator('#toggle-sign-up-btn');
+      await toggleSignUpBtn.waitFor({ state: 'visible', timeout: 5000 });
+      await toggleSignUpBtn.click();
+      await page.waitForTimeout(500);
+    } else {
+      console.log('Already on sign-up page, no toggle needed');
+    }
+
+    // Verify we're now on sign-up page
     await expect(page.locator('#email-auth-title')).toContainText('Create Account');
+    console.log('✅ On sign-up page');
 
     // Fill in the signup form
     await page.fill('#auth-email', TEST_CONFIG.USERS.santa.username);
@@ -171,21 +187,29 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     }
 
     // Submit the form
+    console.log('Submitting sign-up form...');
     await page.locator('#email-sign-up-btn').click();
 
     // Should redirect to authorize page first (new user needs authorization)
     await page.waitForTimeout(2000);
-    await expect(page).toHaveURL(/\/authorize/, { timeout: 15000 });
+    console.log(`Current URL after sign-up: ${page.url()}`);
+    await expect(page).toHaveURL(/\/authorize\/?/, { timeout: 15000 });
     console.log('✅ Account created and redirected to authorize page');
 
     // The authorize page allows users to enter the passcode to become authorized
     // Let's enter the passcode (semperfi) to get authorized as a volunteer
+    console.log('Looking for authorization code input field...');
     const authCodeInput = page.locator('input[placeholder*="shared code"], #auth-code, input[type="text"]').first();
     await authCodeInput.waitFor({ state: 'visible', timeout: 5000 });
+    console.log('Found auth code input, filling in passcode...');
     await authCodeInput.fill(TEST_CONFIG.PASSCODE);
 
     // Click the Authorize Access button
-    const authorizeBtn = page.locator('button:has-text("Authorize Access"), button:has-text("Authorize")').first();
+    console.log('Looking for Authorize button...');
+    const authorizeBtn = page.locator('button:has-text("Authorize Access"), button:has-text("Authorize"), a:has-text("Authorize Access"), a:has-text("Authorize")').first();
+    await authorizeBtn.waitFor({ state: 'visible', timeout: 5000 });
+    const authBtnText = await authorizeBtn.textContent();
+    console.log(`Found authorize button: "${authBtnText}", clicking...`);
     await authorizeBtn.click();
 
     // Wait for authorization to complete
@@ -209,16 +233,20 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     }
 
     // Now should be on setup page with the box ID (with or without trailing slash)
+    console.log(`Current URL before setup check: ${page.url()}`);
     await expect(page).toHaveURL(/\/setup\/?\?id=/, { timeout: 10000 });
     console.log('✅ Navigated to setup page');
 
     // Wait for setup page to load (just use timeout since network might not idle)
+    console.log('Waiting for setup page to load...');
     await page.waitForTimeout(3000);
 
     // Since we're already authorized, we don't need to enter passcode again
     // Just fill in the location details
+    console.log('Looking for location name input field...');
     const labelInput = page.locator('#label, input[placeholder*="Location Name"]').first();
     await labelInput.waitFor({ state: 'visible', timeout: 5000 });
+    console.log('Found label input, filling in location name...');
     await labelInput.fill(santaBox.label);
 
     // Click to show address fields
@@ -252,9 +280,11 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     await page.fill('#contactEmail, input[placeholder*="Contact Email"]', santaBox.contactEmail);
 
     // Submit - use the button with id="submit-btn" specifically
-    const submitBtn = page.locator('#submit-btn');
+    console.log('Looking for submit button...');
+    const submitBtn = page.locator('#submit-btn, button:has-text("Submit"), button:has-text("Create")').first();
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
-    console.log('🎯 Found submit button, clicking...');
+    const submitBtnText = await submitBtn.textContent();
+    console.log(`🎯 Found submit button: "${submitBtnText}", clicking...`);
     await submitBtn.click();
 
     // Wait for provisioning to complete (Cloud Function call can be slow)
@@ -263,6 +293,7 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
 
     // First check for any immediate error messages
     await page.waitForTimeout(2000); // Give time for errors to appear
+    console.log(`Current URL after submit: ${page.url()}`);
 
     const errorMsg = page.locator('.error, .message.error, [class*="error"]');
     const hasError = await errorMsg.isVisible().catch(() => false);
@@ -275,6 +306,7 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
 
     // Wait for redirect to status page (form waits 1 second, then redirects)
     // Total wait time should be at least 6 seconds for slow Cloud Functions
+    console.log('Waiting for redirect to status page...');
     await page.waitForURL(/\/status\/?\?id=.*&newBox=true/, { timeout: 10000 }).catch(async (e) => {
       const currentUrl = page.url();
       console.log('⚠️ Did not redirect to status page');
