@@ -266,12 +266,10 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     if (isCI) {
       console.log('🔧 In CI mode - filling passcode on setup page to authorize');
       const passcodeInput = page.locator('#passcode, input[placeholder*="passcode"], input[placeholder*="shared code"]').first();
-      if (await passcodeInput.isVisible()) {
-        await passcodeInput.fill(TEST_CONFIG.PASSCODE);
-        console.log('   Passcode entered - will be validated when submitting the form');
-      } else {
-        console.log('⚠️  Passcode field not visible - may cause authorization issues');
-      }
+      // Wait for passcode field to become visible (setup page shows it after auth check in onAuthStateChanged)
+      await passcodeInput.waitFor({ state: 'visible', timeout: 10000 });
+      await passcodeInput.fill(TEST_CONFIG.PASSCODE);
+      console.log('   Passcode entered - will be validated when submitting the form');
     }
 
     // Since we're already authorized (or will be via passcode above), fill in the location details

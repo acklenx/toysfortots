@@ -330,3 +330,53 @@ Modified `public/setup/index.html` to skip the `isAuthorizedVolunteer()` check w
 
 **Next:** Commit and push to test in GitHub Actions
 
+
+---
+
+## ITERATION 6: Add Passcode Field to Setup Page
+
+**Root Cause Identified:**
+The setup page was hardcoded to send `passcode: ''` (empty string), assuming users were already authorized when they reached the page. In the normal flow, users go through the authorize page first, which calls `authorizeVolunteerV2` and adds them to the `authorizedVolunteers` collection. Then the setup page sends an empty passcode because the user is already authorized.
+
+In CI, we skip the authorize page (due to CORS issues with `authorizeVolunteerV2`). Users reach the setup page without being authorized. The setup page still sends `passcode: ''`, but `provisionBoxV2` checks if the user is authorized (finds false) and tries to validate the empty passcode - which fails with "functions/internal" error.
+
+**Investigation:**
+Checked `functions/index.js` and confirmed that `provisionBoxV2` DOES add users to `authorizedVolunteers` collection when passcode is valid (lines 377-387). So the "real" authorization flow is:
+1. User enters passcode (on authorize page OR setup page)
+2. `provisionBoxV2` validates passcode
+3. If valid, adds user to `authorizedVolunteers` collection
+4. Creates location and initial report
+
+**Solution:**
+Add a passcode input field to the setup page that:
+1. Is hidden by default
+2. Shows when in localhost/emulator mode (where authorization check is skipped)
+3. Sends the passcode value to `provisionBoxV2` instead of empty string
+
+**Changes Made:**
+- **public/setup/index.html** lines 23-30: Added passcode input field (hidden by default)
+- **public/setup/index.html** lines 545-551: Show passcode field when in localhost mode
+- **public/setup/index.html** line 403: Read passcode from form data instead of hardcoding empty string
+- **tests/e2e/e2e-full-journey.spec.js** line 268: Update selector to match "passcode" placeholder
+
+**Why This Works:**
+- Passcode field is now visible in CI (localhost mode)
+- Test fills passcode before submitting form
+- `provisionBoxV2` receives valid passcode
+- `provisionBoxV2` validates passcode and adds user to `authorizedVolunteers`
+- Subsequent dashboard operations work because user is now authorized
+
+**Security:**
+- Passcode field only shown in localhost/emulator mode
+- Production still requires authorize page (due to `isLocalhost` check)
+- Server-side validation in `provisionBoxV2` unchanged
+- No security vulnerabilities introduced
+
+**Local Test Result:**
+```
+✅ All 3 tests pass (22.5s)
+✅ No regression - authorize page flow still works in local mode
+```
+
+**Next:** Commit (da56272) and push to test in GitHub Actions
+
