@@ -509,23 +509,31 @@
 							return;
 						}
 
-						// Check authorization
-						try
+						// Check authorization (skip in emulator mode to avoid CORS issues)
+						const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+						if( !isLocalhost )
 						{
-							const result = await isAuthorizedVolunteer();
-							if( !result.data.isAuthorized )
+							try
 							{
-								// Not authorized - redirect to authorize page with boxId
+								const result = await isAuthorizedVolunteer();
+								if( !result.data.isAuthorized )
+								{
+									// Not authorized - redirect to authorize page with boxId
+									window.location.href = `/authorize?boxId=${ scannedBoxId }`;
+									return;
+								}
+							}
+							catch( error )
+							{
+								console.error( 'Authorization check failed:', error );
+								// On error, redirect to authorize page
 								window.location.href = `/authorize?boxId=${ scannedBoxId }`;
 								return;
 							}
 						}
-						catch( error )
+						else
 						{
-							console.error( 'Authorization check failed:', error );
-							// On error, redirect to authorize page
-							window.location.href = `/authorize?boxId=${ scannedBoxId }`;
-							return;
+							console.log( '[setup] Skipping authorization check in emulator mode (localhost). Authorization will be validated server-side in provisionBoxV2.' );
 						}
 
 						// User is authenticated and authorized - proceed
