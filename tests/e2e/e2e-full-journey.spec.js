@@ -265,7 +265,7 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     // In CI mode, we're not authorized yet - need to fill passcode on setup page
     if (isCI) {
       console.log('🔧 In CI mode - filling passcode on setup page to authorize');
-      const passcodeInput = page.locator('#passcode, input[placeholder*="shared code"]').first();
+      const passcodeInput = page.locator('#passcode, input[placeholder*="passcode"], input[placeholder*="shared code"]').first();
       if (await passcodeInput.isVisible()) {
         await passcodeInput.fill(TEST_CONFIG.PASSCODE);
         console.log('   Passcode entered - will be validated when submitting the form');
