@@ -145,6 +145,18 @@ The tests include advanced scenarios (concurrent users, rapid operations, sessio
 ---
 
 **Created:** 2025-11-16
-**Completed:** 2025-11-16 (local testing)
-**Status:** ✅ All 14 E2E tests passing locally - Ready for GitHub Actions
+**Completed:** 2025-11-16 (local testing + stability)
+**Status:** ✅ All 14 E2E tests stable (5/5 runs passed) - Ready for GitHub Actions
 **Priority:** HIGH - Configure GitHub Actions to run E2E tests
+
+---
+
+## Stability Testing
+
+**5 consecutive runs: 5/5 passed** ✅
+
+Flakiness fix applied:
+- **Issue**: Part 2 would timeout 20% of the time waiting for `networkidle`
+- **Root cause**: Part 1's redirect could leave pending network requests
+- **Fix**: Changed `page.goto('/login', { waitUntil: 'networkidle' })` to use `domcontentloaded`
+- **Result**: 100% pass rate (was 80% before fix)
