@@ -91,3 +91,87 @@ Test run finished: passed
 
 **Next Step:** Commit and push to trigger GitHub Actions
 
+
+---
+
+## ITERATION 1 RESULT: Partial Success
+
+**What Worked:**
+✅ Port conflict resolved - no more "http://localhost:5000 is already used" error
+✅ Smoke tests passed  
+✅ E2E tests started running
+
+**New Problem Discovered:**
+❌ Part 1 failing: Cannot find `#label` input field on setup page
+- Error: `TimeoutError: locator.waitFor: Timeout 5000ms exceeded`
+- Locator: `$('#label, input[placeholder*="Location Name"]').first()`
+- Test gets to setup page successfully but form elements don't appear
+- Works locally but not in CI
+
+**Hypothesis:**
+Setup page JavaScript may not be loading/executing properly in CI environment. Could be:
+1. Timing issue - JS not loaded before test looks for element
+2. CSP issue blocking inline scripts
+3. Firebase initialization timing difference
+4. Missing static files in emulated hosting
+
+**Next Steps:**
+1. Download screenshot artifact from failed run to see what page shows
+2. Check if setup page is actually loading or showing an error
+3. May need to add longer waits or check for JS errors in console
+4. Consider checking network tab for failed resource loads
+
+**GitHub Actions Run:** https://github.com/acklenx/toysfortots/actions/runs/19409910823
+**PR:** https://github.com/acklenx/toysfortots/pull/1
+
+
+---
+
+## ITERATION 2: Root Cause Found
+
+**Problem Identified via Screenshot:**
+The screenshot from the failed test shows the user is STUCK on the authorize page, not the setup page!
+
+**What's Happening:**
+1. Test clicks "Authorize Access" button
+2. Authorization fails silently in CI (Cloud Function issue?)
+3. Test manually navigates to `/setup/?id=BOX_ID`
+4. User isn't authorized, so setup page redirects back to `/authorize/`
+5. Test waits for `#label` input which never appears (wrong page!)
+
+**Why It Works Locally But Not in CI:**
+The `isAuthorizedVolunteerV2` Cloud Function likely works locally but has issues in CI emulator environment. This matches the earlier note in user instructions: "authorize action has been problematic using the emulators"
+
+**Solution:**
+Skip the authorize page entirely. Go directly to setup page and use the passcode field there. The `provisionBoxV2` function validates the passcode AND authorizes the user in one step.
+
+**Implementation:**
+1. Remove authorize page interaction from test
+2. Go directly from signup → setup page
+3. Fill passcode on setup page (which grants authorization)
+4. This is the "real" authorization flow mentioned in CLAUDE.md
+
+
+---
+
+## ITERATION 2: Add Debug Logging
+
+**Changes Made:**
+1. Added console error listener to capture browser JavaScript errors
+2. Changed authorization wait from simple 3s timeout to Promise.race:
+   - Waits for navigation to setup page (success case)
+   - OR timeout after 10s (failure case)
+3. Added logging to show which case happened
+
+**Why This Helps:**
+- Will show browser console errors if Cloud Function fails
+- Will explicitly log "✅ Navigated to setup page after authorization" on success
+- Will log "⚠️ Timeout waiting for navigation - authorization may have failed" on failure
+- Makes it clear in CI logs whether authorization worked or not
+
+**Local Test Result:**
+✅ Part 1 passed (16.0s)
+✅ Shows "✅ Navigated to setup page after authorization" - auth works locally
+
+**Next:** Commit and push to see CI behavior with new logging
+

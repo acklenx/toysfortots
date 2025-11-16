@@ -204,6 +204,13 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log('Found auth code input, filling in passcode...');
     await authCodeInput.fill(TEST_CONFIG.PASSCODE);
 
+    // Listen for console errors to debug authorization issues
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`❌ Browser console error: ${msg.text()}`);
+      }
+    });
+
     // Click the Authorize Access button
     console.log('Looking for Authorize button...');
     const authorizeBtn = page.locator('button:has-text("Authorize Access"), button:has-text("Authorize"), a:has-text("Authorize Access"), a:has-text("Authorize")').first();
@@ -212,8 +219,12 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     console.log(`Found authorize button: "${authBtnText}", clicking...`);
     await authorizeBtn.click();
 
-    // Wait for authorization to complete
-    await page.waitForTimeout(3000);
+    // Wait for navigation to setup page OR stay on authorize page (indicating failure)
+    console.log('Waiting for authorization to complete...');
+    await Promise.race([
+      page.waitForURL(/\/setup\/?\?/, { timeout: 10000 }).then(() => console.log('✅ Navigated to setup page after authorization')),
+      page.waitForTimeout(10000).then(() => console.log('⚠️ Timeout waiting for navigation - authorization may have failed'))
+    ]);
 
     // Check the current URL - we might be on setup page now, or need to navigate there
     const currentUrl = page.url();
