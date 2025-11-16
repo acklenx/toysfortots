@@ -350,7 +350,7 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
 
     // Login as Santa
     console.log('Navigating to login page...');
-    await page.goto('/login', { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
     console.log(`Current URL: ${page.url()}`);
 
@@ -361,12 +361,9 @@ test.describe.serial('E2E Journey: Complete Volunteer Flow', () => {
     await page.locator('#email-sign-in-btn').click();
 
     // Wait for auth and redirect
-    await page.waitForTimeout(2000);
-    console.log(`Current URL after sign-in: ${page.url()}`);
-
-    // Navigate to dashboard
+    console.log('Waiting for redirect to dashboard...');
     await expect(page).toHaveURL(/\/dashboard\/?/, { timeout: 15000 });
-    console.log('✅ Redirected to dashboard');
+    console.log(`✅ Redirected to dashboard - Current URL: ${page.url()}`);
 
     // Wait for dashboard to load
     await page.waitForTimeout(2000);  // Wait for page to render instead of network idle
