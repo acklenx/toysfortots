@@ -169,9 +169,11 @@
 
 						// Use mock cache on localhost/emulators, real cache in production
 						const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+						// Add cache busting parameter to prevent stale data from browser/service worker cache
+						const cacheBuster = `v=${Date.now()}`;
 						const cacheUrl = isLocalhost
-							? '/mock-locations-cache.json'
-							: 'https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache';
+							? `/mock-locations-cache.json?${cacheBuster}`
+							: `https://us-central1-toysfortots-eae4d.cloudfunctions.net/getLocationsCache?${cacheBuster}`;
 
 						const response = await fetch( cacheUrl );
 
