@@ -713,6 +713,9 @@
 					<button id="sync-spreadsheet-btn" class="primary-btn" style="background-color: var(--t4t-green);">
 						🔄 Sync Spreadsheet to Locations
 					</button>
+					<button id="cleanup-broken-boxes-btn" class="danger-btn" style="background-color: #f59e0b;">
+						M-pM-^_M-^_M-oM-^A Clean Up Broken Boxes
+					</button>
 				</div>
 				<div id="sync-results" style="margin-top: 15px; padding: 15px; background: var(--gray-50); border-radius: 4px; display: none;">
 					<h3 style="margin: 0 0 10px 0; color: var(--marine-blue); font-size: 1rem;">Sync Results</h3>
@@ -3858,6 +3861,47 @@ No Action: ${noActionViews}`;
 				} finally {
 					syncButton.disabled = false;
 					syncButton.textContent = '🔄 Sync Spreadsheet to Locations';
+				}
+			});
+		}
+
+		// ===== CLEANUP BROKEN BOXES =====
+		const cleanupButton = document.getElementById('cleanup-broken-boxes-btn');
+		if (cleanupButton) {
+			cleanupButton.addEventListener('click', async () => {
+				if (!confirm('This will delete all imported boxes that have broken coordinates (lng instead of lon).\n\nThese boxes are invisible on the map and admin page.\n\nContinue?')) {
+					return;
+				}
+
+				cleanupButton.disabled = true;
+				cleanupButton.textContent = '⏳ Cleaning...';
+
+				try {
+					const cleanupFunction = httpsCallable(functions, 'cleanupBrokenImportedBoxes');
+					const result = await cleanupFunction();
+
+					if (result.data.success) {
+						alert(`✓ Cleanup complete!\n\nDeleted ${result.data.deleted} broken boxes.\n\nPage will reload to refresh the data.`);
+						setTimeout(() => window.location.reload(), 1000);
+					} else {
+						alert(`Cleanup failed: ${result.data.message}`);
+					}
+				} catch (error) {
+					console.error('Error cleaning up broken boxes:', error);
+					let errorMessage = 'An error occurred during cleanup.';
+
+					if (error.code === 'functions/permission-denied') {
+						errorMessage = 'You do not have permission to clean up boxes.';
+					} else if (error.code === 'functions/unauthenticated') {
+						errorMessage = 'You must be signed in to clean up boxes.';
+					} else if (error.message) {
+						errorMessage = error.message;
+					}
+
+					alert(`❌ Error: ${errorMessage}`);
+				} finally {
+					cleanupButton.disabled = false;
+					cleanupButton.textContent = '🗑️ Clean Up Broken Boxes';
 				}
 			});
 		}

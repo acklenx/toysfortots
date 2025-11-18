@@ -1629,3 +1629,90 @@ exports.syncSuggestionsToLocations = onCall( async( request ) =>
 	}
 } );
 
+/**
+ * One-time cleanup function to delete boxes with 'lng' instead of 'lon'
+ * These are broken imported boxes from the first sync attempt
+ * Callable by authorized volunteers only
+ */
+exports.cleanupBrokenImportedBoxes = onCall( async( request ) =>
+{
+	console.log( '--- cleanupBrokenImportedBoxes STARTED ---' );
+
+	// Check authorization
+	if( !request.auth )
+	{
+		throw new HttpsError( 'unauthenticated', 'Must be signed in' );
+	}
+
+	const db = getFirestore();
+	const uid = request.auth.uid;
+
+	// Verify user is authorized
+	const authDoc = await db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` ).get();
+	if( !authDoc.exists )
+	{
+		throw new HttpsError( 'permission-denied', 'Not authorized' );
+	}
+
+	try
+	{
+		console.log( 'Searching for broken imported boxes...' );
+
+		// Get all locations
+		const locationsSnapshot = await db.collection( LOCATIONS_PATH ).get();
+		const brokenBoxes = [];
+
+		locationsSnapshot.forEach( doc =>
+		{
+			const data = doc.data();
+			// Find boxes that have 'lng' but not 'lon' and are imported
+			if( data.lng !== undefined && data.lon === undefined && data.importedFromSpreadsheet === true )
+			{
+				brokenBoxes.push( {
+					id: doc.id,
+					boxId: data.boxId,
+					label: data.label
+				} );
+			}
+		} );
+
+		console.log( `Found ${ brokenBoxes.length } broken boxes to delete` );
+
+		if( brokenBoxes.length === 0 )
+		{
+			return {
+				success: true,
+				deleted: 0,
+				message: 'No broken boxes found!'
+			};
+		}
+
+		// Delete all broken boxes
+		const batch = db.batch();
+		brokenBoxes.forEach( box =>
+		{
+			const docRef = db.collection( LOCATIONS_PATH ).doc( box.id );
+			batch.delete( docRef );
+		} );
+
+		await batch.commit();
+		console.log( `Successfully deleted ${ brokenBoxes.length } broken boxes` );
+
+		return {
+			success: true,
+			deleted: brokenBoxes.length,
+			message: `Deleted ${ brokenBoxes.length } broken imported boxes`,
+			deletedBoxes: brokenBoxes
+		};
+	}
+	catch( error )
+	{
+		console.error( 'Error in cleanupBrokenImportedBoxes:', error );
+		throw new HttpsError( 'internal', `Cleanup failed: ${ error.message }` );
+	}
+	finally
+	{
+		console.log( '--- cleanupBrokenImportedBoxes FINISHED ---' );
+	}
+} );
+
