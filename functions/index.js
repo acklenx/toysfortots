@@ -1384,3 +1384,248 @@ exports.createReportV2 = onCall( async( request ) =>
 	}
 } );
 
+/**
+ * Generate a unique box ID for imported locations
+ * Format: X + 5 random alphanumeric characters (total 6 chars)
+ * Example: XA3K9F
+ */
+function generateImportedBoxId()
+{
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let id = 'X';
+	for( let i = 0; i < 5; i++ )
+	{
+		id += chars.charAt( Math.floor( Math.random() * chars.length ) );
+	}
+	return id;
+}
+
+/**
+ * Geocode an address to get lat/lng
+ */
+async function geocodeAddress( address, city, state )
+{
+	const fullAddress = `${ address }, ${ city }, ${ state }`.trim();
+
+	try
+	{
+		const response = await mapsClient.geocode( {
+			params: {
+				address: fullAddress,
+				key: GEOCODING_API_KEY.value()
+			}
+		} );
+
+		if( response.data.results && response.data.results.length > 0 )
+		{
+			const location = response.data.results[ 0 ].geometry.location;
+			return {
+				lat: location.lat,
+				lng: location.lng,
+				formattedAddress: response.data.results[ 0 ].formatted_address
+			};
+		}
+	}
+	catch( error )
+	{
+		console.error( `Geocoding failed for ${ fullAddress }:`, error.message );
+	}
+
+	return null;
+}
+
+/**
+ * Normalize strings for comparison
+ */
+function normalizeString( str )
+{
+	return ( str || '' ).toLowerCase().trim().replace( /\s+/g, ' ' );
+}
+
+/**
+ * Check if a suggestion already exists as a location
+ */
+function locationExistsInList( suggestion, existingLocations )
+{
+	const suggestionLabel = normalizeString( suggestion.label );
+	const suggestionAddress = normalizeString( suggestion.address );
+
+	return existingLocations.some( loc =>
+	{
+		const locLabel = normalizeString( loc.label );
+		const locAddress = normalizeString( loc.address );
+
+		// Match by label OR address
+		return locLabel === suggestionLabel || locAddress === suggestionAddress;
+	} );
+}
+
+/**
+ * Sync location suggestions to actual locations
+ * Creates boxes for all spreadsheet entries that have addresses but aren't provisioned yet
+ * Callable by authorized volunteers only
+ */
+exports.syncSuggestionsToLocations = onCall( async( request ) =>
+{
+	console.log( '--- syncSuggestionsToLocations STARTED ---' );
+
+	// Check authorization
+	if( !request.auth )
+	{
+		throw new HttpsError( 'unauthenticated', 'Must be signed in' );
+	}
+
+	const db = getFirestore();
+	const uid = request.auth.uid;
+
+	// Verify user is authorized
+	const authDoc = await db.doc( `${ AUTHORIZED_VOLUNTEERS_PATH }/${ uid }` ).get();
+	if( !authDoc.exists )
+	{
+		throw new HttpsError( 'permission-denied', 'Not authorized' );
+	}
+
+	try
+	{
+		console.log( 'Fetching existing locations and suggestions...' );
+
+		// Fetch existing locations
+		const locationsSnapshot = await db.collection( LOCATIONS_PATH ).get();
+		const existingLocations = [];
+		locationsSnapshot.forEach( doc =>
+		{
+			existingLocations.push( { id: doc.id, ...doc.data() } );
+		} );
+		console.log( `Found ${ existingLocations.length } existing locations` );
+
+		// Fetch location suggestions
+		const suggestionsSnapshot = await db.collection( LOCATION_SUGGESTIONS_PATH ).get();
+		const allSuggestions = [];
+		suggestionsSnapshot.forEach( doc =>
+		{
+			allSuggestions.push( { id: doc.id, ...doc.data() } );
+		} );
+		console.log( `Found ${ allSuggestions.length } suggestions` );
+
+		// Filter suggestions that have addresses and don't exist yet
+		const suggestionsWithAddresses = allSuggestions.filter( s => s.address && s.address.trim() );
+		console.log( `${ suggestionsWithAddresses.length } suggestions have addresses` );
+
+		const missingLocations = suggestionsWithAddresses.filter( s =>
+			!locationExistsInList( s, existingLocations )
+		);
+		console.log( `${ missingLocations.length } locations need to be added` );
+
+		if( missingLocations.length === 0 )
+		{
+			return {
+				success: true,
+				added: 0,
+				skipped: 0,
+				failed: 0,
+				message: 'No new locations to add - all suggestions already exist!'
+			};
+		}
+
+		// Add each missing location
+		let addedCount = 0;
+		let skippedCount = 0;
+		let failedCount = 0;
+		const results = [];
+
+		for( const suggestion of missingLocations )
+		{
+			const boxId = generateImportedBoxId();
+
+			console.log( `Processing: ${ suggestion.label } (${ boxId })` );
+
+			// Geocode the address
+			const geoResult = await geocodeAddress(
+				suggestion.address,
+				suggestion.city || '',
+				suggestion.state || 'GA'
+			);
+
+			if( !geoResult )
+			{
+				console.log( `  Geocoding failed for ${ suggestion.label }, skipping` );
+				skippedCount++;
+				results.push( {
+					label: suggestion.label,
+					status: 'skipped',
+					reason: 'geocoding_failed'
+				} );
+				continue;
+			}
+
+			// Create location document
+			// Use a 2024 date for imported boxes since these are historical locations
+			const timestamp2024 = admin.firestore.Timestamp.fromDate( new Date( '2024-11-01T12:00:00Z' ) );
+
+			const locationData = {
+				boxId,
+				label: suggestion.label || 'Unnamed Location',
+				address: suggestion.address,
+				city: suggestion.city || '',
+				state: suggestion.state || 'GA',
+				lat: geoResult.lat,
+				lng: geoResult.lng,
+				contactName: suggestion.contactName || '',
+				contactPhone: suggestion.contactPhone || '',
+				contactEmail: suggestion.contactEmail || '',
+				createdAt: timestamp2024, // Set to 2024 date instead of current time
+				createdBy: uid,
+				volunteer: uid,
+				volunteerEmail: request.auth.token.email || 'imported@system',
+				importedFromSpreadsheet: true // Flag to identify imported boxes
+			};
+
+			try
+			{
+				await db.collection( LOCATIONS_PATH ).doc( boxId ).set( locationData );
+				console.log( `  Added successfully: ${ boxId }` );
+				addedCount++;
+				results.push( {
+					label: suggestion.label,
+					boxId,
+					status: 'added'
+				} );
+
+				// Small delay to avoid rate limiting on geocoding
+				await new Promise( resolve => setTimeout( resolve, 200 ) );
+			}
+			catch( error )
+			{
+				console.error( `  Failed to add ${ suggestion.label }:`, error );
+				failedCount++;
+				results.push( {
+					label: suggestion.label,
+					status: 'failed',
+					reason: error.message
+				} );
+			}
+		}
+
+		console.log( `Sync complete: ${ addedCount } added, ${ skippedCount } skipped, ${ failedCount } failed` );
+
+		return {
+			success: true,
+			added: addedCount,
+			skipped: skippedCount,
+			failed: failedCount,
+			total: missingLocations.length,
+			message: `Successfully added ${ addedCount } new locations from spreadsheet`,
+			results
+		};
+	}
+	catch( error )
+	{
+		console.error( 'Error in syncSuggestionsToLocations:', error );
+		throw new HttpsError( 'internal', `Sync failed: ${ error.message }` );
+	}
+	finally
+	{
+		console.log( '--- syncSuggestionsToLocations FINISHED ---' );
+	}
+} );
+
