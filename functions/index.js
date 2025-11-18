@@ -1573,7 +1573,7 @@ exports.syncSuggestionsToLocations = onCall( async( request ) =>
 				contactName: suggestion.contactName || '',
 				contactPhone: suggestion.contactPhone || '',
 				contactEmail: suggestion.contactEmail || '',
-				createdAt: timestamp2024, // Set to 2024 date instead of current time
+				created: timestamp2024, // Use 'created' not 'createdAt' to match existing schema
 				createdBy: uid,
 				volunteer: uid,
 				volunteerEmail: request.auth.token.email || 'imported@system',
