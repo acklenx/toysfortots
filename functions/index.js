@@ -1569,7 +1569,7 @@ exports.syncSuggestionsToLocations = onCall( async( request ) =>
 				city: suggestion.city || '',
 				state: suggestion.state || 'GA',
 				lat: geoResult.lat,
-				lng: geoResult.lng,
+				lon: geoResult.lng, // Use 'lon' not 'lng' to match existing schema
 				contactName: suggestion.contactName || '',
 				contactPhone: suggestion.contactPhone || '',
 				contactEmail: suggestion.contactEmail || '',
