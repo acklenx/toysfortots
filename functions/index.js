@@ -1479,7 +1479,7 @@ exports.syncSuggestionsToLocations = onCall( async( request ) =>
 	const uid = request.auth.uid;
 
 	// Verify user is authorized
-	const authDoc = await db.doc( `${ AUTHORIZED_VOLUNTEERS_PATH }/${ uid }` ).get();
+	const authDoc = await db.doc( `${ AUTH_VOLUNTEERS_PATH }/${ uid }` ).get();
 	if( !authDoc.exists )
 	{
 		throw new HttpsError( 'permission-denied', 'Not authorized' );
