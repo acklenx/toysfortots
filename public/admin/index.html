@@ -700,6 +700,26 @@
 				</label>
 			</div>
 
+			<!-- Admin/Root: Data Import Section -->
+			<div id="import-section" class="admin-section" style="display: none;">
+				<div class="section-header">
+					<h2>📥 Data Import</h2>
+				</div>
+				<p style="color: var(--text-secondary); margin-bottom: 20px;">
+					Import locations from the synced spreadsheet that have addresses but aren't yet provisioned as boxes on the map.
+					Imported boxes will have X-prefixed IDs and show a 2024 creation date.
+				</p>
+				<div class="control-buttons">
+					<button id="sync-spreadsheet-btn" class="primary-btn" style="background-color: var(--t4t-green);">
+						🔄 Sync Spreadsheet to Locations
+					</button>
+				</div>
+				<div id="sync-results" style="margin-top: 15px; padding: 15px; background: var(--gray-50); border-radius: 4px; display: none;">
+					<h3 style="margin: 0 0 10px 0; color: var(--marine-blue); font-size: 1rem;">Sync Results</h3>
+					<div id="sync-results-content"></div>
+				</div>
+			</div>
+
 			<!-- Admin/Root: Audit Logs Section -->
 			<div id="audit-section" class="admin-section" style="display: none;">
 				<div class="section-header">
@@ -1045,6 +1065,12 @@
 				document.getElementById('admin-content').style.display = 'block';
 
 				// Show/hide root-only features
+				// Show/hide admin/root-only features
+				if (currentUserRole === 'admin' || currentUserRole === 'root') {
+					const importSection = document.getElementById('import-section');
+					if (importSection) importSection.style.display = 'block';
+				}
+
 				if (currentUserRole === 'root') {
 					const deletedToggle = document.getElementById('deleted-toggle');
 					const purgeSection = document.getElementById('purge-section');
@@ -3747,6 +3773,93 @@ No Action: ${noActionViews}`;
 		// Load audit logs for admins/root on init
 		if (['admin', 'root'].includes(currentUserRole)) {
 			setTimeout(loadAuditLogs, 1000); // Load after main data
+		}
+
+		// ===== SPREADSHEET SYNC =====
+		const syncButton = document.getElementById('sync-spreadsheet-btn');
+		if (syncButton) {
+			syncButton.addEventListener('click', async () => {
+				const resultsDiv = document.getElementById('sync-results');
+				const resultsContent = document.getElementById('sync-results-content');
+
+				if (!confirm('This will import all locations from the spreadsheet that have addresses and are not already on the map.\n\nImported boxes will have X-prefixed IDs and show a 2024 creation date.\n\nContinue?')) {
+					return;
+				}
+
+				syncButton.disabled = true;
+				syncButton.textContent = '⏳ Syncing...';
+				resultsDiv.style.display = 'none';
+
+				try {
+					const syncFunction = httpsCallable(functions, 'syncSuggestionsToLocations');
+					const result = await syncFunction();
+
+					if (result.data.success) {
+						const { added, skipped, failed, total } = result.data;
+
+						let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">';
+						html += `<div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid var(--t4t-green);">`;
+						html += `<div style="font-size: 2rem; font-weight: bold; color: var(--t4t-green);">${added}</div>`;
+						html += `<div style="color: var(--text-secondary); font-size: 0.875rem;">Added</div>`;
+						html += `</div>`;
+
+						if (skipped > 0) {
+							html += `<div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b;">`;
+							html += `<div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">${skipped}</div>`;
+							html += `<div style="color: var(--text-secondary); font-size: 0.875rem;">Skipped (geocoding failed)</div>`;
+							html += `</div>`;
+						}
+
+						if (failed > 0) {
+							html += `<div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid var(--t4t-red);">`;
+							html += `<div style="font-size: 2rem; font-weight: bold; color: var(--t4t-red);">${failed}</div>`;
+							html += `<div style="color: var(--text-secondary); font-size: 0.875rem;">Failed</div>`;
+							html += `</div>`;
+						}
+
+						html += `<div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid var(--marine-blue);">`;
+						html += `<div style="font-size: 2rem; font-weight: bold; color: var(--marine-blue);">${total}</div>`;
+						html += `<div style="color: var(--text-secondary); font-size: 0.875rem;">Total Processed</div>`;
+						html += `</div>`;
+						html += '</div>';
+
+						if (added > 0) {
+							html += `<p style="color: var(--t4t-green); margin: 0;">✓ Successfully imported ${added} new location${added !== 1 ? 's' : ''}!</p>`;
+							html += `<p style="color: var(--text-secondary); font-size: 0.875rem; margin: 10px 0 0 0;">Reloading page to show new boxes...</p>`;
+						} else {
+							html += `<p style="color: var(--text-secondary); margin: 0;">All locations from the spreadsheet are already on the map.</p>`;
+						}
+
+						resultsContent.innerHTML = html;
+						resultsDiv.style.display = 'block';
+
+						// Reload page if new boxes were added
+						if (added > 0) {
+							setTimeout(() => window.location.reload(), 2000);
+						}
+					} else {
+						resultsContent.innerHTML = `<p style="color: var(--t4t-red); margin: 0;">❌ Sync failed: ${result.data.message}</p>`;
+						resultsDiv.style.display = 'block';
+					}
+				} catch (error) {
+					console.error('Error syncing spreadsheet:', error);
+					let errorMessage = 'An error occurred during sync.';
+
+					if (error.code === 'functions/permission-denied') {
+						errorMessage = 'You do not have permission to sync locations.';
+					} else if (error.code === 'functions/unauthenticated') {
+						errorMessage = 'You must be signed in to sync locations.';
+					} else if (error.message) {
+						errorMessage = error.message;
+					}
+
+					resultsContent.innerHTML = `<p style="color: var(--t4t-red); margin: 0;">❌ Error: ${errorMessage}</p>`;
+					resultsDiv.style.display = 'block';
+				} finally {
+					syncButton.disabled = false;
+					syncButton.textContent = '🔄 Sync Spreadsheet to Locations';
+				}
+			});
 		}
 	</script>
 </body>

@@ -25,9 +25,6 @@
 						<label for="view-filter">Show boxes:</label>
 						<select id="view-filter">
 						</select>
-						<button id="sync-spreadsheet-btn" style="margin-left: 15px; padding: 0.5rem 1rem; background-color: var(--t4t-green); color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
-							Sync Spreadsheet
-						</button>
 					</div>
 				</div>
 				<section id="boxes-section">
@@ -462,70 +459,6 @@
 						button.disabled = false;
 						button.textContent = 'Resolve All';
 					}
-				}
-			} );
-
-			// Handle sync spreadsheet button
-			document.getElementById( 'sync-spreadsheet-btn' ).addEventListener( 'click', async() =>
-			{
-				const button = document.getElementById( 'sync-spreadsheet-btn' );
-				const originalText = button.textContent;
-
-				if( !confirm( 'This will import all locations from the spreadsheet that have addresses and are not already on the map. Continue?' ) )
-				{
-					return;
-				}
-
-				button.disabled = true;
-				button.textContent = 'Syncing...';
-
-				try
-				{
-					const syncFunction = httpsCallable( functions, 'syncSuggestionsToLocations' );
-					const result = await syncFunction();
-
-					if( result.data.success )
-					{
-						const { added, skipped, failed, total } = result.data;
-						let message = `Sync complete!\n\n`;
-						message += `• Added: ${added} new locations\n`;
-						if( skipped > 0 ) message += `• Skipped: ${skipped} (geocoding failed)\n`;
-						if( failed > 0 ) message += `• Failed: ${failed}\n`;
-						message += `\nTotal processed: ${total}`;
-
-						alert( message );
-
-						// Reload the dashboard to show new boxes
-						if( added > 0 )
-						{
-							window.location.reload();
-						}
-					}
-					else
-					{
-						alert( 'Sync failed: ' + result.data.message );
-					}
-				}
-				catch( error )
-				{
-					console.error( 'Error syncing spreadsheet:', error );
-					if( error.code === 'functions/permission-denied' )
-					{
-						alert( 'You do not have permission to sync locations.' );
-					}
-					else if( error.code === 'functions/unauthenticated' )
-					{
-						alert( 'You must be signed in to sync locations.' );
-					}
-					else
-					{
-						alert( 'Error syncing: ' + error.message );
-					}
-				}
-				finally
-				{
-					button.disabled = false;
-					button.textContent = originalText;
 				}
 			} );
 
