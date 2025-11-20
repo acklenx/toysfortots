@@ -48,7 +48,7 @@
 
 			document.addEventListener( 'DOMContentLoaded', () =>
 			{
-				const map = L.map( 'map' ).setView( [ 34.05, -84.60 ], 11 );
+				const map = L.map( 'map' ).setView( [ 34.12, -84.53 ], 11 );
 				L.tileLayer( 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 					attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 				} ).addTo( map );
@@ -56,7 +56,7 @@
 
 				// Regular QR code boxes
 				const customIcon = L.icon( {
-					iconUrl: 'images/pin.webp',
+					iconUrl: 'images/pin.webp?123',
 					iconSize: [ 40, 39 ],
 					iconAnchor: [ 20, 39 ],
 					popupAnchor: [ 0, -39 ]
@@ -64,7 +64,7 @@
 
 				// Imported boxes (X-prefixed IDs)
 				const importedIcon = L.icon( {
-					iconUrl: 'images/pin-imported.webp',
+					iconUrl: 'images/pin-imported.webp?123',
 					iconSize: [ 40, 39 ],
 					iconAnchor: [ 20, 39 ],
 					popupAnchor: [ 0, -39 ]
@@ -142,7 +142,7 @@
 						if( location.lat && location.lon )
 						{
 							// Use different icon for imported boxes (X-prefixed IDs)
-							const iconToUse = (location.boxId && location.boxId.startsWith('X')) ? importedIcon : customIcon;
+							const iconToUse = (location.id && location.id.length===4) ? importedIcon : customIcon;
 							const marker = L.marker( [ location.lat, location.lon ], { icon: iconToUse } ).addTo( map );
 							let popupContent = `<b>${ escapeHtml(location.label) }</b><br>${ escapeHtml(location.address) }`;
 							if( location.city && location.state )

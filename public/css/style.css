@@ -280,7 +280,7 @@ header .header-right {
 }
 
 .container #map {
-    height: 500px !important; /* Explicit height for Leaflet, override any library defaults */
+    height: 800px !important; /* Explicit height for Leaflet, override any library defaults */
     flex: 4 !important;
     min-width: 480px; /* Minimum for usable map viewing on desktop (mobile overrides this) */
     width: auto !important; /* Let flex determine width, override Leaflet */
