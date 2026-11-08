@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * Production Smoke Tests
  *
- * These tests run against https://toysfortots.mcl1311.com
+ * These tests run against https://toysfortots.mcl1311.org
  * They verify:
  * - Pages load successfully
  * - JavaScript executes (not blocked by CSP)

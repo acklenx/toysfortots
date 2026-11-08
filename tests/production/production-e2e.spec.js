@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * Production End-to-End Tests
  *
  * IMPORTANT: These tests CREATE TEST DATA in the PRODUCTION SITE
- * Run against: https://toysfortots.mcl1311.com
+ * Run against: https://toysfortots.mcl1311.org
  *
  * Test data uses festive North Pole theme to clearly identify as test data:
  * - Santa Claus, Rudolph, Frosty as test users

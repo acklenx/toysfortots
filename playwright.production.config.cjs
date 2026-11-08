@@ -3,7 +3,7 @@ const { defineConfig, devices } = require('@playwright/test');
 /**
  * Production smoke test configuration
  *
- * Runs against live production site: https://toysfortots.mcl1311.com
+ * Runs against live production site: https://toysfortots.mcl1311.org (override with PROD_BASE_URL)
  *
  * Usage:
  *   npx playwright test --config=playwright.production.config.js
@@ -20,7 +20,7 @@ module.exports = defineConfig({
   reporter: 'html',
 
   use: {
-    baseURL: 'https://toysfortots.mcl1311.com',
+    baseURL: process.env.PROD_BASE_URL || 'https://toysfortots.mcl1311.org',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 10000,

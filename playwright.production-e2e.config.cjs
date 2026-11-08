@@ -3,7 +3,7 @@ const { defineConfig, devices } = require('@playwright/test');
 /**
  * Production End-to-End test configuration
  *
- * Runs comprehensive E2E tests against live production site: https://toysfortots.mcl1311.com
+ * Runs comprehensive E2E tests against live production site: https://toysfortots.mcl1311.org (override with PROD_BASE_URL)
  *
  * IMPORTANT: These tests CREATE TEST DATA in production!
  * - Uses festive North Pole themed test data for clear identification
@@ -27,7 +27,7 @@ module.exports = defineConfig({
   ],
 
   use: {
-    baseURL: 'https://toysfortots.mcl1311.com',
+    baseURL: process.env.PROD_BASE_URL || 'https://toysfortots.mcl1311.org',
 
     // Capture evidence
     trace: 'on', // Always capture trace for production tests
