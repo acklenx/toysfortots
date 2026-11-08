@@ -197,7 +197,9 @@
 			}
 
 			const MCL_LOGO = 'https://toysfortots.netlify.app/images/mcl-logo.webp';
-			const BASE_URL = 'http://toysfortots.mcl1311.com/box';
+			// New stickers point at the .org host. Older stickers carry http://toysfortots.mcl1311.com/box?id=…
+			// and keep working through the permanent 301 on the .com host (Cloudflare redirect rule).
+			const BASE_URL = 'https://toysfortots.mcl1311.org/box';
 			const DEFAULT_STICKER_HEIGHT = '2.6in';
 			const idGen = new IdObfuscator();
 

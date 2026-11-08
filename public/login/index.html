@@ -104,6 +104,9 @@
 
 				// Replace spaces with underscores to match how email was created during signup
 				const emailUsername = username.replace(/\s+/g, '_');
+				// NOTE: '@toysfortots.mcl1311.com' is a synthetic account identifier stored in Firebase Auth,
+				// not a mailbox. It must stay '.com' even though the site now lives on toysfortots.mcl1311.org;
+				// changing it would orphan every existing username/password volunteer account.
 				const email = `${emailUsername}@toysfortots.mcl1311.com`;
 
 				try {

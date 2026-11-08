@@ -8,7 +8,7 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 
 const firebaseConfig = {
 	apiKey: 'AIzaSyC3-oZseVLWFYFbmjAFEgQ-I6hNOgiPj9w',
-	authDomain: 'toysfortots.mcl1311.com',
+	authDomain: 'toysfortots.mcl1311.org',
 	projectId: 'toysfortots-eae4d',
 	storageBucket: 'toysfortots-eae4d.firebasestorage.app',
 	messagingSenderId: '505039956655',

@@ -1,7 +1,7 @@
 // Service Worker for Toys for Tots
 // Implements stale-while-revalidate strategy for fast, cached-first loading
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.0.1'; // bumped for the .org domain move so cached _header.html refreshes
 const CACHE_NAME = `toysfortots-${CACHE_VERSION}`;
 
 // Resources to cache immediately on install
