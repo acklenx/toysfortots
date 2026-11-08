@@ -196,7 +196,7 @@
 					.replace(/'/g, '&#039;');
 			}
 
-			const MCL_LOGO = 'https://toysfortots.netlify.app/images/mcl-logo.webp';
+			const MCL_LOGO = '/images/mcl-logo.webp'; // was an old Netlify host; the file is served by this site
 			// New stickers point at the .org host. Older stickers carry http://toysfortots.mcl1311.com/box?id=…
 			// and keep working through the permanent 301 on the .com host (Cloudflare redirect rule).
 			const BASE_URL = 'https://toysfortots.mcl1311.org/box';
