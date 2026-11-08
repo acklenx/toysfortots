@@ -129,7 +129,7 @@ npx playwright show-report                       # View test report
 
 **Production Smoke Tests:**
 ```bash
-# Test against live production site (https://toysfortots.mcl1311.com)
+# Test against live production site (https://toysfortots.mcl1311.org; PROD_BASE_URL overrides)
 npm run test:production
 
 # These tests verify:

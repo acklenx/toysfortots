@@ -171,3 +171,18 @@ Tests are organized by authentication requirements:
 ## CI/CD Note
 
 For CI/CD, emulators will start automatically. Set `CI=true` environment variable.
+
+## Emulator project id matters (found 2026-11-08)
+
+Start the emulators **without** `--project demo-test`. The app (`public/js/firebase-init.js`)
+and the test fixtures (`tests/fixtures/firebase-helpers.js`) both use project id
+`toysfortots-eae4d`; with `--project demo-test` the Functions emulator's Admin SDK reads a
+different Firestore namespace, every `isAuthorizedVolunteerV2` check fails, and the dashboard,
+admin and status tests time out in "Loading..." (the symptom described in
+FLAKINESS_ANALYSIS.md). `./start-emulators.sh` already does the right thing; `.github/workflows/tests.yml`
+does not.
+
+With the real project id and relaxed timeouts (`actionTimeout`/`navigationTimeout`/`expect`
+20 s, one worker) the full `npm test` set is 16 pass / 3 fail on an unmodified checkout; the
+3 failures (admin panel needs an `admin`-role user, XSS home and status pages) fail identically
+on `main` and are not environment related.
