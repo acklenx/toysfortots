@@ -1,10 +1,9 @@
 const { onCall, onRequest, HttpsError } = require( 'firebase-functions/v2/https' );
-const { getFirestore, FieldValue } = require( 'firebase-admin/firestore' );
+const { getFirestore, FieldValue, Timestamp } = require( 'firebase-admin/firestore' );
 const { getAuth } = require( 'firebase-admin/auth' );
 const { onDocumentCreated } = require( 'firebase-functions/v2/firestore' );
 const { onSchedule } = require( 'firebase-functions/v2/scheduler' );
 const { initializeApp } = require( 'firebase-admin/app' );
-const admin = require( 'firebase-admin' );
 const { defineString } = require( 'firebase-functions/params' );
 const FormData = require( 'form-data' );
 const { Client } = require( '@googlemaps/google-maps-services-js' );
@@ -979,7 +978,7 @@ exports.triggerSyncLocationSuggestions = onRequest( { cors: ['https://toysfortot
 	try
 	{
 		// Verify the ID token
-		const decodedToken = await admin.auth().verifyIdToken( idToken );
+		const decodedToken = await getAuth().verifyIdToken( idToken );
 		const uid = decodedToken.uid;
 
 		// Check if user is authorized volunteer
@@ -1264,7 +1263,7 @@ exports.triggerRefreshLocationsCache = onRequest( { cors: ['https://toysfortots.
 	try
 	{
 		// Verify the ID token
-		const decodedToken = await admin.auth().verifyIdToken( idToken );
+		const decodedToken = await getAuth().verifyIdToken( idToken );
 		const uid = decodedToken.uid;
 
 		// Check if user is authorized volunteer
@@ -1560,7 +1559,7 @@ exports.syncSuggestionsToLocations = onCall( async( request ) =>
 
 			// Create location document
 			// Use a 2024 date for imported boxes since these are historical locations
-			const timestamp2024 = admin.firestore.Timestamp.fromDate( new Date( '2024-11-01T12:00:00Z' ) );
+			const timestamp2024 = Timestamp.fromDate( new Date( '2024-11-01T12:00:00Z' ) );
 
 			const locationData = {
 				boxId,
