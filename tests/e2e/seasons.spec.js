@@ -170,3 +170,37 @@ test( 'setup: typing a returning business offers last season\'s box and fills th
 	await expect( page.locator( '#label' ) ).toHaveValue( boxes.lastYear.label );
 	await expect( page.locator( '#address' ) ).toHaveValue( '123 Test St' );
 } );
+
+test( 'admin: season filter defaults to the current season and narrows boxes and reports', async( { page } ) =>
+{
+	await signIn( page, username, PASSWORD );
+	await page.goto( '/admin/' );
+	const seasonSelect = page.locator( '#admin-season-filter' );
+	const boxesTable = page.locator( '#boxes-container' );
+	const reportsTable = page.locator( '#reports-container' );
+
+	await expect( boxesTable ).toContainText( boxes.current.id, { timeout: 15000 } );
+	await expect( seasonSelect ).toHaveValue( String( SEASON ) );
+	await expect( page.locator( '#stat-boxes-label' ) ).toHaveText( `Boxes (${ SEASON })` );
+	await expect( boxesTable ).not.toContainText( boxes.lastYear.id );
+	await expect( boxesTable ).not.toContainText( boxes.twoYearsAgo.id );
+	// Reports go by when they were filed: each box's registration report is dated when the box
+	// was created, while the pickup sent from last season's sticker earlier in this file is current.
+	const reportRow = ( boxId, type ) => reportsTable.locator( 'tr', { hasText: boxId } ).filter( { hasText: type } );
+	await expect( reportRow( boxes.current.id, 'box_registered' ) ).toHaveCount( 1 );
+	await expect( reportRow( boxes.lastYear.id, 'box_registered' ) ).toHaveCount( 0 );
+	await expect( reportRow( boxes.lastYear.id, 'pickup_alert' ) ).toHaveCount( 1 );
+
+	await seasonSelect.selectOption( String( SEASON - 1 ) );
+	await expect( boxesTable ).toContainText( boxes.lastYear.id );
+	await expect( boxesTable ).not.toContainText( boxes.current.id );
+	await expect( reportRow( boxes.lastYear.id, 'box_registered' ) ).toHaveCount( 1 );
+	await expect( page.locator( '#delete-all-boxes-btn' ) ).toHaveText( /^Delete \d+ Box(es)?$/ );
+
+	await seasonSelect.selectOption( 'all' );
+	for( const box of Object.values( boxes ) )
+	{
+		await expect( boxesTable ).toContainText( box.id );
+	}
+	await expect( page.locator( '#delete-all-boxes-btn' ) ).toHaveText( 'Delete All Boxes' );
+} );

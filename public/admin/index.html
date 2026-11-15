@@ -588,15 +588,22 @@
 		</div>
 
 		<div id="admin-content" style="display: none;">
+			<!-- Season filter: each drive year gets new stickers; boxes and reports default to the current season -->
+			<div class="admin-section" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+				<label for="admin-season-filter" style="font-weight: 600; color: var(--marine-blue);">Season:</label>
+				<select id="admin-season-filter" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 4px;"></select>
+				<span style="color: var(--text-muted); font-size: 0.9rem;">Filters the box and report lists below</span>
+			</div>
+
 			<!-- Statistics -->
 			<div class="stats-grid">
 				<div class="stat-card">
 					<div class="stat-value" id="stat-boxes">0</div>
-					<div class="stat-label">Total Boxes</div>
+					<div class="stat-label" id="stat-boxes-label">Total Boxes</div>
 				</div>
 				<div class="stat-card">
 					<div class="stat-value" id="stat-reports">0</div>
-					<div class="stat-label">Total Reports</div>
+					<div class="stat-label" id="stat-reports-label">Total Reports</div>
 				</div>
 				<div class="stat-card">
 					<div class="stat-value" id="stat-volunteers">0</div>
@@ -910,6 +917,7 @@
 	<script type="module">
 		import { db, auth, functions, locationsCollectionPath, reportsCollectionPath, authorizedVolunteersCollectionPath, auditLogsCollectionPath } from '/js/firebase-init.js';
 		import { logAudit, AUDIT_ACTIONS } from '/js/audit-logger.js';
+		import { currentSeason, boxSeason, seasonOf, seasonsIn } from '/js/season.js';
 		import {
 			collection,
 			getDocs,
@@ -1005,6 +1013,58 @@
 				return formatMilitaryDateTime(timestamp).split(' ')[0]; // Just the date part
 			}
 		};
+
+		// Season filter: a year or 'all'; ?season=2025 or ?season=all preselects it
+		let adminSeason = currentSeason();
+		{
+			const seasonParam = new URLSearchParams(window.location.search).get('season');
+			if (seasonParam === 'all') adminSeason = 'all';
+			else if (/^\d{4}$/.test(seasonParam || '')) adminSeason = Number(seasonParam);
+		}
+		const boxInAdminSeason = (box) => adminSeason === 'all' || boxSeason(box) === adminSeason;
+		// A report belongs to the season it was filed in (its box's season if it has no timestamp)
+		const reportInAdminSeason = (report) => {
+			if (adminSeason === 'all') return true;
+			let season = seasonOf(report.timestamp);
+			if (season === null) {
+				const box = allBoxes.find(b => b.id === report.boxId);
+				season = box ? boxSeason(box) : null;
+			}
+			return season === adminSeason;
+		};
+		const seasonLabel = () => adminSeason === 'all' ? 'all seasons' : String(adminSeason);
+		function updateSeasonStats() {
+			document.getElementById('stat-boxes').textContent = allBoxes.filter(boxInAdminSeason).length;
+			document.getElementById('stat-boxes-label').textContent = `Boxes (${seasonLabel()})`;
+			document.getElementById('stat-reports').textContent = allReports.filter(reportInAdminSeason).length;
+			document.getElementById('stat-reports-label').textContent = `Reports (${seasonLabel()})`;
+		}
+		function populateAdminSeasons() {
+			const select = document.getElementById('admin-season-filter');
+			const seasons = seasonsIn(allBoxes);
+			if (!seasons.includes(currentSeason())) seasons.push(currentSeason());
+			if (typeof adminSeason === 'number' && !seasons.includes(adminSeason)) seasons.push(adminSeason);
+			seasons.sort((a, b) => b - a);
+			select.innerHTML = '';
+			seasons.forEach(season => {
+				const option = document.createElement('option');
+				option.value = String(season);
+				option.textContent = season === currentSeason() ? `${season} (current)` : String(season);
+				select.appendChild(option);
+			});
+			const allOption = document.createElement('option');
+			allOption.value = 'all';
+			allOption.textContent = 'All seasons';
+			select.appendChild(allOption);
+			select.value = String(adminSeason);
+		}
+		document.getElementById('admin-season-filter').addEventListener('change', (e) => {
+			adminSeason = e.target.value === 'all' ? 'all' : Number(e.target.value);
+			currentBoxesPage = 1;
+			currentReportsPage = 1;
+			filterAndRenderBoxes();
+			filterAndRenderReports();
+		});
 
 		// Data storage for filtering/sorting/pagination
 		let allBoxes = [];
@@ -1271,7 +1331,7 @@
 							allBoxes.push({ id: doc.id, ...data });
 						});
 
-						document.getElementById('stat-boxes').textContent = allBoxes.length;
+						populateAdminSeasons();
 						document.getElementById('boxes-loading').style.display = 'none';
 
 						// Update timestamp
@@ -1329,7 +1389,7 @@
 						});
 
 						// Update count
-						document.getElementById('stat-boxes').textContent = allBoxes.length;
+						updateSeasonStats();
 
 						// Update timestamp
 						const now = new Date();
@@ -1467,7 +1527,7 @@
 					}
 				}
 
-				filteredBoxes = allBoxes.filter(box => {
+				filteredBoxes = allBoxes.filter(boxInAdminSeason).filter(box => {
 					if (!searchTerm) return !invertMatch; // Empty search: show all (or none if inverted)
 
 					let matches = false;
@@ -1495,6 +1555,7 @@
 					return invertMatch ? !matches : matches;
 				});
 
+				updateSeasonStats();
 				updateDeleteAllBoxesButton();
 				renderBoxes();
 			}, 100); // Wait 100ms for rapid changes to settle
@@ -1505,7 +1566,7 @@
 			const count = filteredBoxes.length;
 			const searchTerm = document.getElementById('boxes-search').value.trim();
 
-			if (searchTerm) {
+			if (searchTerm || adminSeason !== 'all') {
 				btn.textContent = `Delete ${count} Box${count !== 1 ? 'es' : ''}`;
 			} else {
 				btn.textContent = 'Delete All Boxes';
@@ -1768,7 +1829,7 @@ No Action: ${noActionViews}`;
 							allReports.push({ id: doc.id, ...data });
 						});
 
-						document.getElementById('stat-reports').textContent = allReports.length;
+						updateSeasonStats();
 						document.getElementById('reports-loading').style.display = 'none';
 
 						// Update timestamp
@@ -1825,7 +1886,7 @@ No Action: ${noActionViews}`;
 						});
 
 						// Update count
-						document.getElementById('stat-reports').textContent = allReports.length;
+						updateSeasonStats();
 
 						// Update timestamp
 						const now = new Date();
@@ -1933,7 +1994,7 @@ No Action: ${noActionViews}`;
 				}
 			}
 
-			filteredReports = allReports.filter(report => {
+			filteredReports = allReports.filter(reportInAdminSeason).filter(report => {
 				if (!searchTerm) return !invertMatch; // Empty search: show all (or none if inverted)
 
 				let matches = false;
@@ -1959,6 +2020,7 @@ No Action: ${noActionViews}`;
 				return invertMatch ? !matches : matches;
 			});
 
+			updateSeasonStats();
 			updateDeleteAllReportsButton();
 			renderReports();
 		}
@@ -1968,7 +2030,7 @@ No Action: ${noActionViews}`;
 			const count = filteredReports.length;
 			const searchTerm = document.getElementById('reports-search').value.trim();
 
-			if (searchTerm) {
+			if (searchTerm || adminSeason !== 'all') {
 				btn.textContent = `Delete ${count} Report${count !== 1 ? 's' : ''}`;
 			} else {
 				btn.textContent = 'Delete All Reports';

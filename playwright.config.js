@@ -16,7 +16,7 @@ export default defineConfig({
     '**/e2e-full-journey.spec.js', // Comprehensive E2E journey tests (14 tests)
     '**/admin.spec.js',            // Admin panel tests (2 tests)
     '**/xss-security.spec.js',     // XSS security tests (4 tests)
-    '**/seasons.spec.js'           // Seasons: map, dashboard, box page, setup reuse (7 tests)
+    '**/seasons.spec.js'           // Seasons: map, dashboard, box page, setup reuse, admin (8 tests)
   ],
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
