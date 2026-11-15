@@ -28,6 +28,15 @@
 				justify-content: space-between;
 			}
 
+			/* "• Get more information" in bold is ~173px in Arial against a 180px column, and wider
+			   system fonts (Segoe UI, San Francisco) wrap it, pushing the logo into the sticker below.
+			   Keep each bullet on one line and a little smaller so it fits with any font. */
+			.sticker-card li {
+				white-space: nowrap;
+				font-size: 15px;
+				line-height: 22px;
+			}
+
 			#sticker-grid-wrapper {
 				margin: 0 auto;
 			}
