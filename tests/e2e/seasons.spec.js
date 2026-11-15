@@ -140,3 +140,22 @@ test( 'box page: a current sticker shows no old-sticker notice', async( { page }
 	await expect( page.locator( '.info-title' ) ).toContainText( boxes.current.label, { timeout: 10000 } );
 	await expect( page.locator( '#old-sticker-notice' ) ).toHaveCount( 0 );
 } );
+
+test( 'setup: typing a returning business offers last season\'s box and fills the form', async( { page } ) =>
+{
+	await signIn( page, username, PASSWORD );
+	const newBoxId = generateBoxId( 'SEASONNEW' );
+	await page.goto( `/setup/?id=${ newBoxId }` );
+	await expect( page.locator( '#new-location-form' ) ).toBeVisible( { timeout: 10000 } );
+
+	await page.locator( '#label' ).pressSequentially( 'Last season box', { delay: 20 } );
+	const item = page.locator( '.autocomplete-item', { hasText: boxes.lastYear.label } );
+	await expect( item ).toBeVisible( { timeout: 10000 } );
+	await expect( item ).toContainText( `${ SEASON - 1 } box ${ boxes.lastYear.id }` );
+	// The current season's box is not offered as a "previous" location
+	await expect( page.locator( '.autocomplete-item', { hasText: boxes.current.label } ) ).toHaveCount( 0 );
+
+	await item.click();
+	await expect( page.locator( '#label' ) ).toHaveValue( boxes.lastYear.label );
+	await expect( page.locator( '#address' ) ).toHaveValue( '123 Test St' );
+} );

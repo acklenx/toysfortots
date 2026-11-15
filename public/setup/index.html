@@ -88,12 +88,15 @@
 				autoFillFormFields,
 				createAutocomplete
 			} from '../js/location-autocomplete.js';
+			import { previousSeasonMatches, mergeSuggestions } from '../js/previous-season.js';
 				import {
 					onAuthStateChanged
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 				import {
 					doc,
-					getDoc
+					getDoc,
+					collection,
+					getDocs
 				} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 				import {
 					httpsCallable
@@ -485,11 +488,35 @@
 					showMessage( 'success', 'Location info filled from records!' );
 				};
 
-				// Label field autocomplete
-				createAutocomplete( labelInput, searchByLabel, handleAutocompleteSelect );
+				// Earlier seasons' boxes, loaded once on first search: returning businesses get new
+				// stickers each year, so their details can be filled in from last year's box.
+				let earlierBoxesPromise = null;
+				const loadEarlierBoxes = () =>
+				{
+					if( !earlierBoxesPromise )
+					{
+						earlierBoxesPromise = getDocs( collection( db, locationsCollectionPath ) )
+							.then( snapshot => snapshot.docs.map( d => ( { id: d.id, ...d.data() } ) ) )
+							.catch( error =>
+							{
+								console.warn( 'Could not load earlier seasons\' boxes:', error );
+								earlierBoxesPromise = null;
+								return [];
+							} );
+					}
+					return earlierBoxesPromise;
+				};
+				const withEarlierSeasons = ( searchSuggestions, field ) => async( query ) =>
+				{
+					const [ suggestions, earlierBoxes ] = await Promise.all( [ searchSuggestions( query ), loadEarlierBoxes() ] );
+					return mergeSuggestions( suggestions, previousSeasonMatches( earlierBoxes, query, { field } ) );
+				};
 
-				// Address field autocomplete
-				createAutocomplete( addressInput, searchByAddress, handleAutocompleteSelect );
+				// Label field autocomplete (spreadsheet suggestions plus earlier seasons' boxes)
+				createAutocomplete( labelInput, withEarlierSeasons( searchByLabel, 'label' ), handleAutocompleteSelect );
+
+				// Address field autocomplete (spreadsheet suggestions plus earlier seasons' boxes)
+				createAutocomplete( addressInput, withEarlierSeasons( searchByAddress, 'address' ), handleAutocompleteSelect );
 
 				// Contact name field autocomplete
 				createAutocomplete( contactNameInput, searchByContactName, handleAutocompleteSelect );

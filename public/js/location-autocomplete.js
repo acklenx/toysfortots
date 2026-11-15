@@ -377,10 +377,17 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 		});
 	}
 
+	// The field being typed in takes the chosen suggestion's value: clear the partial text so
+	// autoFillFormFields (which only fills empty fields) replaces it.
+	function choose(result) {
+		inputElement.value = '';
+		onSelect(result);
+	}
+
 	// Helper to select current item
 	function selectCurrentItem() {
 		if (selectedIndex >= 0 && selectedIndex < currentResults.length) {
-			onSelect(currentResults[selectedIndex]);
+			choose(currentResults[selectedIndex]);
 			dropdownElement.style.display = 'none';
 			selectedIndex = -1;
 		}
@@ -418,6 +425,7 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 				">
 					<div style="font-weight: bold;">${escapeHtml(result.label || '(No label)')}</div>
 					<div style="font-size: 0.875rem; color: #666;">${escapeHtml(result.address || '')}, ${escapeHtml(result.city || '')}</div>
+					${result.note ? `<div style="font-size: 0.75rem; color: #888;">${escapeHtml(result.note)}</div>` : ''}
 				</div>
 			`).join('');
 
@@ -434,10 +442,9 @@ export function createAutocomplete(inputElement, searchFunction, onSelect, debou
 					updateSelectedItem();
 				});
 				item.addEventListener('click', () => {
-					const selectedId = item.getAttribute('data-id');
-					const selectedResult = results.find(r => r.id === selectedId);
+					const selectedResult = results[index];
 					if (selectedResult) {
-						onSelect(selectedResult);
+						choose(selectedResult);
 						dropdownElement.style.display = 'none';
 						selectedIndex = -1;
 					}
