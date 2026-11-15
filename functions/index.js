@@ -9,6 +9,7 @@ const FormData = require( 'form-data' );
 const { Client } = require( '@googlemaps/google-maps-services-js' );
 const Mailgun = require( 'mailgun.js' );
 const { google } = require( 'googleapis' );
+const { seasonOf, boxSeason } = require( './season' );
 const mailgun = new Mailgun( FormData );
 const ADMIN_EMAIL = 'toysfortots@qlamail.com';
 const MAILGUN_KEY = defineString( 'MAILGUN_KEY' );
@@ -352,10 +353,11 @@ exports.provisionBoxV2 = onCall( async( request ) =>
 			console.error( 'Geocoding API error during request:', error.response ? JSON.stringify( error.response.data ) : error.message );
 		}
 	}
+	const createdAt = new Date();
 	const newLocation = {
 		label: data.label, address: data.address, city: data.city, state: data.state,
 		boxes: data.boxes, volunteer: userName, status: 'active',
-		created: new Date().toISOString(), provisionedBy: uid,
+		created: createdAt.toISOString(), season: seasonOf( createdAt ), provisionedBy: uid,
 		lat: geocodedLat, lon: geocodedLon,
 		contactName: data.contactName, contactEmail: data.contactEmail, contactPhone: data.contactPhone,
 		reportCounter: 0,
@@ -1073,7 +1075,8 @@ async function generateLocationsCache()
 				volunteer: data.volunteer,
 				status: data.status,
 				boxes: data.boxes,
-				created: data.created
+				created: data.created,
+				season: boxSeason( data )
 			} );
 		} );
 
