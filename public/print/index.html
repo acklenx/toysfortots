@@ -153,7 +153,9 @@
 			{
 				constructor()
 				{
-					this.ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+					// Capital letters and digits only, so IDs are easy to read and type. Stickers printed
+					// before 2026-11-15 used mixed case; those IDs stay valid (box IDs are stored as printed).
+					this.ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 					this.BASE = this.ALPHABET.length;
 					this.PRIME = 1000000007;
 					this.MULTIPLIER = 478372833;
