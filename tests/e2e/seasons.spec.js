@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { authorizeVolunteer, createTestLocation } from '../fixtures/firebase-helpers.js';
+import { authorizeVolunteer, createTestLocation, getReportsForBox } from '../fixtures/firebase-helpers.js';
 import { generateBoxId, generateUsername } from '../fixtures/test-id-generator.js';
 import { signIn } from '../fixtures/auth.js';
 import { currentSeason } from '../../public/js/season.js';
@@ -118,4 +118,25 @@ test( 'dashboard ?season= preselects a season', async( { page } ) =>
 	await expect( page.locator( '#boxes-title' ) ).toContainText( `${ VOLUNTEER }'s Boxes (${ SEASON - 2 })`, { timeout: 10000 } );
 	await expect( page.locator( '#boxes-container' ) ).toContainText( boxes.twoYearsAgo.label );
 	await expect( page.locator( '#season-filter' ) ).toHaveValue( String( SEASON - 2 ) );
+} );
+
+test( 'box page: an old sticker says which drive it is from and still takes reports', async( { page } ) =>
+{
+	await page.goto( `/box?id=${ boxes.lastYear.id }` );
+	const notice = page.locator( '#old-sticker-notice' );
+	await expect( notice ).toContainText( `from the ${ SEASON - 1 } drive`, { timeout: 10000 } );
+
+	const before = ( await getReportsForBox( boxes.lastYear.id ) ).filter( r => r.reportType === 'pickup_alert' ).length;
+	await page.locator( '#pickup-btn' ).click();
+	await expect( page.locator( '#pickup-confirmation' ) ).toBeVisible();
+	await expect.poll( async() =>
+		( await getReportsForBox( boxes.lastYear.id ) ).filter( r => r.reportType === 'pickup_alert' ).length,
+		{ timeout: 10000 } ).toBe( before + 1 );
+} );
+
+test( 'box page: a current sticker shows no old-sticker notice', async( { page } ) =>
+{
+	await page.goto( `/box?id=${ boxes.current.id }` );
+	await expect( page.locator( '.info-title' ) ).toContainText( boxes.current.label, { timeout: 10000 } );
+	await expect( page.locator( '#old-sticker-notice' ) ).toHaveCount( 0 );
 } );

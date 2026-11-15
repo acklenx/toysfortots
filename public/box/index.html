@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="/css/style.min.css?v=1.0.7">
 		<script type="module">
 			import { auth, db, functions, locationsCollectionPath, reportsCollectionPath } from '../js/firebase-init.js';
+			import { boxSeason, currentSeason } from '../js/season.js';
 			import {
 				signInAnonymously,
 				onAuthStateChanged
@@ -123,7 +124,11 @@
 						return;
 					}
 					const location = locSnap.data();
-					currentBoxInfo = `${ location.label } (ID: ${ boxId }) @ ${ location.address }`;
+					// A sticker from an earlier drive still works: reports go through, labeled with its
+					// season so volunteers know an old sticker is still out there.
+					const season = boxSeason( location );
+					const isOldSticker = season !== null && season < currentSeason();
+					currentBoxInfo = `${ location.label } (ID: ${ boxId }${ isOldSticker ? `, ${ season } sticker` : '' }) @ ${ location.address }`;
 					loadingMessage.remove();
 					let volunteerDisplayName = 'MCL 1311';
 					if( location.volunteer )
@@ -153,6 +158,7 @@
                        <p class="info-text">${ escapeHtml(location.address) }, ${ escapeHtml(location.city) }, ${ escapeHtml(location.state) }</p>
                        <p class="info-detail">Box ID: <span class="text-tots-red font-semibold">${ escapeHtml(boxId) }</span></p>
                        <p class="info-detail">Assigned Volunteer: <span class="font-semibold">${ escapeHtml(volunteerDisplayName) }</span></p>
+                       ${ isOldSticker ? `<p id="old-sticker-notice" class="info-detail">This sticker is from the ${ season } drive. You can still use the buttons below and we'll pass it on to a volunteer.</p>` : '' }
                    </div>
                `;
 					document.getElementById( 'problem-box-id-detail' ).value = currentBoxInfo;
