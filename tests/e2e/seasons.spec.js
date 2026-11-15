@@ -77,6 +77,17 @@ test( 'home map lists only the current season', async( { page } ) =>
 	await expect( list ).not.toContainText( boxes.twoYearsAgo.label );
 } );
 
+test( 'home map says so when no boxes are set up for the current season yet', async( { page } ) =>
+{
+	await page.route( '**/mock-locations-cache.json*', route => route.fulfill( {
+		contentType: 'application/json',
+		body: JSON.stringify( { locations: [ { id: 'OLD1', label: 'Old box', lat: 34.1, lon: -84.5, created: `${ SEASON - 1 }-11-04T15:00:00.000Z` } ], count: 1, version: 1 } )
+	} ) );
+	await page.goto( '/' );
+	await expect( page.locator( '#location-list' ) ).toContainText( `No donation locations have been set up for the ${ SEASON } drive yet.`, { timeout: 10000 } );
+	await expect( page.locator( '.leaflet-marker-icon' ) ).toHaveCount( 0 );
+} );
+
 test( 'dashboard defaults to the current season and can switch seasons', async( { page } ) =>
 {
 	await signIn( page, username, PASSWORD );

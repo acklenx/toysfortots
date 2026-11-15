@@ -108,10 +108,8 @@
 
 					if( locationsArray.length === 0 )
 					{
-						if( source === 'realtime' )
-						{
-							locationList.innerHTML = `<p style="padding: 15px; text-align: center;">No donation locations have been set up for the ${ season } drive yet.</p>`;
-						}
+						// The home page renders from the cache only, so say so here too, not just for realtime
+						locationList.innerHTML = `<p style="padding: 15px; text-align: center;">No donation locations have been set up for the ${ season } drive yet.</p>`;
 						return;
 					}
 
