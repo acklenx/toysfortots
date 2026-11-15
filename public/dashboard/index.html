@@ -22,6 +22,9 @@
 						</div>
 					</div>
 					<div class="dashboard-header-controls">
+						<label for="season-filter">Season:</label>
+						<select id="season-filter">
+						</select>
 						<label for="view-filter">Show boxes:</label>
 						<select id="view-filter">
 						</select>
@@ -41,6 +44,7 @@
 		<script src="/js/loader.min.js" defer></script>
 		<script type="module">
 			import { auth, db, functions, reportsCollectionPath, locationsCollectionPath } from '../js/firebase-init.js';
+			import { currentSeason, boxSeason, seasonsIn } from '../js/season.js';
 			import {
 				onAuthStateChanged,
 				signOut
@@ -188,6 +192,8 @@
 			let allBoxesMap = new Map();
 			let currentUserId = null;
 			let currentUserDisplayName = null;
+			// Season shown: a year, or 'all'. Defaults to the current drive; each year gets new box IDs.
+			let selectedSeason = currentSeason();
 			const renderDashboard = ( filterKey ) =>
 			{
 				const boxesContainer = document.getElementById( 'boxes-container' );
@@ -197,18 +203,20 @@
 
 				// Map "my_boxes" to current user's display name
 				const actualFilterKey = filterKey === 'my_boxes' ? currentUserDisplayName : filterKey;
+				const inSelectedSeason = ( box ) => selectedSeason === 'all' || box.season === selectedSeason;
+				const seasonSuffix = selectedSeason === 'all' ? ' (all seasons)' : ` (${ selectedSeason })`;
 
 				if( actualFilterKey === 'all_boxes' )
 				{
-					boxesToRender = Array.from( allBoxesMap.values() );
-					boxesTitle.textContent = 'All Box Statuses';
+					boxesToRender = Array.from( allBoxesMap.values() ).filter( inSelectedSeason );
+					boxesTitle.textContent = `All Box Statuses${ seasonSuffix }`;
 				}
 				else
 				{
-					boxesTitle.textContent = `${ actualFilterKey }'s Boxes`;
+					boxesTitle.textContent = `${ actualFilterKey }'s Boxes${ seasonSuffix }`;
 					allBoxesMap.forEach( box =>
 					{
-						if( box.volunteer === actualFilterKey )
+						if( box.volunteer === actualFilterKey && inSelectedSeason( box ) )
 						{
 							boxesToRender.push( box );
 						}
@@ -216,7 +224,10 @@
 				}
 				if( boxesToRender.length === 0 )
 				{
-					boxesContainer.innerHTML = '<p style="text-align: center; color: #4b5563; padding: 1rem;">No reports have been filed for any boxes yet.</p>';
+					const emptyText = selectedSeason === 'all'
+						? 'No reports have been filed for any boxes yet.'
+						: `No boxes set up for the ${ selectedSeason } drive yet.`;
+					boxesContainer.innerHTML = `<p style="text-align: center; color: #4b5563; padding: 1rem;">${ emptyText }</p>`;
 					return;
 				}
 				let html = '';
@@ -267,7 +278,8 @@
 							city: location.city || '',
 							latestPendingReport: null,
 							provisionedBy: location.provisionedBy,
-							volunteer: location.volunteer
+							volunteer: location.volunteer,
+							season: boxSeason( location )
 						} );
 					} );
 
@@ -314,8 +326,41 @@
 						renderDashboard( e.target.value );
 					} );
 
-					// Check for volunteer query parameter (from admin "View Boxes" link)
+					// Season picker: every season that has boxes, always including the current one.
+					// ?season=2025 or ?season=all preselects it.
 					const urlParams = new URLSearchParams( window.location.search );
+					const seasonSelect = document.getElementById( 'season-filter' );
+					const seasons = seasonsIn( Array.from( allBoxesMap.values() ) );
+					if( !seasons.includes( currentSeason() ) )
+					{
+						seasons.unshift( currentSeason() );
+						seasons.sort( ( a, b ) => b - a );
+					}
+					seasonSelect.innerHTML = '';
+					seasons.forEach( season =>
+					{
+						const option = document.createElement( 'option' );
+						option.value = String( season );
+						option.textContent = season === currentSeason() ? `${ season } (current)` : String( season );
+						seasonSelect.appendChild( option );
+					} );
+					const allOption = document.createElement( 'option' );
+					allOption.value = 'all';
+					allOption.textContent = 'All seasons';
+					seasonSelect.appendChild( allOption );
+					const seasonParam = urlParams.get( 'season' );
+					if( seasonParam === 'all' || seasons.includes( Number( seasonParam ) ) )
+					{
+						selectedSeason = seasonParam === 'all' ? 'all' : Number( seasonParam );
+					}
+					seasonSelect.value = String( selectedSeason );
+					seasonSelect.addEventListener( 'change', ( e ) =>
+					{
+						selectedSeason = e.target.value === 'all' ? 'all' : Number( e.target.value );
+						renderDashboard( filterSelect.value );
+					} );
+
+					// Check for volunteer query parameter (from admin "View Boxes" link)
 					const volunteerParam = urlParams.get( 'volunteer' );
 
 					if( volunteerParam )
