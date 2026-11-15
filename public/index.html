@@ -35,6 +35,7 @@
 		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 		<script type="module">
 			import { db, auth, locationsCollectionPath } from './js/firebase-init.js';
+			import { currentSeason, isInSeason } from './js/season.js';
 			import {
 				signInAnonymously,
 				onAuthStateChanged
@@ -100,11 +101,16 @@
 					// Remove loading message when we get data
 					removeLoadingMessage();
 
+					// Only this season's boxes: each year's drive gets new stickers (box IDs), and last
+					// year's boxes at the same businesses may no longer be out.
+					const season = currentSeason();
+					locationsArray = locationsArray.filter( ( location ) => isInSeason( location, season ) );
+
 					if( locationsArray.length === 0 )
 					{
 						if( source === 'realtime' )
 						{
-							locationList.innerHTML = '<p style="padding: 15px; text-align: center;">No donation locations have been set up yet.</p>';
+							locationList.innerHTML = `<p style="padding: 15px; text-align: center;">No donation locations have been set up for the ${ season } drive yet.</p>`;
 						}
 						return;
 					}
